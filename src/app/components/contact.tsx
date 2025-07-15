@@ -34,7 +34,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="bg-black min-h-screen flex flex-col justify-between">
+    <div className="bg-black flex flex-col justify-between pt-10 ">
       {/* Top Section */}
       <div className="flex flex-col items-center text-white py-10 px-4 space-y-8">
         {/* Emoji + Heading */}
@@ -107,7 +107,7 @@ export default function Contact() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-white text-center py-2 md:py-6 font-outfit text-black text-xs md:text-2xl  font-normal">
+      <footer className="bg-white text-center md:mt-10 py-2 md:py-6 font-outfit text-black text-xs md:text-2xl  font-normal">
         © 2025 Goutham Gopinath • Full Stack Developer & Designer
       </footer>
     </div>

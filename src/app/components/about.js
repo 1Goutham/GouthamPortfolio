@@ -5,10 +5,7 @@ import ScrollReveal from "./layout/scrollreveal";
 
 export default function About() {
   return (
-    <div
-      id="about"
-      className="flex flex-col md:flex-row w-full bg-black min-h-[750px] md:min-h-screen"
-    >
+    <div id="about" className="flex flex-col md:flex-row w-full bg-black min-h-[750px] md:min-h-screen">
       {/* Text Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center p-6 md:pl-8 md:pr-15">
         <div className="space-y-6">
@@ -64,7 +61,7 @@ export default function About() {
       </div>
 
       {/* Image Section */}
-      <div className="w-full md:w-1/2 flex justify-center items-center md:justify-end md:items-end p-6 md:p-0 -translate-y-5">
+      <div className="w-full md:w-1/2 flex justify-center items-center md:justify-end md:items-stretch p-6 md:p-0">
         <Image
           className="w-full h-[300px] md:h-full object-cover object-left-top md:object-center rounded-xl md:rounded-none"
           src="/portfoliopic1.png"
