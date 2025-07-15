@@ -41,7 +41,7 @@ export default function Skills() {
           </ScrollReveal>
           <div>
             <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
-            <Image src="/logos.png" alt="SkillsLogos" width={300} height={300} />
+            <Image src="/logos.png" alt="SkillsLogos" width={300} height={300} className="w-40 md:w-80"/>
             </FadeContent>
             </div>
         </div>
@@ -49,7 +49,7 @@ export default function Skills() {
       </div>
 
       {/* Image Section */}
-      <div className="w-full md:w-1/2 flex justify-center items-end md:justify-center md:items-end order-2 md:order-1">
+      <div className="w-full md:w-1/2 flex justify-center items-center md:justify-center md:items-end order-2 md:order-1">
       
         <Image
           className=" w-full h-[300px] md:w-[550px] md:h-[400px] object-contain"

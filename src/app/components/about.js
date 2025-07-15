@@ -64,7 +64,7 @@ export default function About() {
       </div>
 
       {/* Image Section */}
-      <div className="w-full md:w-1/2 flex justify-center md:justify-end items-center md:items-stretch p-6 md:p-0">
+      <div className="w-full md:w-1/2 flex justify-center items-center md:justify-end md:items-end p-6 md:p-0 -translate-y-5">
         <Image
           className="w-full h-[300px] md:h-full object-cover object-left-top md:object-center rounded-xl md:rounded-none"
           src="/portfoliopic1.png"
