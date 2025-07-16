@@ -12,11 +12,10 @@ export default function Hero() {
     { label: "Home", href: "#" },
     { label: "About", href: "#about" },
     { label: "Projects", href: "#projects" },
-    { label: "Resume", href: "#" }
   ];
 
   return (
-    <div className="relative overflow-hidden h-[550px] md:h-[780px] bg-black">
+    <div className="relative overflow-hidden h-[600px] md:h-[780px] bg-black">
       <nav className="flex justify-between items-center p-6 relative z-10">
         <div>
           <Image src="/logo.png" width={40} height={40} alt="mylogo" />
@@ -38,11 +37,11 @@ export default function Hero() {
         </button>
       </nav>
 
-      <div className="flex flex-col md:flex-row md:justify-center items-center h-full relative">
+      <div className="flex flex-col md:flex-row md:justify-center md:items-center items-center h-full relative">
         <div className="order-1 md:order-2">
           <FadeContent blur={true} duration={2500} easing="ease-out" initialOpacity={0}>
           <Image
-            className="pt-10 md:pt-2 w-[300px] md:w-[500px] md:-translate-x-30"
+            className="pt-10 md:pt-2 md:-translate-x-30 w-[300px] md:w-[500px]"
             src="/welcome-typography.png"
             width={500}
             height={500}
@@ -65,13 +64,16 @@ export default function Hero() {
             threshold={0.2}
             delay={0.3}
           >
-            <Image
-              className="pt-3 md:pt-35"
-              src="/animated-img.png"
-              width={800}
-              height={800}
-              alt="animated visual"
-            />
+            <video
+            src="/animated-video.mp4"
+            width={500}
+            height={500}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="pt-3 md:pt-35 w-[700px] md:-translate-x-10 md:translate-y-50 h-[250px] md:h-[500px] object-cover"
+          />
           </AnimatedContent>
           </FadeContent>
         </div>
