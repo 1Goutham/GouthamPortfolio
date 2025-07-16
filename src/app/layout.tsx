@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Montserrat, Anonymous_Pro, Outfit } from "next/font/google";
 import { Toaster } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/next';
+
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -55,6 +57,7 @@ export default function RootLayout({
           }}
         />
         {children}
+        <Analytics />
       </body>
     </html>
   );
