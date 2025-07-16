@@ -67,8 +67,8 @@ export default function Projects() {
                     height={300}
                     className="rounded-xl p-2 md:pl-10 transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div className="text-white space-y-3 md:pr-20">
-                    <h2 className="text-lg md:text-2xl font-medium">
+                  <div className="text-white space-y-3 md:pr-20 font-outfit">
+                    <h2 className="text-lg font-outfit md:text-2xl font-medium">
                       <span className="font-medium text-4xl">{project.title}</span><br />
                       <span className="pt-1 block">{project.tagline}</span>
                     </h2>
