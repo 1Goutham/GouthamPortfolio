@@ -55,3 +55,13 @@ video {
   --font-outfit: var(--font-outfit);
   --font-anonymous-pro: var(--font-anonymous-pro);
 }
+
+::selection {
+  background: #9DFF50;
+  color: black;
+}
+
+::-moz-selection {
+  background: #9DFF50;
+  color: black;
+}
