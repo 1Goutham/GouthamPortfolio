@@ -48,7 +48,7 @@ export default function About() {
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div className="mt-3 md:mt-6">
               <h1 className="text-white font-medium font-outfit text-base lg:text-2xl">
-                Experience <span className="text-base font-thin">+</span> Dev
+                Experience
               </h1>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
                 Freelance Product Creator<br />
