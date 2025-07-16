@@ -65,7 +65,7 @@ export default function Hero() {
             delay={0.3}
           >
             <video
-            src="/animated-video.mp4"
+            src="/animatedPic.mp4"
             width={500}
             height={500}
             autoPlay
