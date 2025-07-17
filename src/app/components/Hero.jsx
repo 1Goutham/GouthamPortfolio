@@ -12,7 +12,7 @@ export default function Hero() {
     { label: "Home", href: "#" },
     { label: "About", href: "#about" },
     { label: "Projects", href: "#projects" },
-    { label: "Gtalk", href: "#Gtalk" }
+    { label: "G-Talk", href: "#Gtalk" }
   ];
 
   return (

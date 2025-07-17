@@ -18,7 +18,7 @@ export default function ChatMessage({ userQuestion, botReply }: ChatMessageProps
   return (
     <div className="w-full flex justify-center items-start px-4 py-6">
       <div className="w-full max-w-3xl h-[450px] md:h-[220px] bg-[#F2F2F2] rounded-xl p-6 flex md:flex-row flex-col justify-between items-start overflow-hidden">
-        <div className="md:w-2/3 flex flex-col gap-3 max-w-[75%] overflow-hidden h-full">
+        <div className="md:w-2/3 w-full flex flex-col gap-3 overflow-hidden h-full">
           <p className="text-lg md:text-2xl font-medium text-black">
             {userQuestion}
           </p>
