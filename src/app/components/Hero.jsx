@@ -12,6 +12,7 @@ export default function Hero() {
     { label: "Home", href: "#" },
     { label: "About", href: "#about" },
     { label: "Projects", href: "#projects" },
+    { label: "Gtalk", href: "#Gtalk" }
   ];
 
   return (
@@ -29,7 +30,8 @@ export default function Hero() {
             initialActiveIndex={0}
             animationTime={300}
             timeVariance={300}
-            colors={[1, 2, 3, 1, 2, 3, 1, 4]}
+            colors={[1, 2, 3, 1, 2, 3, 1, 4]} 
+            className="font-outfit"
           />
         </div>
         <button className="flex justify-center items-center backdrop-blur-lg h-9 bg-white/10 border border-white/40 rounded-3xl px-6 py-2 shadow-md hover:scale-105 transition-transform duration-300" onClick={() => window.open('https://www.linkedin.com/in/goutham-g-98a0ba253/')}>

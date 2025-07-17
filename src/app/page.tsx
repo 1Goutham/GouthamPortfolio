@@ -4,6 +4,7 @@ import About from './components/about'
 import Skills from './components/skills'
 import Projects from './components/projects'
 import Contact from './components/contact'
+import Gtalk from './components/Gtalk'
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
     <About/>
     <Skills/>
     <Projects/>
+    <Gtalk/>
     <Contact/>
     </>
   );
