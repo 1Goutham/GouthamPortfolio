@@ -68,7 +68,7 @@ export default function Skills() {
           threshold={0.15}
         >
           <Image
-            className=" w-full h-[300px] md:w-[550px] md:h-[400px] object-contain transition-transform duration-700 ease-out hover:-translate-y-1.5"
+            className=" w-full h-[300px] md:w-[550px] md:h-[400px] object-contain transition-transform duration-700 ease-out hover:scale-[1.02]"
             src="/picwlap.webp"
             alt="portfoliopic"
             width={550}
