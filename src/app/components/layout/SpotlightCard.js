@@ -1,52 +1,76 @@
 "use client"
-import { useRef, useState } from "react";
+import { useRef, useCallback } from "react";
 
+/**
+ * Spotlight follows the cursor via CSS custom properties written straight to
+ * the DOM (rAF-throttled) - zero React re-renders per mouse move.
+ * Also adds a subtle 3D tilt + lift on hover.
+ */
 const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(255, 255, 255, 0.25)" }) => {
   const divRef = useRef(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [opacity, setOpacity] = useState(0);
+  const frame = useRef(0);
+  const pending = useRef(null);
 
-  const handleMouseMove = (e) => {
-    if (!divRef.current || isFocused) return;
+  const apply = useCallback(() => {
+    frame.current = 0;
+    const el = divRef.current;
+    const p = pending.current;
+    if (!el || !p) return;
+    el.style.setProperty("--spot-x", `${p.x}px`);
+    el.style.setProperty("--spot-y", `${p.y}px`);
+    el.style.setProperty("--tilt-x", `${p.tiltX}deg`);
+    el.style.setProperty("--tilt-y", `${p.tiltY}deg`);
+  }, []);
 
-    const rect = divRef.current.getBoundingClientRect();
-    setPosition({ x: e.clientX - rect.left, y: e.clientY - rect.top });
-  };
+  const handleMouseMove = useCallback((e) => {
+    const el = divRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    pending.current = {
+      x,
+      y,
+      // Tilt at most ~2.5deg toward the cursor - felt, not seen.
+      tiltY: ((x / rect.width) - 0.5) * 5,
+      tiltX: (0.5 - (y / rect.height)) * 5,
+    };
+    if (!frame.current) frame.current = requestAnimationFrame(apply);
+  }, [apply]);
 
-  const handleFocus = () => {
-    setIsFocused(true);
-    setOpacity(0.6);
-  };
-
-  const handleBlur = () => {
-    setIsFocused(false);
-    setOpacity(0);
-  };
-
-  const handleMouseEnter = () => {
-    setOpacity(0.6);
-  };
-
-  const handleMouseLeave = () => {
-    setOpacity(0);
-  };
+  const setActive = useCallback((on) => {
+    const el = divRef.current;
+    if (!el) return;
+    el.style.setProperty("--spot-o", on ? "0.6" : "0");
+    if (!on) {
+      el.style.setProperty("--tilt-x", "0deg");
+      el.style.setProperty("--tilt-y", "0deg");
+    }
+  }, []);
 
   return (
     <div
       ref={divRef}
       onMouseMove={handleMouseMove}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={`relative rounded-3xl border-3 border-neutral-800 bg-neutral-900 overflow-hidden p-8 ${className}`}
+      onFocus={() => setActive(true)}
+      onBlur={() => setActive(false)}
+      onMouseEnter={() => setActive(true)}
+      onMouseLeave={() => setActive(false)}
+      className={`spotlight-card relative rounded-3xl border-3 border-neutral-800 bg-neutral-900 overflow-hidden p-8 ${className}`}
+      style={{
+        "--spot-x": "50%",
+        "--spot-y": "50%",
+        "--spot-o": 0,
+        "--tilt-x": "0deg",
+        "--tilt-y": "0deg",
+        "--spot-color": spotlightColor,
+      }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 ease-in-out"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-500 ease-in-out"
         style={{
-          opacity,
-          background: `radial-gradient(circle at ${position.x}px ${position.y}px, ${spotlightColor}, transparent 80%)`,
+          opacity: "var(--spot-o)",
+          background: `radial-gradient(circle at var(--spot-x) var(--spot-y), var(--spot-color), transparent 80%)`,
         }}
       />
       {children}

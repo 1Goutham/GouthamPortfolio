@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .word {
@@ -26,6 +28,21 @@ html {
   height: 100%;
 }
 
+/* Lenis takes over scrolling when active (native smooth scroll would fight it). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
 body {
   min-height: 100vh;
   overflow-x: hidden;
@@ -34,7 +51,7 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  backface-visibility: hidden;
+  text-rendering: optimizeLegibility;
 }
 
 img,
@@ -49,8 +66,6 @@ video {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
   --font-montserrat: var(--font-montserrat);
   --font-outfit: var(--font-outfit);
   --font-anonymous-pro: var(--font-anonymous-pro);
@@ -73,4 +88,208 @@ video {
 .scrollbar-hide {
   -ms-overflow-style: none; 
   scrollbar-width: none;    
+}
+
+/* ------------------------------------------------------------------ */
+/*  Micro-interactions                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Tactile button: lifts on hover, presses on click, keyboard focus ring. */
+.btn-tactile {
+  transition:
+    transform 0.35s var(--ease-out-expo),
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.35s var(--ease-out-expo);
+  will-change: transform;
+}
+.btn-tactile:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+.btn-tactile:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+.btn-tactile:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+/* Arrow/icon nudge on hover of its parent. */
+.nudge-x {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.group:hover .nudge-x,
+.btn-tactile:hover .nudge-x {
+  transform: translateX(4px);
+}
+
+/* Underline that grows from the left on hover. */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.group:hover .link-underline::after,
+.link-underline:hover::after {
+  transform: scaleX(1);
+}
+
+/* Gentle idle float for hero art. */
+@keyframes float-y {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -8px, 0); }
+}
+.float-y {
+  animation: float-y 6s ease-in-out infinite;
+}
+
+/* List rows that slide right slightly and reveal a dash on hover. */
+.row-hover {
+  display: inline-block;
+  transition: transform 0.35s var(--ease-out-expo), opacity 0.3s ease;
+}
+.row-hover:hover {
+  transform: translateX(6px);
+}
+
+/* Project card: lift + brighter border on hover; 3D tilt via CSS vars. */
+.spotlight-card {
+  transform: perspective(1200px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0);
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    border-color 0.4s ease,
+    box-shadow 0.5s var(--ease-out-expo);
+  transform-style: preserve-3d;
+}
+.spotlight-card:hover {
+  border-color: rgb(82 82 82);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* Portrait card in the About section. */
+.portrait-card {
+  --px: 0deg;
+  --py: 0deg;
+  transform: perspective(1400px) rotateX(var(--px)) rotateY(var(--py)) translateZ(0);
+  transition: transform 0.6s var(--ease-out-expo), box-shadow 0.6s var(--ease-out-expo);
+  transform-style: preserve-3d;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 40px 80px -40px rgba(0, 0, 0, 0.9);
+}
+.portrait-card:hover {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.14) inset,
+    0 60px 100px -40px rgba(0, 0, 0, 0.95);
+}
+.portrait-card img {
+  transition: transform 1.2s var(--ease-out-expo), filter 0.8s ease;
+}
+.portrait-card:hover img {
+  transform: scale(1.04);
+}
+/* Fine paper grain over the photo so it reads like a print, not a screenshot. */
+.portrait-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+/* Soft light sweep that tracks the cursor across the print. */
+.portrait-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    600px circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.12),
+    transparent 45%
+  );
+  transition: opacity 0.6s ease;
+}
+.portrait-card:hover::before {
+  opacity: 1;
+}
+
+/* Inputs: border warms up and lifts a hair on focus. */
+.input-glow {
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.4s var(--ease-out-expo),
+    transform 0.4s var(--ease-out-expo),
+    background-color 0.3s ease;
+}
+.input-glow:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Chat suggestion chips fill in on hover. */
+.chip {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.35s var(--ease-out-expo),
+    border-color 0.3s ease;
+}
+.chip:hover {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+  transform: translateY(-2px);
+}
+.chip:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Entrance for a freshly-rendered chat message. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in 0.55s var(--ease-out-expo) both;
+}
+
+/* Wobble on hover for the little emoji avatar. */
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-6deg); }
+  75%      { transform: rotate(6deg); }
+}
+.wobble-hover:hover {
+  animation: wobble 0.6s ease-in-out;
+}
+
+/* Pause decorative animations when they are off-screen or motion is reduced. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

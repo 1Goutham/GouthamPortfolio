@@ -12,7 +12,7 @@ export default function InputBox({
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }) {
   return (
-<div className="flex w-[300px] md:w-[770px]  flex-nowrap rounded-full bg-[#E8E8E8] p-1 items-center gap-1 overflow-hidden">
+<div className="flex w-[300px] md:w-[770px] flex-nowrap rounded-full bg-[#E8E8E8] p-1 items-center gap-1 overflow-hidden transition-shadow duration-300 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0.08)]">
   <input
     type="text"
     value={input}
@@ -20,12 +20,14 @@ export default function InputBox({
     onKeyDown={handleKeyDown}
     className="flex-grow min-w-0 px-4 py-2 text-black placeholder:text-[#969696] bg-transparent outline-none"
     placeholder="Write a message"
+    aria-label="Ask G-Talk a question"
   />
   <button
     onClick={sendMessage}
-    className="bg-black px-4 py-2 h-10 rounded-full flex items-center gap-2 hover:scale-107 whitespace-nowrap shrink-0 transition-all duration-200 ease-in-out"
+    aria-label="Send message"
+    className="btn-tactile bg-black px-4 py-2 h-10 rounded-full flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
   >
-    <Image src="/vector.png" alt="send" width={13} height={13} />
+    <Image src="/vector.png" alt="" width={13} height={13} className="nudge-x" />
   </button>
 </div>
   );

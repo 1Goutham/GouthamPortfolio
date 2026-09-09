@@ -18,6 +18,7 @@ const AnimatedContent = ({
   threshold = 0.1,
   delay = 0,
   onComplete,
+  className = "",
 }) => {
   const ref = useRef(null);
 
@@ -25,36 +26,47 @@ const AnimatedContent = ({
     const el = ref.current;
     if (!el) return;
 
-    const axis = direction === "horizontal" ? "x" : "y";
-    const offset = reverse ? -distance : distance;
-    const startPct = (1 - threshold) * 100;
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
 
-    gsap.set(el, {
-      [axis]: offset,
-      scale,
-      opacity: animateOpacity ? initialOpacity : 1,
-    });
+      mm.add("(prefers-reduced-motion: no-preference)", () => {
+        const axis = direction === "horizontal" ? "x" : "y";
+        const offset = reverse ? -distance : distance;
+        const startPct = (1 - threshold) * 100;
 
-    gsap.to(el, {
-      [axis]: 0,
-      scale: 1,
-      opacity: 1,
-      duration,
-      ease,
-      delay,
-      onComplete,
-      scrollTrigger: {
-        trigger: el,
-        start: `top ${startPct}%`,
-        toggleActions: "play none none none",
-        once: true,
-      },
-    });
+        gsap.set(el, {
+          [axis]: offset,
+          scale,
+          opacity: animateOpacity ? initialOpacity : 1,
+          willChange: "transform, opacity",
+        });
 
-    return () => {
-      ScrollTrigger.getAll().forEach(t => t.kill());
-      gsap.killTweensOf(el);
-    };
+        gsap.to(el, {
+          [axis]: 0,
+          scale: 1,
+          opacity: 1,
+          duration,
+          ease,
+          delay,
+          onComplete: () => {
+            gsap.set(el, { clearProps: "willChange" });
+            onComplete?.();
+          },
+          scrollTrigger: {
+            trigger: el,
+            start: `top ${startPct}%`,
+            toggleActions: "play none none none",
+            once: true,
+          },
+        });
+      });
+
+      mm.add("(prefers-reduced-motion: reduce)", () => {
+        gsap.set(el, { opacity: 1 });
+      });
+    }, el);
+
+    return () => ctx.revert();
   }, [
     distance,
     direction,
@@ -69,7 +81,7 @@ const AnimatedContent = ({
     onComplete,
   ]);
 
-  return <div ref={ref}>{children}</div>;
+  return <div ref={ref} className={className}>{children}</div>;
 };
 
 export default AnimatedContent;

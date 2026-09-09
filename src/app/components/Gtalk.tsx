@@ -99,11 +99,11 @@ export default function Gtalk() {
         <div className="bg-white w-full h-[550px] md:h-[450px] mx-auto rounded-[10px] flex flex-col justify-between">
           <div className="flex-1 flex items-center justify-center px-4">
             {!messagePair ? (
-              <div className="text-black px-4 justify-center md:justify-start -translate-y-5 md:-translate-x-21  md:-translate-y-8">
+              <div className="rise-in text-black px-4 justify-center md:justify-start -translate-y-5 md:-translate-x-21  md:-translate-y-8">
                 <h2 className="text-xl lg:text-4xl md:text-3xl font-medium mb-2 pt-12 text-center md:text-start">
                   I’m{" "}
                   <span className="inline-flex align-middle">
-                    <Image src="/chatAvatar.png" className=" w-[50px] -translate-y-2" width={60} height={60} alt="emoji" />
+                    <Image src="/chatAvatar.png" className=" w-[50px] -translate-y-2 transition-transform duration-500 ease-out hover:rotate-12 hover:scale-110" width={60} height={60} alt="emoji" />
                   </span>{" "}
                   <span className="font-semibold">G-</span>Talk
                   <br />
@@ -118,7 +118,7 @@ export default function Gtalk() {
                     <button
                       key={index}
                       onClick={() => setInput(rec)}
-                      className="text-black text-base px-4 py-2 rounded-[10px] border border-black/40 bg-white/5 hover:bg-white/10 hover:scale-101 transition duration-200 cursor-pointer"
+                      className="chip text-black text-base px-4 py-2 rounded-[10px] border border-black/40 bg-white/5 cursor-pointer"
                     >
                       {rec}
                     </button>
