@@ -18,8 +18,8 @@ export default function Hero() {
   return (
     <div className="relative overflow-hidden h-[600px] md:h-[780px] bg-black">
       <nav className="flex justify-between items-center p-6 relative z-10">
-        <div>
-          <Image src="/logo.png" width={40} height={40} alt="mylogo" />
+        <div className="transition-transform duration-500 ease-out hover:rotate-[-6deg] hover:scale-105">
+          <Image src="/logo.png" width={40} height={40} alt="mylogo" priority />
         </div>
         <div className="hidden md:block">
           <GooeyNav
@@ -34,7 +34,10 @@ export default function Hero() {
             className="font-outfit"
           />
         </div>
-        <button className="flex justify-center items-center backdrop-blur-lg h-9 bg-white/10 border border-white/40 rounded-3xl px-6 py-2 shadow-md hover:scale-105 transition-transform duration-300" onClick={() => window.open('https://www.linkedin.com/in/goutham-g-98a0ba253/')}>
+        <button
+          className="btn-tactile flex justify-center items-center backdrop-blur-lg h-9 bg-white/10 border border-white/40 rounded-3xl px-6 py-2 shadow-md hover:bg-white/15 hover:border-white/60 cursor-pointer"
+          onClick={() => window.open('https://www.linkedin.com/in/goutham-g-98a0ba253/', '_blank', 'noopener,noreferrer')}
+        >
           <ShinyText text="Contact!" disabled={false} speed={2} className="custom-class" />
         </button>
       </nav>
@@ -42,13 +45,17 @@ export default function Hero() {
       <div className="flex flex-col md:flex-row md:justify-center md:items-center items-center h-full relative">
         <div className="order-1 md:order-2">
           <FadeContent blur={true} duration={2500} easing="ease-out" initialOpacity={0}>
+          <div className="float-y">
           <Image
             className="pt-10 md:pt-2 md:-translate-x-30 w-[300px] md:w-[500px]"
             src="/welcome-typography.png"
             width={500}
             height={500}
+            sizes="(max-width: 768px) 300px, 500px"
             alt="welcome typography"
+            priority
           />
+          </div>
           </FadeContent>
         </div>
 
@@ -66,16 +73,22 @@ export default function Hero() {
             threshold={0.2}
             delay={0.3}
           >
+            {/* Re-encoded from a 5.9 MB source: single h264 mp4 with a poster for instant paint. */}
             <video
-            src="/animatedPic.mp4"
             width={500}
             height={500}
             autoPlay
             loop
             muted
             playsInline
+            preload="auto"
+            poster="/hero-poster.jpg"
+            aria-hidden="true"
+            disablePictureInPicture
             className="pt-3 md:pt-35 w-[700px] md:-translate-x-10 md:translate-y-50 h-[250px] md:h-[500px] object-cover"
-          />
+          >
+            <source src="/hero.mp4" type="video/mp4" />
+          </video>
           </AnimatedContent>
           </FadeContent>
         </div>

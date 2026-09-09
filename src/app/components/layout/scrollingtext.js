@@ -1,5 +1,5 @@
 "use client"
-import { useRef, useLayoutEffect, useState } from "react";
+import { useRef, useLayoutEffect, useEffect, useState } from "react";
 import {
   motion,
   useScroll,
@@ -14,17 +14,30 @@ function useElementWidth(ref) {
   const [width, setWidth] = useState(0);
 
   useLayoutEffect(() => {
-    function updateWidth() {
-      if (ref.current) {
-        setWidth(ref.current.offsetWidth);
-      }
-    }
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    return () => window.removeEventListener("resize", updateWidth);
+    const el = ref.current;
+    if (!el) return;
+    const update = () => setWidth(el.offsetWidth);
+    update();
+    // ResizeObserver catches font-swap reflows, not just window resizes.
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [ref]);
 
   return width;
+}
+
+/** True while the element is (nearly) on screen - lets us pause the rAF loop. */
+function useInView(ref, rootMargin = "200px") {
+  const [inView, setInView] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { rootMargin });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref, rootMargin]);
+  return inView;
 }
 
 export const ScrollVelocity = ({
@@ -34,7 +47,8 @@ export const ScrollVelocity = ({
   className = "",
   damping = 50,
   stiffness = 400,
-  numCopies = 10,
+  // 4 copies comfortably cover any viewport; the old 10 just bloated the DOM.
+  numCopies = 4,
   velocityMapping = { input: [0, 1000], output: [0, 5] },
   parallaxClassName,
   scrollerClassName,
@@ -73,7 +87,9 @@ export const ScrollVelocity = ({
     );
 
     const copyRef = useRef(null);
+    const wrapperRef = useRef(null);
     const copyWidth = useElementWidth(copyRef);
+    const inView = useInView(wrapperRef);
 
     function wrap(min, max, v) {
       const range = max - min;
@@ -88,6 +104,8 @@ export const ScrollVelocity = ({
 
     const directionFactor = useRef(1);
     useAnimationFrame((t, delta) => {
+      // Skip all work while the marquee is off-screen.
+      if (!inView) return;
       let moveBy = directionFactor.current * baseVelocity * (delta / 1000);
 
       if (velocityFactor.get() < 0) {
@@ -107,6 +125,7 @@ export const ScrollVelocity = ({
           className={`flex-shrink-0 ${className}`}
           key={i}
           ref={i === 0 ? copyRef : null}
+          aria-hidden={i !== 0}
         >
           {children}
         </span>
@@ -115,11 +134,12 @@ export const ScrollVelocity = ({
 
     return (
       <div
-        className={`${parallaxClassName} relative overflow-hidden`}
+        ref={wrapperRef}
+        className={`${parallaxClassName ?? ""} relative overflow-hidden`}
         style={parallaxStyle}
       >
         <motion.div
-          className={`flex whitespace-nowrap text-center drop-shadow ${scrollerClassName ?? ""} ${className ?? ""}`}
+          className={`flex whitespace-nowrap text-center drop-shadow will-change-transform ${scrollerClassName ?? ""} ${className ?? ""}`}
           style={{ x, ...scrollerStyle }}
         >
           {spans}

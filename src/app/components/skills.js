@@ -3,6 +3,7 @@
 import Image from "next/image";
 import ScrollReveal from "./layout/scrollreveal";
 import FadeContent from "./layout/fade-in";
+import AnimatedContent from "./layout/movement";
 
 
 export default function Skills() {
@@ -41,7 +42,14 @@ export default function Skills() {
           </ScrollReveal>
           <div>
             <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
-            <Image src="/logos.png" alt="SkillsLogos" width={300} height={300} className="w-40 md:w-80"/>
+            <Image
+              src="/logos.png"
+              alt="SkillsLogos"
+              width={300}
+              height={300}
+              sizes="(max-width: 768px) 160px, 320px"
+              className="w-40 md:w-80 transition-transform duration-500 ease-out hover:-translate-y-1"
+            />
             </FadeContent>
             </div>
         </div>
@@ -50,14 +58,24 @@ export default function Skills() {
 
       {/* Image Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center md:justify-center md:items-end order-2 md:order-1">
-      
-        <Image
-          className=" w-full h-[300px] md:w-[550px] md:h-[400px] object-contain"
-          src="/picwlap.png"
-          alt="portfoliopic"
-          width={300}
-          height={300}
-        />
+        <AnimatedContent
+          distance={40}
+          direction="vertical"
+          duration={1}
+          initialOpacity={0}
+          animateOpacity
+          scale={1.03}
+          threshold={0.15}
+        >
+          <Image
+            className=" w-full h-[300px] md:w-[550px] md:h-[400px] object-contain transition-transform duration-700 ease-out hover:-translate-y-1.5"
+            src="/picwlap.webp"
+            alt="portfoliopic"
+            width={550}
+            height={400}
+            sizes="(max-width: 768px) 100vw, 550px"
+          />
+        </AnimatedContent>
       </div>
     </div>
   );

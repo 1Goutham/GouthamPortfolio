@@ -6,10 +6,13 @@ import ScrollReveal from './layout/scrollreveal';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [sending, setSending] = useState(false);
   const scrollRef = useRef(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (sending) return;
+    setSending(true);
     const loadingToast = toast.loading('Sending your message ✉️');
 
     try {
@@ -30,8 +33,13 @@ export default function Contact() {
     } catch {
       toast.dismiss(loadingToast);
       toast.error('Something went wrong.');
+    } finally {
+      setSending(false);
     }
   };
+
+  const inputClass =
+    'input-glow w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-lg shadow-inner placeholder:text-gray-300 focus:outline-none';
 
   return (
     <div className="bg-black flex flex-col justify-between pt-10 ">
@@ -40,11 +48,12 @@ export default function Contact() {
         {/* Emoji + Heading */}
         <div className="flex flex-row items-center space-y-2 gap-2 md:gap-5">
           <Image
-            src="/emoji.png"
+            src="/emoji.webp"
             alt="emoji"
             width={150}
             height={80}
-            className="rounded-full w-25 md:w-35"
+            sizes="(max-width: 768px) 100px, 140px"
+            className="rounded-full w-25 md:w-35 wobble-hover cursor-default"
           />
           <ScrollReveal
             scrollContainerRef={scrollRef}
@@ -73,18 +82,20 @@ export default function Contact() {
                 name="name"
                 placeholder="Name"
                 required
+                autoComplete="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-lg shadow-inner placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 transition"
+                className={inputClass}
               />
               <input
                 type="email"
                 name="email"
                 placeholder="Email ID"
                 required
+                autoComplete="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-3 rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-lg shadow-inner placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 transition"
+                className={inputClass}
               />
             </div>
             <textarea
@@ -94,13 +105,15 @@ export default function Contact() {
               required
               value={formData.message}
               onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-              className="w-full p-3  rounded-lg bg-white/10 border border-white/20 text-white backdrop-blur-lg shadow-inner placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-white/30 transition"
+              className={inputClass}
             />
             <button
               type="submit"
-              className="bg-white/20 text-white border border-white/30 px-6 py-2 rounded-md backdrop-blur-lg hover:bg-white/30"
+              disabled={sending}
+              aria-busy={sending}
+              className="btn-tactile bg-white/20 text-white border border-white/30 px-6 py-2 rounded-md backdrop-blur-lg hover:bg-white/30 disabled:opacity-60 disabled:cursor-wait cursor-pointer"
             >
-              Submit
+              {sending ? 'Sending…' : 'Submit'}
             </button>
           </form>
         </div>

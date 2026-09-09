@@ -38,60 +38,54 @@ const ScrollReveal = ({
     if (!el) return;
 
     const scroller = scrollContainerRef?.current || window;
-    const isInViewport = el.getBoundingClientRect().top < window.innerHeight;
-    const triggerStart = isInViewport ? 'top bottom' : 'top 90%';
 
-    const timeline = gsap.timeline({
-      scrollTrigger: {
-        trigger: el,
-        scroller,
-        start: triggerStart,
-        end: rotationEnd,
-        scrub: 0.7, // smoother
-      },
-    });
+    // gsap.context scopes every tween/trigger to this element so cleanup only
+    // kills what this component created (previously it killed *every* trigger).
+    const ctx = gsap.context(() => {
+      const mm = gsap.matchMedia();
 
-    if (isTextOnly) {
-      const wordElements = el.querySelectorAll('.word');
-      timeline.fromTo(
-        wordElements,
-        {
-          opacity: baseOpacity,
-          filter: enableBlur ? `blur(${blurStrength}px)` : 'none',
-          willChange: 'opacity, filter',
-        },
-        {
-          opacity: 1,
-          filter: 'blur(0px)',
-          stagger: 0.1, // slower reveal
-          ease: 'power2.out',
-          duration: 1.5,
-        }
-      );
-    } else {
-      timeline.fromTo(
-        el,
-        {
-          opacity: baseOpacity,
-          filter: enableBlur ? `blur(${blurStrength}px)` : 'none',
-          willChange: 'opacity, filter',
-        },
-        {
-          opacity: 1,
-          filter: 'blur(0px)',
-          ease: 'power2.out',
-          duration: 1.8,
-        }
-      );
-    }
+      mm.add('(prefers-reduced-motion: no-preference)', () => {
+        const isInViewport = el.getBoundingClientRect().top < window.innerHeight;
+        const triggerStart = isInViewport ? 'top bottom' : 'top 90%';
 
-    setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 300);
+        const timeline = gsap.timeline({
+          scrollTrigger: {
+            trigger: el,
+            scroller,
+            start: triggerStart,
+            end: rotationEnd,
+            scrub: 0.7,
+          },
+        });
 
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-    };
+        const target = isTextOnly ? el.querySelectorAll('.word') : el;
+        timeline.fromTo(
+          target,
+          {
+            opacity: baseOpacity,
+            y: 18,
+            filter: enableBlur ? `blur(${blurStrength}px)` : 'none',
+          },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            stagger: isTextOnly ? 0.1 : 0,
+            ease: 'power2.out',
+            duration: isTextOnly ? 1.5 : 1.8,
+            // Drop the compositor hint once the reveal has settled.
+            onComplete: () => gsap.set(target, { clearProps: 'filter,willChange' }),
+          }
+        );
+      });
+
+      // Reduced motion: content is simply visible.
+      mm.add('(prefers-reduced-motion: reduce)', () => {
+        gsap.set(el, { opacity: 1, filter: 'none' });
+      });
+    }, el);
+
+    return () => ctx.revert();
   }, [
     scrollContainerRef,
     enableBlur,

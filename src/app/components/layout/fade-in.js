@@ -12,36 +12,43 @@ const FadeContent = ({
   className = ''
 }) => {
   const [inView, setInView] = useState(false);
+  const [settled, setSettled] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
-    if (!ref.current) return;
+    const el = ref.current;
+    if (!el) return;
 
+    let timer;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          observer.unobserve(ref.current);
-          setTimeout(() => {
-            setInView(true);
-          }, delay);
+          observer.unobserve(el);
+          timer = setTimeout(() => setInView(true), delay);
         }
       },
-      { threshold }
+      { threshold, rootMargin: '0px 0px -5% 0px' }
     );
 
-    observer.observe(ref.current);
+    observer.observe(el);
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
   }, [threshold, delay]);
 
   return (
     <div
       ref={ref}
       className={className}
+      onTransitionEnd={() => setSettled(true)}
       style={{
         opacity: inView ? 1 : initialOpacity,
         transition: `opacity ${duration}ms ${easing}, filter ${duration}ms ${easing}`,
         filter: blur ? (inView ? 'blur(0px)' : 'blur(10px)') : 'none',
+        // Promote to its own layer only during the transition.
+        willChange: settled ? 'auto' : 'opacity, filter',
       }}
     >
       {children}
