@@ -394,3 +394,26 @@ video {
 .send-dot {
   animation: send-dot 0.9s ease-in-out infinite;
 }
+
+/* ------------------------------------------------------------------ */
+/*  Minimal nav                                                        */
+/* ------------------------------------------------------------------ */
+.mnav-glow {
+  transition:
+    left 0.5s var(--ease-out-expo),
+    width 0.5s var(--ease-out-expo),
+    opacity 0.35s ease;
+}
+.mnav-line {
+  transition:
+    left 0.6s var(--ease-out-expo),
+    width 0.6s var(--ease-out-expo);
+}
+/* Label roll: the text slides up and its twin slides in from below. */
+.mnav-roll-inner {
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.mnav-link:hover .mnav-roll-inner,
+.mnav-link:focus-visible .mnav-roll-inner {
+  transform: translateY(-50%);
+}

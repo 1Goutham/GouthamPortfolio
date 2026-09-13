@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import GooeyNav from './layout/navbar';
+import MinimalNav from './layout/navbar';
 import ShinyText from './layout/shiny-text';
 import AnimatedContent from './layout/movement'
 import FadeContent from './layout/fade-in'
@@ -11,6 +11,7 @@ export default function Hero() {
   const items = [
     { label: "Home", href: "#" },
     { label: "About", href: "#about" },
+    { label: "Skills", href: "#skills" },
     { label: "Projects", href: "#projects" },
     { label: "G-Talk", href: "#Gtalk" }
   ];
@@ -21,18 +22,8 @@ export default function Hero() {
         <div className="transition-transform duration-500 ease-out hover:rotate-[-6deg] hover:scale-105">
           <Image src="/logo.png" width={40} height={40} alt="mylogo" priority />
         </div>
-        <div className="hidden md:block">
-          <GooeyNav
-            items={items}
-            particleCount={10}
-            particleDistances={[60, 10]}
-            particleR={50}
-            initialActiveIndex={0}
-            animationTime={300}
-            timeVariance={300}
-            colors={[1, 2, 3, 1, 2, 3, 1, 4]} 
-            className="font-outfit"
-          />
+        <div className="hidden md:block md:fixed md:top-6 md:left-1/2 md:z-50 md:-translate-x-1/2">
+          <MinimalNav items={items} initialActiveIndex={0} />
         </div>
         <button
           className="btn-tactile flex justify-center items-center backdrop-blur-lg h-9 bg-white/10 border border-white/40 rounded-3xl px-6 py-2 shadow-md hover:bg-white/15 hover:border-white/60 cursor-pointer"

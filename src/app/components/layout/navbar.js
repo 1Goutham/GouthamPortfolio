@@ -1,317 +1,156 @@
-"use client"
-import { useRef, useEffect, useState } from "react";
+"use client";
 
-const GooeyNav = ({
-  items,
-  animationTime = 600,
-  particleCount = 15,
-  particleDistances = [90, 10],
-  particleR = 100,
-  timeVariance = 300,
-  colors = [1, 2, 3, 1, 2, 3, 1, 4],
-  initialActiveIndex = 0,
-}) => {
-  const containerRef = useRef(null);
-  const navRef = useRef(null);
-  const filterRef = useRef(null);
-  const textRef = useRef(null);
-  const [activeIndex, setActiveIndex] = useState(initialActiveIndex);
+import { useCallback, useEffect, useRef, useState } from "react";
 
-  const noise = (n = 1) => n / 2 - Math.random() * n;
-  const getXY = (distance, pointIndex, totalPoints) => {
-    const angle =
-      ((360 + noise(8)) / totalPoints) * pointIndex * (Math.PI / 180);
-    return [distance * Math.cos(angle), distance * Math.sin(angle)];
-  };
-  const createParticle = (i, t, d, r) => {
-    let rotate = noise(r / 10);
-    return {
-      start: getXY(d[0], particleCount - i, particleCount),
-      end: getXY(d[1] + noise(7), particleCount - i, particleCount),
-      time: t,
-      scale: 1 + noise(0.2),
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rotate:
-        rotate > 0 ? (rotate + r / 20) * 10 : (rotate - r / 20) * 10,
-    };
-  };
-  const makeParticles = (element) => {
-    const d = particleDistances;
-    const r = particleR;
-    const bubbleTime = animationTime * 2 + timeVariance;
-    element.style.setProperty("--time", `${bubbleTime}ms`);
-    for (let i = 0; i < particleCount; i++) {
-      const t = animationTime * 2 + noise(timeVariance * 2);
-      const p = createParticle(i, t, d, r);
-      element.classList.remove("active");
-      setTimeout(() => {
-        const particle = document.createElement("span");
-        const point = document.createElement("span");
-        particle.classList.add("particle");
-        particle.style.setProperty("--start-x", `${p.start[0]}px`);
-        particle.style.setProperty("--start-y", `${p.start[1]}px`);
-        particle.style.setProperty("--end-x", `${p.end[0]}px`);
-        particle.style.setProperty("--end-y", `${p.end[1]}px`);
-        particle.style.setProperty("--time", `${p.time}ms`);
-        particle.style.setProperty("--scale", `${p.scale}`);
-        particle.style.setProperty(
-          "--color",
-          `var(--color-${p.color}, white)`
-        );
-        particle.style.setProperty("--rotate", `${p.rotate}deg`);
-        point.classList.add("point");
-        particle.appendChild(point);
-        element.appendChild(particle);
-        requestAnimationFrame(() => {
-          element.classList.add("active");
-        });
-        setTimeout(() => {
-          try {
-            element.removeChild(particle);
-          } catch {
-            // do nothing
-          }
-        }, t);
-      }, 30);
-    }
-  };
-  const updateEffectPosition = (element) => {
-    if (!containerRef.current || !filterRef.current || !textRef.current)
-      return;
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const pos = element.getBoundingClientRect();
-    const styles = {
-      left: `${pos.x - containerRect.x}px`,
-      top: `${pos.y - containerRect.y}px`,
-      width: `${pos.width}px`,
-      height: `${pos.height}px`,
-    };
-    Object.assign(filterRef.current.style, styles);
-    Object.assign(textRef.current.style, styles);
-    textRef.current.innerText = element.innerText;
-  };
-  const handleClick = (e, index) => {
-    const liEl = e.currentTarget;
-    if (activeIndex === index) return;
-    setActiveIndex(index);
-    updateEffectPosition(liEl);
-    if (filterRef.current) {
-      const particles = filterRef.current.querySelectorAll(".particle");
-      particles.forEach((p) => filterRef.current.removeChild(p));
-    }
-    if (textRef.current) {
-      textRef.current.classList.remove("active");
-      void textRef.current.offsetWidth;
-      textRef.current.classList.add("active");
-    }
-    if (filterRef.current) {
-      makeParticles(filterRef.current);
-    }
-  };
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      const liEl = e.currentTarget.parentElement;
-      if (liEl) {
-        handleClick({ currentTarget: liEl }, index);
-      }
-    }
-  };
+/**
+ * Minimal pill navigation.
+ *
+ *  - A soft highlight glides to whichever item is under the cursor and fades
+ *    out when the cursor leaves, staying where it was.
+ *  - A thin underline slides between items to mark the active section, and
+ *    follows you down the page via IntersectionObserver.
+ *  - Labels do a subtle "roll": the text slides up and a copy slides in.
+ *
+ * `items` is [{ label, href }] where href is "#" (top) or "#section-id".
+ */
+export default function MinimalNav({ items, initialActiveIndex = 0, className = "" }) {
+  const listRef = useRef(null);
+  const itemRefs = useRef([]);
+  const [active, setActive] = useState(initialActiveIndex);
+  const [hover, setHover] = useState(null);
+  const [rects, setRects] = useState([]);
+  const lockUntil = useRef(0);
+
+  // Measure each item so the highlight/underline can be positioned absolutely.
+  const measure = useCallback(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const base = list.getBoundingClientRect();
+    setRects(
+      itemRefs.current.map((el) => {
+        if (!el) return { left: 0, width: 0 };
+        const r = el.getBoundingClientRect();
+        return { left: r.left - base.left, width: r.width };
+      })
+    );
+  }, []);
+
   useEffect(() => {
-    if (!navRef.current || !containerRef.current) return;
-    const activeLi = navRef.current.querySelectorAll("li")[activeIndex];
-    if (activeLi) {
-      updateEffectPosition(activeLi);
-      textRef.current?.classList.add("active");
-    }
-    const resizeObserver = new ResizeObserver(() => {
-      const currentActiveLi =
-        navRef.current?.querySelectorAll("li")[activeIndex];
-      if (currentActiveLi) {
-        updateEffectPosition(currentActiveLi);
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (listRef.current) ro.observe(listRef.current);
+    document.fonts?.ready.then(measure);
+    return () => ro.disconnect();
+  }, [measure]);
+
+  // Scroll-spy: the underline follows the section currently in view.
+  useEffect(() => {
+    const targets = items
+      .map((item, i) => {
+        const id = item.href.startsWith("#") ? item.href.slice(1) : "";
+        const el = id ? document.getElementById(id) : null;
+        return el ? { el, i } : null;
+      })
+      .filter(Boolean);
+
+    const homeIndex = items.findIndex((it) => it.href === "#");
+    const visible = new Map();
+
+    const pick = () => {
+      if (performance.now() < lockUntil.current) return;
+      if (window.scrollY < 80 && homeIndex >= 0) {
+        setActive(homeIndex);
+        return;
       }
-    });
-    resizeObserver.observe(containerRef.current);
-    return () => resizeObserver.disconnect();
-  }, [activeIndex]);
+      let best = null;
+      for (const [i, ratio] of visible) {
+        if (ratio > 0 && (best === null || ratio > visible.get(best))) best = i;
+      }
+      if (best !== null) setActive(best);
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const i = targets.find((t) => t.el === e.target)?.i;
+          if (i !== undefined) visible.set(i, e.isIntersecting ? e.intersectionRatio : 0);
+        }
+        pick();
+      },
+      { rootMargin: "-35% 0px -45% 0px", threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] }
+    );
+    targets.forEach((t) => io.observe(t.el));
+    window.addEventListener("scroll", pick, { passive: true });
+    return () => {
+      io.disconnect();
+      window.removeEventListener("scroll", pick);
+    };
+  }, [items]);
+
+  const onClick = (i) => {
+    setActive(i);
+    // Hold the choice while the page smooth-scrolls so the spy doesn't fight it.
+    lockUntil.current = performance.now() + 1200;
+  };
+
+  const target = hover ?? active;
+  const hoverRect = rects[target] || { left: 0, width: 0 };
+  const activeRect = rects[active] || { left: 0, width: 0 };
+  const underlineInset = 16; // px of the item's horizontal padding
 
   return (
-    <>
-      {/* This effect is quite difficult to recreate faithfully using Tailwind, so a style tag is a necessary workaround */}
-      <style>
-        {`
-          :root {
-            --linear-ease: linear(0, 0.068, 0.19 2.7%, 0.804 8.1%, 1.037, 1.199 13.2%, 1.245, 1.27 15.8%, 1.274, 1.272 17.4%, 1.249 19.1%, 0.996 28%, 0.949, 0.928 33.3%, 0.926, 0.933 36.8%, 1.001 45.6%, 1.013, 1.019 50.8%, 1.018 54.4%, 1 63.1%, 0.995 68%, 1.001 85%, 1);
-          }
-          .effect {
-            position: absolute;
-            opacity: 1;
-            pointer-events: none;
-            display: grid;
-            place-items: center;
-            z-index: 1;
-          }
-          .effect.text {
-            color: white;
-            transition: color 0.3s ease;
-          }
-          .effect.text.active {
-            color: black;
-          }
-          .effect.filter {
-            filter: blur(7px) contrast(100) blur(0);
-            mix-blend-mode: lighten;
-          }
-          .effect.filter::before {
-            content: "";
-            position: absolute;
-            inset: -75px;
-            z-index: -2;
-            background: black;
-          }
-          .effect.filter::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: white;
-            transform: scale(0);
-            opacity: 0;
-            z-index: -1;
-            border-radius: 9999px;
-          }
-          .effect.active::after {
-            animation: pill 0.3s ease both;
-          }
-          @keyframes pill {
-            to {
-              transform: scale(1);
-              opacity: 1;
-            }
-          }
-          .particle,
-          .point {
-            display: block;
-            opacity: 0;
-            width: 20px;
-            height: 20px;
-            border-radius: 9999px;
-            transform-origin: center;
-          }
-          .particle {
-            --time: 5s;
-            position: absolute;
-            top: calc(50% - 8px);
-            left: calc(50% - 8px);
-            animation: particle calc(var(--time)) ease 1 -350ms;
-          }
-          .point {
-            background: var(--color);
-            opacity: 1;
-            animation: point calc(var(--time)) ease 1 -350ms;
-          }
-          @keyframes particle {
-            0% {
-              transform: rotate(0deg) translate(calc(var(--start-x)), calc(var(--start-y)));
-              opacity: 1;
-              animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-            }
-            70% {
-              transform: rotate(calc(var(--rotate) * 0.5)) translate(calc(var(--end-x) * 1.2), calc(var(--end-y) * 1.2));
-              opacity: 1;
-              animation-timing-function: ease;
-            }
-            85% {
-              transform: rotate(calc(var(--rotate) * 0.66)) translate(calc(var(--end-x)), calc(var(--end-y)));
-              opacity: 1;
-            }
-            100% {
-              transform: rotate(calc(var(--rotate) * 1.2)) translate(calc(var(--end-x) * 0.5), calc(var(--end-y) * 0.5));
-              opacity: 1;
-            }
-          }
-          @keyframes point {
-            0% {
-              transform: scale(0);
-              opacity: 0;
-              animation-timing-function: cubic-bezier(0.55, 0, 1, 0.45);
-            }
-            25% {
-              transform: scale(calc(var(--scale) * 0.25));
-            }
-            38% {
-              opacity: 1;
-            }
-            65% {
-              transform: scale(var(--scale));
-              opacity: 1;
-              animation-timing-function: ease;
-            }
-            85% {
-              transform: scale(var(--scale));
-              opacity: 1;
-            }
-            100% {
-              transform: scale(0);
-              opacity: 0;
-            }
-          }
-          li.active {
-            color: black;
-            text-shadow: none;
-          }
-          li.active::after {
-            opacity: 1;
-            transform: scale(1);
-          }
-          li::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            border-radius: 8px;
-            background: white;
-            opacity: 0;
-            transform: scale(0);
-            transition: all 0.3s ease;
-            z-index: -1;
-          }
-        `}
-      </style>
-      <div className="relative" ref={containerRef}>
-        <nav
-          className="flex relative"
-          style={{ transform: "translate3d(0,0,0.01px)" }}
-        >
-          <ul
-            ref={navRef}
-            className="flex gap-8 list-none p-0 px-4 m-0 relative z-[3]"
-            style={{
-              color: "white",
-              textShadow: "0 1px 1px hsl(205deg 30% 10% / 0.2)",
-            }}
-          >
-            {items.map((item, index) => (
-              <li
-                key={index}
-                className={`rounded-full relative cursor-pointer transition-[background-color_color_box-shadow] duration-300 ease shadow-[0_0_0.5px_1.5px_transparent] text-white ${activeIndex === index ? "active" : ""
-                  }`}
-              >
-                <a
-                  onClick={(e) => handleClick(e, index)}
-                  href={item.href}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="outline-none py-[0.3em] px-[1em] inline-block"
-                >
-                  {item.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-        <span className="effect filter" ref={filterRef} />
-        <span className="effect text" ref={textRef} />
-      </div>
-    </>
-  );
-};
+    <nav
+      aria-label="Primary"
+      className={`mnav relative rounded-full border border-white/10 bg-black/70 p-1.5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.8)] backdrop-blur-md ${className}`}
+      onMouseLeave={() => setHover(null)}
+    >
+      <ul ref={listRef} className="relative m-0 flex list-none p-0">
+        {/* hover highlight */}
+        <span
+          aria-hidden="true"
+          className="mnav-glow pointer-events-none absolute top-0 bottom-0 rounded-full bg-white/10"
+          style={{
+            left: hoverRect.left,
+            width: hoverRect.width,
+            opacity: hover === null ? 0 : 1,
+          }}
+        />
+        {/* active underline */}
+        <span
+          aria-hidden="true"
+          className="mnav-line pointer-events-none absolute bottom-[5px] h-px rounded-full bg-white"
+          style={{
+            left: activeRect.left + underlineInset,
+            width: Math.max(activeRect.width - underlineInset * 2, 0),
+          }}
+        />
 
-export default GooeyNav;
+        {items.map((item, i) => (
+          <li key={item.label} className="relative z-10">
+            <a
+              ref={(el) => (itemRefs.current[i] = el)}
+              href={item.href}
+              onClick={() => onClick(i)}
+              onMouseEnter={() => setHover(i)}
+              onFocus={() => setHover(i)}
+              onBlur={() => setHover(null)}
+              aria-current={active === i ? "location" : undefined}
+              className={`mnav-link block px-4 py-1.5 text-sm font-outfit tracking-wide transition-colors duration-300 outline-none ${
+                active === i ? "text-white" : "text-white/55 hover:text-white focus-visible:text-white"
+              }`}
+            >
+              <span className="mnav-roll block h-[1.4em] overflow-hidden leading-[1.4]">
+                <span className="mnav-roll-inner block">
+                  <span className="block">{item.label}</span>
+                  <span className="block" aria-hidden="true">
+                    {item.label}
+                  </span>
+                </span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
