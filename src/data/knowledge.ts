@@ -77,7 +77,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'contact',
     title: 'Contact',
-    text: `You can reach Goutham through the contact form at the bottom of this site, by phone at +91 93420 33780, on LinkedIn at https://www.linkedin.com/in/goutham-g-98a0ba253/ or on GitHub at https://github.com/1Goutham. He is based in Chennai, India and usually replies within a day.`,
+    text: `You can reach Goutham through the contact form at the bottom of this site, by email at gouthamgopinath.tsi@gmail.com, by phone at +91 93420 33780, on Instagram at https://www.instagram.com/tanger.ineee/, on LinkedIn at https://www.linkedin.com/in/goutham-g-98a0ba253/ or on GitHub at https://github.com/1Goutham. He is based in Chennai, India and usually replies within a day.`,
   },
   {
     id: 'availability',
