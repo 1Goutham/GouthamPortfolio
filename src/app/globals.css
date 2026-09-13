@@ -319,7 +319,7 @@ video {
 /* Autofill shouldn't paint the browser's yellow box. */
 .field input:-webkit-autofill {
   -webkit-text-fill-color: #fff;
-  -webkit-box-shadow: 0 0 0 1000px #0b0b0b inset;
+  -webkit-box-shadow: 0 0 0 1000px #000 inset;
   transition: background-color 9999s ease-out;
 }
 
