@@ -12,75 +12,45 @@ export default function Gtalk() {
   const [messagePair, setMessagePair] = useState<{
     user: string;
     bot: string | null;
+    sources: string[];
   } | null>(null);
+  const [history, setHistory] = useState<{ role: "user" | "model"; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
   const sendMessage = async () => {
-    if (!input.trim()) return;
+    const question = input.trim();
+    if (!question || loading) return;
 
-    const userMessage = input;
     setInput("");
     setLoading(true);
-    setMessagePair({ user: userMessage, bot: null });
-
-    const systemPrompt = `You are G-Talk, a professional chatbot integrated into Goutham Gopinath’s personal portfolio. Respond clearly and concisely (1–2 sentences max) and help users learn more about Goutham’s skills, projects, experience, and interests.
-      Goutham has completed a B.Tech in Artificial Intelligence and Data Science (2021–2025) at Sri Eshwar College of Engineering, Coimbatore, with a 8 CGPA. He currently works remotely as a Digital Engineer at DeepWeaver.AI (HQ: Australia), where he handles UI/UX design using Figma, Webflow, and design systems, and contributes to marketing through LinkedIn graphics and demo videos(only UI/Ux).
-      Previously, he freelanced as a Full Stack Developer & Designer (2022–2023), building full-scale solutions for clients using the React stack, Webflow, and Figma—handling both design and frontend development, including client revisions and project launches.
-      His major projects include:
-      ZudyLock (2025): An AI-powered chatbot (Next.js, OpenAI API, MongoDB) that redirects students toward focused, career-based questions with safe, structured interaction.
-      E-Commerce Platform (2024): Built with Next.js, TypeScript, and MongoDB; includes filtering, auth, cart, and SEO-friendly routing.
-      Ideako (2024): An AI-powered creative tool for generating content ideas, captions, and hashtags.
-      He’s skilled in:
-      Languages: TypeScript, JavaScript, HTML5, CSS3
-      Frameworks: React.js, Next.js, Express.js, Tailwind CSS, Vite
-      Design Tools: Figma, Adobe Illustrator, Webflow
-      DevOps: Git, GitHub, Vercel, Netlify, Docker, Postman
-      Certifications include:
-      Google UX Design Certificate
-      IBM UI/UX Design Specialization
-      Full Stack Web Development
-      Generative AI Fundamentals
-      AI Tools with KNIME & Tableau
-      Goutham is currently exploring Generative AI and building creative tools using it. Always keep replies relevant, helpful, and professional. If the user asks personal, entertainment, or unrelated queries, politely redirect them toward career, tech, or design-focused questions.`;
-
-    const contents = [
-      { role: "user", parts: [{ text: systemPrompt }] },
-      { role: "user", parts: [{ text: userMessage }] },
-    ];
+    setMessagePair({ user: question, bot: null, sources: [] });
 
     try {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: contents }),
+        body: JSON.stringify({ question, history }),
       });
 
-      const raw = await res.clone().text();
+      const data = await res.json().catch(() => null);
+
       if (!res.ok) {
-        if (res.status === 429) toast.error("You’ve hit your API usage limit");
-        else if (res.status === 403) toast.error("Invalid API key or access denied");
-        else toast.error("Error fetching response");
-        console.error("API error:", raw);
+        if (res.status === 429) toast.error("Too many questions at once. Give it a moment.");
+        else if (res.status === 403) toast.error("The assistant's API key was rejected.");
+        else toast.error(data?.error || "Error fetching response");
+        setMessagePair(null);
         return;
       }
 
-      let data;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        toast.error("Unexpected response format.");
-        console.error("Malformed response:", raw);
-        return;
-      }
-
-      const botReply =
-        data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-        "I'm not sure how to respond to that.";
-
-      setMessagePair({ user: userMessage, bot: botReply });
+      const reply: string = data?.reply || "I'm not sure how to respond to that.";
+      const sources: string[] = Array.isArray(data?.sources) ? data.sources : [];
+      setMessagePair({ user: question, bot: reply, sources });
+      // Keep a short rolling history so follow-up questions have context.
+      setHistory((h) => [...h, { role: "user" as const, text: question }, { role: "model" as const, text: reply }].slice(-8));
     } catch (err) {
       toast.error("🔌 Network or server error.");
       console.error("Caught error:", err);
+      setMessagePair(null);
     } finally {
       setLoading(false);
     }
@@ -128,6 +98,7 @@ export default function Gtalk() {
             ) : (
               <ChatMessage
                 userQuestion={messagePair.user}
+                sources={loading ? [] : messagePair.sources}
                 botReply={
                   loading ? (
                     <div className="flex pt-3 pl-3 h-24">
