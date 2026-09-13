@@ -25,7 +25,7 @@ gsap.registerPlugin(ScrollTrigger);
 // ---------------------------------------------------------------------------
 const CONTACT = {
   email: 'goutham@example.com',
-  phone: '+91 98765 43210',
+  phone: '+91 93420 33780',
   location: 'Chennai, India',
 };
 
@@ -167,7 +167,7 @@ export default function Contact() {
     <section
       id="contact"
       ref={sectionRef}
-      className="contact relative overflow-hidden bg-[#0b0b0b] text-white font-outfit"
+      className="contact relative overflow-hidden bg-black text-white font-outfit"
     >
       <div className="grain pointer-events-none absolute inset-0" aria-hidden="true" />
 
