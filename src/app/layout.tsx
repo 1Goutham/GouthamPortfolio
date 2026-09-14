@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Anonymous_Pro, Outfit } from "next/font/google";
+import { Montserrat, Anonymous_Pro, Outfit, Noto_Sans_Tamil } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
@@ -26,6 +26,14 @@ const outfit = Outfit({
   display: "swap",
 });
 
+// Used for the Thirukkural in the hero; Outfit has no Tamil glyphs.
+const notoSansTamil = Noto_Sans_Tamil({
+  variable: "--font-tamil",
+  subsets: ["tamil"],
+  weight: ["400"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Goutham G",
   description: "Crafting sleek, modern web apps with style and skill.",
@@ -45,7 +53,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${montserrat.variable} ${anonymousPro.variable} ${outfit.variable} antialiased`}
+        className={`${montserrat.variable} ${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} antialiased`}
       >
         <SmoothScroll />
         <Toaster

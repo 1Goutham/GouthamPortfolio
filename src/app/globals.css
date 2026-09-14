@@ -69,6 +69,7 @@ video {
   --font-montserrat: var(--font-montserrat);
   --font-outfit: var(--font-outfit);
   --font-anonymous-pro: var(--font-anonymous-pro);
+  --font-tamil: var(--font-tamil);
 }
 
 ::selection {
@@ -251,6 +252,127 @@ video {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero                                                               */
+/* ------------------------------------------------------------------ */
+
+/* Copy lines rise in one after another once fonts are ready. */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero[data-ready="false"] .hero-line {
+  opacity: 0;
+}
+.hero[data-ready="true"] .hero-line {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(120ms + var(--i, 0) * 90ms);
+}
+
+/* Portrait: fades up on load, then leans a few degrees toward the cursor
+   (the tilt vars are set inline) while the inner layer keeps its idle float. */
+@keyframes hero-portrait-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.hero-portrait {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out-expo);
+  will-change: transform;
+}
+.hero[data-ready="false"] .hero-portrait-inner {
+  opacity: 0;
+}
+.hero[data-ready="true"] .hero-portrait-inner {
+  animation:
+    hero-portrait-in 0.9s var(--ease-out-expo) both,
+    float-y 6s ease-in-out 0.9s infinite;
+}
+.hero-portrait img {
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6));
+  transition: filter 0.5s ease;
+}
+.hero-portrait:hover img {
+  filter: drop-shadow(0 34px 48px rgba(0, 0, 0, 0.7)) brightness(1.04);
+}
+
+/* "[ label ]" links: the brackets ease outward and the label brightens. */
+.bracket-link {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  outline: none;
+}
+.bracket-link-l,
+.bracket-link-r {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.4s var(--ease-out-expo), color 0.3s ease;
+}
+.bracket-link-text {
+  margin: 0 0.55ch;
+  color: rgba(255, 255, 255, 0.88);
+  transition: color 0.3s ease;
+}
+.bracket-link:hover .bracket-link-l,
+.bracket-link:focus-visible .bracket-link-l {
+  transform: translateX(-5px);
+  color: #9DFF50;
+}
+.bracket-link:hover .bracket-link-r,
+.bracket-link:focus-visible .bracket-link-r {
+  transform: translateX(5px);
+  color: #9DFF50;
+}
+.bracket-link:hover .bracket-link-text,
+.bracket-link:focus-visible .bracket-link-text {
+  color: #fff;
+}
+.bracket-link:active .bracket-link-l,
+.bracket-link:active .bracket-link-r {
+  transform: translateX(0);
+  transition-duration: 0.1s;
+}
+
+/* Kural: Tamil and English sit in the same grid cell and crossfade. */
+.kural-ta,
+.kural-en {
+  transition: opacity 0.45s ease, transform 0.55s var(--ease-out-expo);
+}
+.kural-en {
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+}
+.kural[data-lang="en"] .kural-ta {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.kural[data-lang="en"] .kural-en {
+  opacity: 1;
+  transform: translateY(0);
+}
+.kural-hint {
+  transition: color 0.3s ease;
+}
+.kural:hover .kural-hint,
+.kural[data-lang="en"] .kural-hint {
+  color: rgba(255, 255, 255, 0.55);
+}
+.kural:focus-visible .kural-hint {
+  color: #9DFF50;
+}
+
+/* Diagonal arrow nudges up-right on hover of its parent. */
+.nudge-diag {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.group:hover .nudge-diag,
+.btn-tactile:hover .nudge-diag {
+  transform: translate(2px, -2px);
 }
 
 /* ------------------------------------------------------------------ */
