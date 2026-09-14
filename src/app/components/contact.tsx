@@ -24,7 +24,7 @@ gsap.registerPlugin(ScrollTrigger);
 // hide that icon.
 // ---------------------------------------------------------------------------
 const CONTACT = {
-  email: 'goutham@example.com',
+  email: 'gouthamgopinath.tsi@gmail.com',
   phone: '+91 93420 33780',
   location: 'Chennai, India',
 };
@@ -32,7 +32,7 @@ const CONTACT = {
 const SOCIALS = [
   { label: 'LinkedIn', href: 'https://www.linkedin.com/in/goutham-g-98a0ba253/', Icon: Linkedin },
   { label: 'GitHub', href: 'https://github.com/1Goutham', Icon: Github },
-  { label: 'Instagram', href: '', Icon: Instagram },
+  { label: 'Instagram', href: 'https://www.instagram.com/tanger.ineee/', Icon: Instagram },
   { label: 'X', href: '', Icon: XIcon },
 ].filter((s) => s.href);
 

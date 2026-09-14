@@ -181,7 +181,7 @@ export default function Hero() {
 
         {/* Copy */}
         <div className="hero-copy max-w-xl text-center md:text-left">
-          <h1 className="hero-line font-outfit text-xl leading-snug text-white sm:text-2xl md:text-[26px] lg:text-[28px]" style={{ "--i": 1 }}>
+          <h1 className="hero-line whitespace-nowrap font-outfit text-[clamp(1rem,4.6vw,1.75rem)] leading-snug text-white md:whitespace-normal md:text-[26px] lg:text-[28px]" style={{ "--i": 1 }}>
             I build digital products with AI, code &amp; design.
           </h1>
           <p className="hero-line mt-2 font-outfit text-sm font-semibold text-white sm:text-base md:text-[17px]" style={{ "--i": 2 }}>
