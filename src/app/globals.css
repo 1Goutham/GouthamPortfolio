@@ -337,33 +337,54 @@ video {
   transition-duration: 0.1s;
 }
 
-/* Kural: Tamil and English sit in the same grid cell and crossfade. */
-.kural-ta,
-.kural-en {
-  transition: opacity 0.45s ease, transform 0.55s var(--ease-out-expo);
+/* Kural: Tamil and English sit in the same grid cell. Each letter is its own
+   span; on hover the Tamil letters lift out one after another while the
+   English letters settle in behind them, then the reverse on leave. */
+.kural-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.kural-ch {
+  display: inline-block;
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 0.45s ease,
+    transform 0.7s var(--ease-out-expo),
+    filter 0.45s ease;
 }
 .kural-en {
-  opacity: 0;
-  transform: translateY(6px);
   pointer-events: none;
 }
-.kural[data-lang="en"] .kural-ta {
+/* Resting state: Tamil in, English waiting below. */
+.kural-en .kural-ch {
   opacity: 0;
-  transform: translateY(-6px);
+  transform: translateY(0.45em);
+  filter: blur(6px);
 }
-.kural[data-lang="en"] .kural-en {
+.kural[data-lang="ta"] .kural-en .kural-ch {
+  transition-delay: calc(var(--i, 0) * 9ms);
+}
+.kural[data-lang="ta"] .kural-ta .kural-ch {
+  transition-delay: calc(140ms + var(--i, 0) * 11ms);
+}
+/* Translated state: Tamil lifts away, English settles in. */
+.kural[data-lang="en"] .kural-ta .kural-ch {
+  opacity: 0;
+  transform: translateY(-0.45em);
+  filter: blur(6px);
+  transition-delay: calc(var(--i, 0) * 9ms);
+}
+.kural[data-lang="en"] .kural-en .kural-ch {
   opacity: 1;
   transform: translateY(0);
+  filter: blur(0);
+  transition-delay: calc(140ms + var(--i, 0) * 11ms);
 }
-.kural-hint {
-  transition: color 0.3s ease;
-}
-.kural:hover .kural-hint,
-.kural[data-lang="en"] .kural-hint {
-  color: rgba(255, 255, 255, 0.55);
-}
-.kural:focus-visible .kural-hint {
-  color: #9DFF50;
+.kural:focus-visible .kural-ta,
+.kural:focus-visible .kural-en {
+  text-decoration: underline;
+  text-decoration-color: rgba(157, 255, 80, 0.7);
+  text-underline-offset: 4px;
 }
 
 /* Diagonal arrow nudges up-right on hover of its parent. */
