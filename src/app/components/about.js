@@ -29,20 +29,20 @@ export default function About() {
                 <span className="text-lg md:text-3xl font-medium link-underline">Goutham</span>
               </h1>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
-                - a fullstack dev with a creative edge. I believe good design makes you stay, great UX makes you move, and smart code makes it all possible.
+                - a fullstack dev with a creative edge. I blend AI, design, and code to turn ideas into thoughtful digital products.
               </p>
             </div>
           </ScrollReveal>
 
-          {/* Design + Dev */}
+          {/* AI – Dev + Design */}
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div className="mt-3 md:mt-6">
               <h1 className="text-white font-medium font-outfit text-base lg:text-2xl">
-                Design <span className="text-base font-thin">+</span> Dev
+                AI <span className="text-base font-thin">&ndash;</span> Dev <span className="text-base font-thin">+</span> Design
               </h1>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
-                Design thinks. Dev builds.<br />
-                Blending both to craft smart, simple, sleek.
+                Where ideas meet intelligent systems,<br />
+                thoughtful design, and solid engineering.
               </p>
             </div>
           </ScrollReveal>
@@ -55,7 +55,7 @@ export default function About() {
               </h1>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
                 <span className="row-hover">Freelance Product Creator</span><br />
-                <span className="row-hover">Digital Engineer - DeepWeaver</span>
+                <span className="row-hover">Digital Engineer &ndash; DeepWeaver</span>
               </p>
             </div>
           </ScrollReveal>
