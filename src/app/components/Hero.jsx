@@ -35,8 +35,48 @@ function BracketLink({ href, children }) {
   );
 }
 
-/* The kural crossfades to its English translation on hover / focus; a tap or
-   click pins the translation so it works on touch screens too. */
+/* Split a line into words, and words into grapheme clusters, so Tamil vowel
+   signs stay attached to their consonants and lines still wrap at spaces. */
+const segmenter =
+  typeof Intl !== "undefined" && Intl.Segmenter
+    ? new Intl.Segmenter(undefined, { granularity: "grapheme" })
+    : null;
+const graphemes = (word) =>
+  segmenter ? Array.from(segmenter.segment(word), (g) => g.segment) : Array.from(word);
+
+function LetterLine({ text, offset }) {
+  let i = offset;
+  return (
+    <span className="block">
+      {text.split(" ").map((word, w) => (
+        <span key={w} className="kural-word">
+          {graphemes(word).map((ch, c) => (
+            <span key={c} className="kural-ch" style={{ "--i": i++ }}>
+              {ch}
+            </span>
+          ))}
+          {w < text.split(" ").length - 1 && <span className="kural-ch" style={{ "--i": i++ }}>&nbsp;</span>}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function LetterBlock({ lines, className, ...rest }) {
+  let offset = 0;
+  return (
+    <span className={className} {...rest}>
+      {lines.map((line) => {
+        const el = <LetterLine key={line} text={line} offset={offset} />;
+        offset += graphemes(line).length;
+        return el;
+      })}
+    </span>
+  );
+}
+
+/* The kural swaps Tamil for English letter by letter on hover / focus; a tap
+   or click pins the translation so it works on touch screens too. */
 function Kural() {
   const [hover, setHover] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -55,29 +95,16 @@ function Kural() {
       className="kural grid w-fit cursor-pointer text-left outline-none"
       data-lang={showEnglish ? "en" : "ta"}
     >
-      <span
-        className="kural-ta col-start-1 row-start-1 block font-tamil text-sm leading-relaxed text-white/85 md:text-[15px]"
+      <LetterBlock
+        lines={KURAL.tamil}
         lang="ta"
-      >
-        {KURAL.tamil.map((line) => (
-          <span key={line} className="block">{line}</span>
-        ))}
-      </span>
-      <span
-        className="kural-en col-start-1 row-start-1 block font-outfit text-sm leading-relaxed text-white/85 md:text-[15px]"
+        className="kural-ta col-start-1 row-start-1 block font-tamil text-sm leading-relaxed text-white/85 md:text-[15px]"
+      />
+      <LetterBlock
+        lines={KURAL.english}
         aria-hidden={!showEnglish}
-      >
-        {KURAL.english.map((line) => (
-          <span key={line} className="block">{line}</span>
-        ))}
-      </span>
-      <span
-        className="kural-hint col-start-1 row-start-2 mt-2 block font-anonymous-pro text-[11px] tracking-[0.25em] text-white/35"
-        aria-hidden="true"
-      >
-        <span className="md:hidden">{showEnglish ? KURAL.source : "tap to translate"}</span>
-        <span className="hidden md:inline">{showEnglish ? KURAL.source : "hover to translate"}</span>
-      </span>
+        className="kural-en col-start-1 row-start-1 block font-outfit text-sm leading-relaxed text-white/85 md:text-[15px]"
+      />
     </button>
   );
 }
@@ -135,7 +162,7 @@ export default function Hero() {
           ref={frameRef}
           onPointerMove={onPointerMove}
           onPointerLeave={resetTilt}
-          className="hero-portrait relative w-[240px] shrink-0 sm:w-[280px] md:w-[340px] lg:w-[380px]"
+          className="hero-portrait relative w-[200px] shrink-0 sm:w-[240px] md:w-[290px] lg:w-[320px]"
           style={{ "--tilt-x": `${tilt.x}deg`, "--tilt-y": `${tilt.y}deg` }}
         >
           <div className="hero-portrait-inner">
@@ -143,7 +170,7 @@ export default function Hero() {
               src={PROFILE_SRC}
               width={940}
               height={1100}
-              sizes="(max-width: 640px) 240px, (max-width: 768px) 280px, (max-width: 1024px) 340px, 380px"
+              sizes="(max-width: 640px) 200px, (max-width: 768px) 240px, (max-width: 1024px) 290px, 320px"
               alt="Goutham smiling in green glasses, greeting you with Vanakamm!"
               priority
               draggable={false}
