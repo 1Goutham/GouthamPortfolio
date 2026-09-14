@@ -397,6 +397,65 @@ video {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Journey section                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Text selection is inverted here since the ground is already green. */
+.journey ::selection {
+  background: #000;
+  color: #9DFF50;
+}
+
+/* "Scroll to the next": the arrow bobs down on hover. */
+.journey-skip-arrow {
+  transition: transform 0.4s var(--ease-out-expo);
+}
+.journey-skip:hover .journey-skip-arrow,
+.journey-skip:focus-visible .journey-skip-arrow {
+  transform: translateY(4px);
+}
+.journey-skip:focus-visible {
+  outline: none;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Pipeline steps: a black marker fills in behind the word on hover. */
+.journey-step {
+  position: relative;
+  display: inline-block;
+  padding: 0 0.15em;
+  margin: 0 -0.15em;
+  isolation: isolate;
+  transition: color 0.3s ease;
+  cursor: default;
+}
+.journey-step::before {
+  content: "";
+  position: absolute;
+  inset: 0.05em -0.05em;
+  z-index: -1;
+  background: #000;
+  border-radius: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.journey-step:hover {
+  color: #9DFF50;
+}
+.journey-step:hover::before {
+  transform: scaleX(1);
+}
+.journey-arrow {
+  display: inline-block;
+  transition: transform 0.4s var(--ease-out-expo);
+}
+.journey-step:hover + .journey-arrow {
+  transform: translateX(3px);
+}
+
+/* ------------------------------------------------------------------ */
 /*  Contact section                                                    */
 /* ------------------------------------------------------------------ */
 
