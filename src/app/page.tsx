@@ -4,6 +4,7 @@ import Scrolltext from "./components/scroll";
 import About from "./components/about";
 import Skills from "./components/skills";
 import Projects from "./components/projects";
+import Journey from "./components/journey";
 
 // Below-the-fold, JS-heavy sections are code-split so the initial bundle stays lean.
 const Gtalk = dynamic(() => import("./components/Gtalk"), {
@@ -19,6 +20,7 @@ export default function Home() {
       <About />
       <Skills />
       <Projects />
+      <Journey />
       <Gtalk />
       <Contact />
     </>
