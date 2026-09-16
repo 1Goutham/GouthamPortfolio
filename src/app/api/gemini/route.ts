@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { answer, GeminiError, type Turn } from '@/lib/rag';
+import { answer, GeminiError, type Turn } from '@/lib/gtalk';
 
 export const runtime = 'nodejs';
 
@@ -30,6 +30,15 @@ function parseHistory(raw: unknown): Turn[] {
     .slice(-MAX_HISTORY_TURNS);
 }
 
+/** Map an upstream Gemini failure to what the visitor should see. */
+function upstreamError(err: GeminiError): { status: number; error: string } {
+  const keyRejected = err.status === 403 || (err.status === 400 && /api key/i.test(err.message));
+  if (keyRejected) return { status: 403, error: 'The assistant is not configured correctly.' };
+  if (err.status === 429) return { status: 429, error: 'Too many questions right now. Give it a moment.' };
+  if (err.status === 504) return { status: 504, error: 'The assistant took too long to reply. Please try again.' };
+  return { status: 502, error: 'The assistant is unavailable right now.' };
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'local';
   if (rateLimited(ip)) {
@@ -57,8 +66,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     if (err instanceof GeminiError) {
       console.error(err.message);
-      const status = err.status === 429 || err.status === 403 ? err.status : 502;
-      return NextResponse.json({ error: 'The assistant is unavailable right now.' }, { status });
+      const { status, error } = upstreamError(err);
+      return NextResponse.json({ error }, { status });
     }
     console.error('G-Talk error:', err);
     const message = err instanceof Error && err.message.includes('GEMINI_API_KEY') ? 'Assistant is not configured.' : 'Internal Server Error';

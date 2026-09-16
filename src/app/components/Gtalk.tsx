@@ -9,11 +9,7 @@ import { Waveform } from "@uiball/loaders";
 
 export default function Gtalk() {
   const [input, setInput] = useState("");
-  const [messagePair, setMessagePair] = useState<{
-    user: string;
-    bot: string | null;
-    sources: string[];
-  } | null>(null);
+  const [messagePair, setMessagePair] = useState<{ user: string; bot: string | null } | null>(null);
   const [history, setHistory] = useState<{ role: "user" | "model"; text: string }[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -23,7 +19,7 @@ export default function Gtalk() {
 
     setInput("");
     setLoading(true);
-    setMessagePair({ user: question, bot: null, sources: [] });
+    setMessagePair({ user: question, bot: null });
 
     try {
       const res = await fetch("/api/gemini", {
@@ -36,15 +32,14 @@ export default function Gtalk() {
 
       if (!res.ok) {
         if (res.status === 429) toast.error("Too many questions at once. Give it a moment.");
-        else if (res.status === 403) toast.error("The assistant's API key was rejected.");
+        else if (res.status === 403) toast.error("The assistant is not configured correctly.");
         else toast.error(data?.error || "Error fetching response");
         setMessagePair(null);
         return;
       }
 
       const reply: string = data?.reply || "I'm not sure how to respond to that.";
-      const sources: string[] = Array.isArray(data?.sources) ? data.sources : [];
-      setMessagePair({ user: question, bot: reply, sources });
+      setMessagePair({ user: question, bot: reply });
       // Keep a short rolling history so follow-up questions have context.
       setHistory((h) => [...h, { role: "user" as const, text: question }, { role: "model" as const, text: reply }].slice(-8));
     } catch (err) {
@@ -98,7 +93,6 @@ export default function Gtalk() {
             ) : (
               <ChatMessage
                 userQuestion={messagePair.user}
-                sources={loading ? [] : messagePair.sources}
                 botReply={
                   loading ? (
                     <div className="flex pt-3 pl-3 h-24">

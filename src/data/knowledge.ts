@@ -1,14 +1,14 @@
 /**
  * G-Talk knowledge base.
  *
- * Every entry is one retrievable chunk. Keep chunks short and focused on a
- * single topic (roughly 40-120 words) so retrieval stays precise. Add, edit or
- * remove entries freely; the index is rebuilt automatically on the next
- * request after a deploy.
+ * The whole list is handed to Gemini in G-Talk's system prompt, grouped by
+ * `title`. Keep each entry short and on a single topic (roughly 40-120 words)
+ * so the prompt stays small. Add, edit or remove entries freely; changes go
+ * live with the next deploy.
  */
 export type KnowledgeChunk = {
   id: string;
-  /** Short label shown to the visitor as the answer's source. */
+  /** Section heading the entry is filed under in the prompt. */
   title: string;
   text: string;
 };
@@ -67,7 +67,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'project-gtalk',
     title: 'Projects',
-    text: `G-Talk is the assistant on this portfolio. It is a retrieval-augmented (RAG) chatbot: visitor questions are embedded with Gemini, matched against a small knowledge base about Goutham using cosine similarity, and the best-matching chunks are passed to Gemini to write a grounded answer.`,
+    text: `G-Talk is the assistant on this portfolio. It is a small Gemini 2.5 Flash chatbot: a curated knowledge base about Goutham is given to the model in its system prompt, and each visitor question is answered in a single API call, grounded in that knowledge only.`,
   },
   {
     id: 'interests',

@@ -8,11 +8,9 @@ import { useTypingEffect } from "./useTypingEffect";
 interface ChatMessageProps {
   userQuestion: string;
   botReply: string | React.JSX.Element;
-  /** Knowledge-base sections the answer was grounded in. */
-  sources?: string[];
 }
 
-export default function ChatMessage({ userQuestion, botReply, sources = [] }: ChatMessageProps) {
+export default function ChatMessage({ userQuestion, botReply }: ChatMessageProps) {
   const botReplyStr = typeof botReply === "string" ? botReply : "";
   const typedText = useTypingEffect(botReplyStr);
   const isString = typeof botReply === "string";
@@ -30,16 +28,6 @@ export default function ChatMessage({ userQuestion, botReply, sources = [] }: Ch
           >
             {isString ? <ReactMarkdown>{typedText}</ReactMarkdown> : botReply}
           </div>
-          {sources.length > 0 && typedText.length >= botReplyStr.length && (
-            <div className="rise-in flex flex-wrap items-center gap-1.5 text-[11px] text-gray-500">
-              <span className="uppercase tracking-[0.2em]">From</span>
-              {sources.map((s) => (
-                <span key={s} className="rounded-full border border-black/15 px-2 py-0.5 text-gray-700">
-                  {s}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
         <div className="md:w-1/3 h-[100px] md:h-[280px] flex justify-end items-end">
           <Image

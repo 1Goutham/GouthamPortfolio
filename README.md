@@ -20,24 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## G-Talk (RAG chatbot)
+## G-Talk (chatbot)
 
-G-Talk answers visitor questions using retrieval-augmented generation on the Gemini API:
+G-Talk answers visitor questions with a single Gemini call per question:
 
-1. The knowledge base in `src/data/knowledge.ts` is a list of short chunks about Goutham (bio, experience, skills, projects, contact).
-2. On the first request each chunk is embedded with `gemini-embedding-001` and cached in memory (`src/lib/rag.ts`). The cache is keyed by a hash of the text, so editing the knowledge base and redeploying is all that's needed.
-3. A visitor's question is embedded, ranked against the chunks by cosine similarity blended with keyword overlap, and the best matches are passed as context to `gemini-2.5-flash`, which is instructed to answer only from that context.
-4. The API route `src/app/api/gemini/route.ts` returns `{ reply, sources }`; the chat UI shows which sections the answer came from and keeps a short history for follow-ups.
+1. The knowledge base in `src/data/knowledge.ts` is a short list of entries about Goutham (bio, experience, skills, projects, contact).
+2. `src/lib/gtalk.ts` folds the whole list into the system prompt, grouped by section, and asks `gemini-2.5-flash` to answer only from it. The last few turns of the conversation are sent along for follow-ups.
+3. The API route `src/app/api/gemini/route.ts` validates the request, applies a light per-IP rate limit and returns `{ reply }`.
 
-If embeddings are unavailable the search falls back to keyword matching so the bot keeps working.
+There is no embedding or retrieval step, so nothing needs to be indexed or warmed up.
 
 ### Setup
 
-Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY` (from Google AI Studio). `GEMINI_CHAT_MODEL` and `GEMINI_EMBED_MODEL` are optional overrides.
+Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY` (from Google AI Studio). `GEMINI_CHAT_MODEL` is an optional override.
 
 ### Adding knowledge
 
-Append an entry to `KNOWLEDGE` in `src/data/knowledge.ts`. Keep each chunk to one topic and roughly 40 to 120 words; the `title` is what visitors see as the source label.
+Append an entry to `KNOWLEDGE` in `src/data/knowledge.ts`. Keep each entry to one topic and roughly 40 to 120 words; the `title` is the section it is filed under in the prompt.
 
 ## Learn More
 
