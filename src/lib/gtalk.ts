@@ -10,7 +10,7 @@ import { KNOWLEDGE } from '../data/knowledge';
  */
 
 const API_BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta';
-const CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || 'gemini-2.5-flash';
+const CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || 'gemini-3.6-flash';
 const TIMEOUT_MS = 25_000;
 const HISTORY_TURNS = 6;
 

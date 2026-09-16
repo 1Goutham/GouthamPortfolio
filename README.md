@@ -25,7 +25,7 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 G-Talk answers visitor questions with a single Gemini call per question:
 
 1. The knowledge base in `src/data/knowledge.ts` is a short list of entries about Goutham (bio, experience, skills, projects, contact).
-2. `src/lib/gtalk.ts` folds the whole list into the system prompt, grouped by section, and asks `gemini-2.5-flash` to answer only from it. The last few turns of the conversation are sent along for follow-ups.
+2. `src/lib/gtalk.ts` folds the whole list into the system prompt, grouped by section, and asks `gemini-3.6-flash` to answer only from it. The last few turns of the conversation are sent along for follow-ups.
 3. The API route `src/app/api/gemini/route.ts` validates the request, applies a light per-IP rate limit and returns `{ reply }`.
 
 There is no embedding or retrieval step, so nothing needs to be indexed or warmed up.

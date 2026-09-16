@@ -67,7 +67,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'project-gtalk',
     title: 'Projects',
-    text: `G-Talk is the assistant on this portfolio. It is a small Gemini 2.5 Flash chatbot: a curated knowledge base about Goutham is given to the model in its system prompt, and each visitor question is answered in a single API call, grounded in that knowledge only.`,
+    text: `G-Talk is the assistant on this portfolio. It is a small Gemini 3.6 Flash chatbot: a curated knowledge base about Goutham is given to the model in its system prompt, and each visitor question is answered in a single API call, grounded in that knowledge only.`,
   },
   {
     id: 'interests',
