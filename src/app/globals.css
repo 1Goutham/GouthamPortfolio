@@ -483,17 +483,10 @@ video {
   transition-delay: 0s, 0.95s;
 }
 
-/* Hover / focus: the line and "Click" warm up, the figure brightens a touch. */
-.beyond-cta-click {
-  transition: color 0.3s ease;
-}
+/* Hover / focus: the line brightens to white, the figure brightens a touch. */
 .beyond-link:hover .beyond-line,
 .beyond-link:focus-visible .beyond-line {
-  background: #9DFF50;
-}
-.beyond-link:hover .beyond-cta-click,
-.beyond-link:focus-visible .beyond-cta-click {
-  color: #9DFF50;
+  background: #fff;
 }
 .beyond-link:focus-visible .beyond-cta-text {
   text-decoration: underline;
