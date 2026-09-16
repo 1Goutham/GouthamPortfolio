@@ -54,6 +54,58 @@ type GenerateResponse = {
   promptFeedback?: { blockReason?: string };
 };
 
+type ModelList = { models?: { name: string; supportedGenerationMethods?: string[] }[] };
+
+/** Pull Gemini's human-readable message out of an error body, if there is one. */
+export function geminiMessage(body: string): string {
+  try {
+    const parsed = JSON.parse(body) as { error?: { message?: string } };
+    if (parsed.error?.message) return parsed.error.message;
+  } catch {
+    /* not JSON */
+  }
+  return body.slice(0, 200);
+}
+
+async function call(key: string, path: string, init: RequestInit = {}): Promise<Response> {
+  try {
+    return await fetch(`${API_BASE}/${path}`, {
+      ...init,
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key, ...(init.headers ?? {}) },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+    });
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : String(err);
+    throw new GeminiError(504, `Gemini request failed: ${reason}`);
+  }
+}
+
+/**
+ * Model names get retired. When the configured one 404s, ask Gemini which
+ * models this key can use and pick the newest Flash model that supports
+ * generateContent. The choice is cached for the life of the function instance.
+ */
+let discoveredModel: string | null = null;
+
+async function discoverModel(key: string): Promise<string | null> {
+  if (discoveredModel) return discoveredModel;
+  const res = await call(key, 'models?pageSize=200', { method: 'GET' });
+  if (!res.ok) return null;
+  const data = (await res.json()) as ModelList;
+  const candidates = (data.models ?? [])
+    .filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
+    .map((m) => m.name.replace(/^models\//, ''))
+    .filter((n) => /flash/i.test(n) && !/lite|preview|exp|image|tts|live|audio|8b/i.test(n))
+    .sort((a, b) => b.localeCompare(a, undefined, { numeric: true }));
+  discoveredModel = candidates[0] ?? null;
+  if (discoveredModel) console.warn(`G-Talk: ${CHAT_MODEL} is unavailable; using ${discoveredModel} instead.`);
+  return discoveredModel;
+}
+
+async function generate(key: string, model: string, body: unknown): Promise<Response> {
+  return call(key, `models/${model}:generateContent`, { method: 'POST', body: JSON.stringify(body) });
+}
+
 export async function answer(question: string, history: Turn[] = []): Promise<Answer> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
@@ -62,27 +114,27 @@ export async function answer(question: string, history: Turn[] = []): Promise<An
     ...history.slice(-HISTORY_TURNS).map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
     { role: 'user', parts: [{ text: question }] },
   ];
+  const body = {
+    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+    contents,
+    generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
+  };
 
-  let res: Response;
-  try {
-    res = await fetch(`${API_BASE}/models/${CHAT_MODEL}:generateContent`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents,
-        generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
-      }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-  } catch (err) {
-    const reason = err instanceof Error ? err.message : String(err);
-    throw new GeminiError(504, `Gemini request failed: ${reason}`);
+  let model = discoveredModel ?? CHAT_MODEL;
+  let res = await generate(key, model, body);
+
+  // The configured model is gone for this key: find one that works and retry once.
+  if (res.status === 404 && !process.env.GEMINI_CHAT_MODEL) {
+    const found = await discoverModel(key);
+    if (found && found !== model) {
+      model = found;
+      res = await generate(key, model, body);
+    }
   }
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw new GeminiError(res.status, `Gemini ${CHAT_MODEL} failed (${res.status}): ${detail.slice(0, 300)}`);
+    throw new GeminiError(res.status, `Gemini ${model} failed (${res.status}): ${geminiMessage(detail)}`);
   }
 
   const data = (await res.json()) as GenerateResponse;
