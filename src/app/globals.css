@@ -518,13 +518,25 @@ video {
 /*  Beyond page                                                        */
 /* ------------------------------------------------------------------ */
 
-/* Opening lines rise in one after another once fonts are ready. */
+/* The page arrives from the black veil: the ground settles from black to
+   flash green, then the opening lines rise in once fonts are ready. */
+@keyframes beyond-ground-in {
+  from { background-color: #000; }
+  to   { background-color: #9CFE50; }
+}
+.beyond-page {
+  animation: beyond-ground-in 0.7s ease-out both;
+}
+.beyond-page ::selection {
+  background: #000;
+  color: #9CFE50;
+}
 .beyond-page[data-ready="false"] .beyond-rise {
   opacity: 0;
 }
 .beyond-page[data-ready="true"] .beyond-rise {
   animation: hero-rise 0.8s var(--ease-out-expo) both;
-  animation-delay: calc(100ms + var(--i, 0) * 90ms);
+  animation-delay: calc(250ms + var(--i, 0) * 90ms);
 }
 .beyond-page[data-ready="true"] .beyond-rule {
   animation-name: beyond-rule-in;
@@ -533,6 +545,23 @@ video {
 @keyframes beyond-rule-in {
   from { opacity: 0; transform: scaleX(0); }
   to   { opacity: 1; transform: scaleX(1); }
+}
+
+/* Bracket links on the green ground: black ink, brackets ease outward. */
+.bracket-link-dark .bracket-link-l,
+.bracket-link-dark .bracket-link-r {
+  color: rgba(0, 0, 0, 0.6);
+}
+.bracket-link-dark .bracket-link-text {
+  color: rgba(0, 0, 0, 0.85);
+}
+.bracket-link-dark:hover .bracket-link-l,
+.bracket-link-dark:hover .bracket-link-r,
+.bracket-link-dark:focus-visible .bracket-link-l,
+.bracket-link-dark:focus-visible .bracket-link-r,
+.bracket-link-dark:hover .bracket-link-text,
+.bracket-link-dark:focus-visible .bracket-link-text {
+  color: #000;
 }
 
 /* "Back home": the arrow nudges left on hover. */
@@ -544,7 +573,7 @@ video {
   transform: translateX(-4px);
 }
 
-/* Pipeline steps: a green marker fills in behind the word on hover. */
+/* Pipeline steps: a black marker fills in behind the word on hover. */
 .journey-step {
   position: relative;
   display: inline-block;
@@ -559,14 +588,14 @@ video {
   position: absolute;
   inset: 0.05em -0.05em;
   z-index: -1;
-  background: #9DFF50;
+  background: #000;
   border-radius: 3px;
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.45s var(--ease-out-expo);
 }
 .journey-step:hover {
-  color: #000;
+  color: #9CFE50;
 }
 .journey-step:hover::before {
   transform: scaleX(1);
