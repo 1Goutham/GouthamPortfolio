@@ -33,7 +33,7 @@ export default function Gtalk() {
       if (!res.ok) {
         if (res.status === 429) toast.error("Too many questions at once. Give it a moment.");
         else if (res.status === 403) toast.error("The assistant is not configured correctly.");
-        else toast.error(data?.error || "Error fetching response");
+        else toast.error(data?.detail ? `${data.error} (${data.detail})` : data?.error || "Error fetching response");
         setMessagePair(null);
         return;
       }
