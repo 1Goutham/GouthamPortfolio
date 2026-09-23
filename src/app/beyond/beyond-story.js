@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
-import MinimalNav from "../components/layout/navbar";
 import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 
@@ -12,12 +11,6 @@ import FadeContent from "../components/layout/fade-in";
 // swings from, so `--pivot-y` in globals.css is where that tape sits
 // (fraction of the image height).
 const PHOTO_SRC = "/beyondpic.png";
-
-const NAV_ITEMS = [
-  { label: "Home", href: "/" },
-  { label: "About me", href: "/#about" },
-  { label: "Projects", href: "/#projects" },
-];
 
 const PIPELINE = ["UX research", "design", "development", "AI integration", "deployment"];
 
@@ -196,9 +189,6 @@ export default function BeyondStory() {
         >
           <Image src="/logo.png" width={40} height={40} alt="Goutham logo" priority className="invert" />
         </TransitionLink>
-        <div className="hidden md:block md:fixed md:top-6 md:left-1/2 md:z-50 md:-translate-x-1/2">
-          <MinimalNav items={NAV_ITEMS} initialActiveIndex={0} tone="light" LinkComponent={TransitionLink} />
-        </div>
         <TransitionLink
           href="/#contact"
           className="btn-tactile btn-tactile-dark group inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-5 font-outfit text-sm font-medium text-white shadow-md hover:bg-[#1a1a1a]"
