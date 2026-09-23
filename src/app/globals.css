@@ -808,3 +808,48 @@ video {
 .mnav-link:focus-visible .mnav-roll-inner {
   transform: translateY(-50%);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Project tiles                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Flat dark squares. On hover the tile warms a shade and lifts, the icon
+   drifts up to make room, and the product name slides in along the bottom. */
+.project-tile {
+  transition:
+    background-color 0.35s ease,
+    transform 0.5s var(--ease-out-expo),
+    box-shadow 0.5s var(--ease-out-expo);
+  will-change: transform;
+}
+.project-tile:hover,
+.project-tile:focus-visible {
+  background-color: #353535;
+  transform: translateY(-4px);
+  box-shadow: 0 24px 40px -24px rgba(0, 0, 0, 0.9);
+}
+.project-tile:focus-visible {
+  box-shadow: 0 0 0 2px #9DFF50;
+}
+.project-tile:active {
+  transform: translateY(-1px) scale(0.98);
+  transition-duration: 0.1s;
+}
+.project-tile-icon {
+  transition: transform 0.6s var(--ease-out-expo), filter 0.4s ease;
+}
+.project-tile:hover .project-tile-icon,
+.project-tile:focus-visible .project-tile-icon {
+  transform: translateY(-9%) scale(1.04);
+  filter: brightness(1.08);
+}
+.project-tile-name {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.35s ease, transform 0.5s var(--ease-out-expo);
+}
+.project-tile:hover .project-tile-name,
+.project-tile:focus-visible .project-tile-name {
+  opacity: 1;
+  transform: translateY(0);
+}
