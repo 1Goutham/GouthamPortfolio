@@ -879,3 +879,88 @@ video {
     opacity: 0.55;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Site-wide micro-interactions                                       */
+/* ------------------------------------------------------------------ */
+
+/* Section headings share the hero's bracket language. At rest the brackets
+   are the heading's own colour; on hover they ease outward and tint green. */
+.bracket-heading {
+  white-space: normal;
+}
+.bracket-heading .bracket-link-l,
+.bracket-heading .bracket-link-r,
+.bracket-heading .bracket-link-text {
+  color: inherit;
+}
+.bracket-heading:hover .bracket-link-l,
+.bracket-heading:hover .bracket-link-r {
+  color: #9DFF50;
+}
+.bracket-link-dark.bracket-heading:hover .bracket-link-l,
+.bracket-link-dark.bracket-heading:hover .bracket-link-r {
+  color: #000;
+}
+
+/* About portrait: parallax drift against the cursor (vars set inline). */
+.about-portrait img {
+  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.06);
+  transition: transform 1s var(--ease-out-expo), filter 0.8s ease;
+}
+.about-portrait:hover img {
+  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.09);
+}
+
+/* Skills radar: a light 3D lean toward the cursor with a soft lift. */
+.skills-radar {
+  transform: perspective(1000px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.8s var(--ease-out-expo);
+  will-change: transform;
+}
+.skills-radar img {
+  transition: transform 0.8s var(--ease-out-expo), filter 0.6s ease;
+}
+.skills-radar:hover img {
+  transform: translateZ(18px) scale(1.02);
+  filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.16));
+}
+
+/* Skills tagline: each word underlines in turn, left to right. */
+.skills-word {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+}
+.skills-word::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0.25em;
+  bottom: -0.08em;
+  height: 2px;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.skills-tagline:hover .skills-word::after {
+  transform: scaleX(1);
+}
+
+/* Marquee stars turn a half-turn while the line is under the cursor. */
+.marquee-star {
+  display: inline-block;
+  transition: transform 0.9s var(--ease-out-expo), color 0.4s ease;
+}
+.marquee:hover .marquee-star {
+  transform: rotate(180deg) scale(1.15);
+  color: #6dcf1e;
+}
+
+/* Contact heading letters: the wave is written inline; this is its ease. */
+.contact-heading .contact-char {
+  transition: transform 0.45s var(--ease-out-expo);
+}

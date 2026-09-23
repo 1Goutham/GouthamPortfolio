@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "./layout/transition-link";
+import BracketHeading from "./layout/bracket-heading";
 
 // Drop the illustration in at /public/blacksuit.png. It is shown at its own
 // proportions; nothing here crops or stretches it. The hover bloom sits behind
@@ -87,7 +88,9 @@ export default function BeyondTeaser() {
   return (
     <section id="beyond" className="beyond bg-black text-white px-6 py-16 md:px-12 md:py-24" data-inview={inView}>
       <div className="mx-auto max-w-3xl">
-        <h2 className="beyond-title font-anonymous-pro text-3xl md:text-5xl">[A Bit More About Me]</h2>
+        <BracketHeading className="beyond-title font-anonymous-pro text-[clamp(1.35rem,6.4vw,1.875rem)] md:text-5xl">
+          A Bit More About Me
+        </BracketHeading>
 
         <div
           ref={stageRef}

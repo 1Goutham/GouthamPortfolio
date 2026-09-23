@@ -14,7 +14,6 @@ import {
   Linkedin,
   Mail,
   MapPin,
-  Phone,
 } from 'lucide-react';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -25,7 +24,6 @@ gsap.registerPlugin(ScrollTrigger);
 // ---------------------------------------------------------------------------
 const CONTACT = {
   email: 'gouthamgopinath.tsi@gmail.com',
-  phone: '+91 93420 33780',
   location: 'Chennai, India',
 };
 
@@ -49,9 +47,13 @@ function XIcon(props: React.SVGProps<SVGSVGElement>) {
 type Status = 'idle' | 'sending' | 'sent';
 
 /** Split a heading into per-character spans so they can rise in one by one. */
-function SplitHeading({ text, className }: { text: string; className?: string }) {
+function SplitHeading({
+  text,
+  className,
+  ...rest
+}: { text: string; className?: string } & React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h1 className={className} aria-label={text}>
+    <h1 className={className} aria-label={text} {...rest}>
       {text.split(' ').map((word, wi) => (
         <span key={wi} className="inline-block overflow-hidden align-bottom pb-[0.08em]" aria-hidden="true">
           {word.split('').map((ch, ci) => (
@@ -74,6 +76,33 @@ export default function Contact() {
   const [status, setStatus] = useState<Status>('idle');
   const [copied, setCopied] = useState(false);
 
+  // Letter wave: once the heading has risen in, its characters lift toward
+  // the cursor with a gaussian falloff, so the giant type feels like it
+  // has some give. Positions are measured once per pass, writes are rAF'd.
+  const waveReady = useRef(false);
+  const waveRaf = useRef(0);
+  const onHeadingMove = (e: React.PointerEvent<HTMLHeadingElement>) => {
+    if (!waveReady.current || e.pointerType !== 'mouse') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const h = e.currentTarget;
+    const cx = e.clientX;
+    if (waveRaf.current) return;
+    waveRaf.current = requestAnimationFrame(() => {
+      waveRaf.current = 0;
+      h.querySelectorAll<HTMLElement>('.contact-char').forEach((ch) => {
+        const r = ch.getBoundingClientRect();
+        const d = (r.left + r.width / 2 - cx) / 110;
+        const lift = 0.16 * Math.exp(-d * d);
+        ch.style.transform = `translateY(${(-lift * 100).toFixed(2)}%)`;
+      });
+    });
+  };
+  const onHeadingLeave = (e: React.PointerEvent<HTMLHeadingElement>) => {
+    e.currentTarget.querySelectorAll<HTMLElement>('.contact-char').forEach((ch) => {
+      ch.style.transform = '';
+    });
+  };
+
   const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -93,6 +122,9 @@ export default function Contact() {
           ease: 'power4.out',
           stagger: 0.028,
           scrollTrigger: { trigger: root, start: 'top 75%', once: true },
+          onComplete: () => {
+            waveReady.current = true;
+          },
         });
         gsap.from('.contact-reveal', {
           y: 28,
@@ -175,7 +207,9 @@ export default function Contact() {
         {/* Giant heading */}
         <SplitHeading
           text="Contact me"
-          className="font-bold leading-[0.95] tracking-[-0.035em] text-[clamp(3.4rem,13.5vw,11.5rem)] text-[#f5f3ef]"
+          onPointerMove={onHeadingMove}
+          onPointerLeave={onHeadingLeave}
+          className="contact-heading font-bold leading-[0.95] tracking-[-0.035em] text-[clamp(3.4rem,13.5vw,11.5rem)] text-[#f5f3ef]"
         />
 
         <div className="mt-14 grid gap-14 md:mt-20 md:grid-cols-2 md:gap-20">
@@ -202,15 +236,6 @@ export default function Contact() {
                     {copied ? <Check className="h-4 w-4 text-[#9DFF50]" /> : <Copy className="h-4 w-4" />}
                   </span>
                 </button>
-              </li>
-              <li>
-                <a
-                  href={`tel:${CONTACT.phone.replace(/\s+/g, '')}`}
-                  className="contact-row group flex items-center gap-4"
-                >
-                  <Phone className="contact-icon h-5 w-5 text-white/70" strokeWidth={1.75} />
-                  <span className="link-underline">{CONTACT.phone}</span>
-                </a>
               </li>
               <li className="contact-row group flex items-center gap-4">
                 <MapPin className="contact-icon h-5 w-5 text-white/70" strokeWidth={1.75} />
