@@ -519,17 +519,13 @@ video {
 /* ------------------------------------------------------------------ */
 
 /* The page arrives from the black veil: the ground settles from black to
-   flash green, then the opening lines rise in once fonts are ready. */
+   white, then the photo and the opening lines rise in once fonts are ready. */
 @keyframes beyond-ground-in {
   from { background-color: #000; }
-  to   { background-color: #9CFE50; }
+  to   { background-color: #fff; }
 }
 .beyond-page {
   animation: beyond-ground-in 0.7s ease-out both;
-}
-.beyond-page ::selection {
-  background: #000;
-  color: #9CFE50;
 }
 .beyond-page[data-ready="false"] .beyond-rise {
   opacity: 0;
@@ -538,16 +534,48 @@ video {
   animation: hero-rise 0.8s var(--ease-out-expo) both;
   animation-delay: calc(250ms + var(--i, 0) * 90ms);
 }
-.beyond-page[data-ready="true"] .beyond-rule {
-  animation-name: beyond-rule-in;
-  transform-origin: left center;
+
+/* The taped photo. `--swing` is driven by the spring in beyond-story.js and
+   the print pivots around the tape, so set `--pivot-y` to where the tape
+   sits in the artwork (fraction of the image height). */
+.beyond-photo {
+  --pivot-y: 6%;
+  --swing: 0deg;
+  cursor: default;
+  touch-action: pan-y;
 }
-@keyframes beyond-rule-in {
-  from { opacity: 0; transform: scaleX(0); }
-  to   { opacity: 1; transform: scaleX(1); }
+.beyond-photo img {
+  transform-origin: 50% var(--pivot-y);
+  transform: rotate(var(--swing));
+  will-change: transform;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.18));
+  transition: filter 0.5s ease;
+}
+.beyond-photo:hover img {
+  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.22));
 }
 
-/* Bracket links on the green ground: black ink, brackets ease outward. */
+/* The asterisk turns with the scroll position (see ScrollStar). */
+.beyond-star {
+  display: inline-block;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+
+/* "2px out of place" sits 2px out of place. Hovering it fixes that. */
+.beyond-2px {
+  display: inline-block;
+  transform: translateY(2px);
+  transition: transform 0.55s var(--ease-out-expo);
+  cursor: default;
+}
+.beyond-2px:hover {
+  transform: translateY(0);
+}
+
+/* Bracket links and headings on the white ground: black ink, brackets ease
+   outward exactly as they do in the hero. */
 .bracket-link-dark .bracket-link-l,
 .bracket-link-dark .bracket-link-r {
   color: rgba(0, 0, 0, 0.6);
@@ -564,13 +592,9 @@ video {
   color: #000;
 }
 
-/* "Back home": the arrow nudges left on hover. */
-.beyond-back-arrow {
-  transition: transform 0.4s var(--ease-out-expo);
-}
-.beyond-back:hover .beyond-back-arrow,
-.beyond-back:focus-visible .beyond-back-arrow {
-  transform: translateX(-4px);
+/* Black "Contact" button: a dark focus ring instead of the white one. */
+.btn-tactile-dark:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
 }
 
 /* Pipeline steps: a black marker fills in behind the word on hover. */
@@ -595,17 +619,10 @@ video {
   transition: transform 0.45s var(--ease-out-expo);
 }
 .journey-step:hover {
-  color: #9CFE50;
+  color: #9DFF50;
 }
 .journey-step:hover::before {
   transform: scaleX(1);
-}
-.journey-arrow {
-  display: inline-block;
-  transition: transform 0.4s var(--ease-out-expo);
-}
-.journey-step:hover + .journey-arrow {
-  transform: translateX(3px);
 }
 
 /* ------------------------------------------------------------------ */

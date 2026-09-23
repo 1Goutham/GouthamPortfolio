@@ -12,8 +12,35 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  - Labels do a subtle "roll": the text slides up and a copy slides in.
  *
  * `items` is [{ label, href }] where href is "#" (top) or "#section-id".
+ * `tone` is "dark" (black pill, for the black pages) or "light" (pale pill,
+ * for the white Beyond page). `LinkComponent` lets a page swap the plain
+ * anchor for something like TransitionLink when the items leave the page.
  */
-export default function MinimalNav({ items, initialActiveIndex = 0, className = "" }) {
+const TONES = {
+  dark: {
+    nav: "border-white/10 bg-black/70 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.8)]",
+    glow: "bg-white/10",
+    line: "bg-white",
+    active: "text-white",
+    idle: "text-white/55 hover:text-white focus-visible:text-white",
+  },
+  light: {
+    nav: "border-black/[0.08] bg-[#f3f3f3]/85 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.35)]",
+    glow: "bg-black/[0.06]",
+    line: "bg-black",
+    active: "text-black",
+    idle: "text-black/50 hover:text-black focus-visible:text-black",
+  },
+};
+
+export default function MinimalNav({
+  items,
+  initialActiveIndex = 0,
+  className = "",
+  tone = "dark",
+  LinkComponent = "a",
+}) {
+  const t = TONES[tone] || TONES.dark;
   const listRef = useRef(null);
   const itemRefs = useRef([]);
   const [active, setActive] = useState(initialActiveIndex);
@@ -101,14 +128,14 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
   return (
     <nav
       aria-label="Primary"
-      className={`mnav relative rounded-full border border-white/10 bg-black/70 p-1.5 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.8)] backdrop-blur-md ${className}`}
+      className={`mnav relative rounded-full border p-1.5 backdrop-blur-md ${t.nav} ${className}`}
       onMouseLeave={() => setHover(null)}
     >
       <ul ref={listRef} className="relative m-0 flex list-none p-0">
         {/* hover highlight */}
         <span
           aria-hidden="true"
-          className="mnav-glow pointer-events-none absolute top-0 bottom-0 rounded-full bg-white/10"
+          className={`mnav-glow pointer-events-none absolute top-0 bottom-0 rounded-full ${t.glow}`}
           style={{
             left: hoverRect.left,
             width: hoverRect.width,
@@ -118,7 +145,7 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
         {/* active underline */}
         <span
           aria-hidden="true"
-          className="mnav-line pointer-events-none absolute bottom-[5px] h-px rounded-full bg-white"
+          className={`mnav-line pointer-events-none absolute bottom-[5px] h-px rounded-full ${t.line}`}
           style={{
             left: activeRect.left + underlineInset,
             width: Math.max(activeRect.width - underlineInset * 2, 0),
@@ -126,9 +153,10 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
         />
 
         {items.map((item, i) => (
-          <li key={item.label} className="relative z-10">
-            <a
-              ref={(el) => (itemRefs.current[i] = el)}
+          // Measured on the <li> (it wraps the link exactly) so any link
+          // component works, ref-forwarding or not.
+          <li key={item.label} ref={(el) => (itemRefs.current[i] = el)} className="relative z-10">
+            <LinkComponent
               href={item.href}
               onClick={() => onClick(i)}
               onMouseEnter={() => setHover(i)}
@@ -136,7 +164,7 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
               onBlur={() => setHover(null)}
               aria-current={active === i ? "location" : undefined}
               className={`mnav-link block px-4 py-1.5 text-sm font-outfit tracking-wide transition-colors duration-300 outline-none ${
-                active === i ? "text-white" : "text-white/55 hover:text-white focus-visible:text-white"
+                active === i ? t.active : t.idle
               }`}
             >
               <span className="mnav-roll block h-[1.4em] overflow-hidden leading-[1.4]">
@@ -147,7 +175,7 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
                   </span>
                 </span>
               </span>
-            </a>
+            </LinkComponent>
           </li>
         ))}
       </ul>
