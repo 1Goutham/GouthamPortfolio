@@ -555,23 +555,20 @@ video {
 }
 
 /* The taped photo. `--swing` is driven by the spring in beyond-story.js and
-   the print pivots around the tape, so set `--pivot-y` to where the tape
-   sits in the artwork (fraction of the image height). */
+   the print pivots around the tape, so `--pivot-x` / `--pivot-y` are where
+   the tape sits in the artwork (fractions of the image size). The shadow is
+   baked into the artwork. */
 .beyond-photo {
-  --pivot-y: 6%;
+  --pivot-x: 52%;
+  --pivot-y: 19%;
   --swing: 0deg;
   cursor: default;
   touch-action: pan-y;
 }
 .beyond-photo img {
-  transform-origin: 50% var(--pivot-y);
+  transform-origin: var(--pivot-x) var(--pivot-y);
   transform: rotate(var(--swing));
   will-change: transform;
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.18));
-  transition: filter 0.5s ease;
-}
-.beyond-photo:hover img {
-  filter: drop-shadow(0 22px 30px rgba(0, 0, 0, 0.22));
 }
 
 /* The asterisk turns with the scroll position (see ScrollStar). */

@@ -2,7 +2,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import FadeContent from "./layout/fade-in";
 
-// Tile artwork lives at /public/projects/<id>.png (the icon marks: robot,
+// Tile artwork lives at /public/<id>.png (the icon marks: robot,
 // cap-lock, rounded square, logo). Each tile opens the live product.
 const PROJECTS = [
   { id: "ideako", title: "Ideako", href: "https://ideako.vercel.app/" },
@@ -38,7 +38,7 @@ export default function Projects() {
                   style={{ "--i": i }}
                 >
                   <Image
-                    src={`/projects/${p.id}.png`}
+                    src={`/${p.id}.png`}
                     alt=""
                     width={240}
                     height={240}

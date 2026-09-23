@@ -6,10 +6,9 @@ import { ArrowUpRight } from "lucide-react";
 import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 
-// Drop the taped polaroid in at /public/beyondpic.png. It is shown at its own
-// proportions; the tape at the top of the artwork is the pivot the photo
-// swings from, so `--pivot-y` in globals.css is where that tape sits
-// (fraction of the image height).
+// The taped print at /public/beyondpic.png is shown at its own proportions;
+// the tape in the artwork is the pivot the photo swings from, so
+// `--pivot-x` / `--pivot-y` in globals.css are where that tape sits.
 const PHOTO_SRC = "/beyondpic.png";
 
 const PIPELINE = ["UX research", "design", "development", "AI integration", "deployment"];
@@ -118,14 +117,14 @@ function HangingPhoto({ ready }) {
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       onPointerDown={onPointerDown}
-      className="beyond-photo beyond-rise relative w-[190px] select-none sm:w-[210px] md:w-[240px]"
+      className="beyond-photo beyond-rise relative w-[250px] select-none sm:w-[280px] md:w-[330px]"
       style={{ "--i": 0 }}
     >
       <Image
         src={PHOTO_SRC}
-        width={800}
-        height={920}
-        sizes="(max-width: 640px) 190px, (max-width: 768px) 210px, 240px"
+        width={812}
+        height={1218}
+        sizes="(max-width: 640px) 250px, (max-width: 768px) 280px, 330px"
         alt="A taped-up photo of Goutham"
         priority
         draggable={false}
