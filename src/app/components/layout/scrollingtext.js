@@ -103,10 +103,16 @@ export const ScrollVelocity = ({
     });
 
     const directionFactor = useRef(1);
+    // Under the cursor the marquee eases down to a crawl, so the line can be
+    // read, and eases back up on leave. Refs only: no re-render, no jump.
+    const slow = useRef(false);
+    const speed = useRef(1);
     useAnimationFrame((t, delta) => {
       // Skip all work while the marquee is off-screen.
       if (!inView) return;
-      let moveBy = directionFactor.current * baseVelocity * (delta / 1000);
+      const target = slow.current ? 0.12 : 1;
+      speed.current += (target - speed.current) * Math.min(1, delta / 260);
+      let moveBy = directionFactor.current * baseVelocity * speed.current * (delta / 1000);
 
       if (velocityFactor.get() < 0) {
         directionFactor.current = -1;
@@ -137,6 +143,12 @@ export const ScrollVelocity = ({
         ref={wrapperRef}
         className={`${parallaxClassName ?? ""} relative overflow-hidden`}
         style={parallaxStyle}
+        onPointerEnter={(e) => {
+          if (e.pointerType === "mouse") slow.current = true;
+        }}
+        onPointerLeave={() => {
+          slow.current = false;
+        }}
       >
         <motion.div
           className={`flex whitespace-nowrap text-center drop-shadow will-change-transform ${scrollerClassName ?? ""} ${className ?? ""}`}

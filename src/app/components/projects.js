@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import FadeContent from "./layout/fade-in";
+import BracketHeading from "./layout/bracket-heading";
 import ProjectTile from "./project-tile";
 
 // Tile artwork lives at /public/<id>.png (the icon marks: robot, cap-lock,
@@ -19,7 +20,7 @@ export default function Projects() {
     <section id="projects" className="bg-black px-6 py-16 text-white md:px-12 md:py-28">
       <div className="mx-auto max-w-5xl">
         <FadeContent duration={800} threshold={0.2}>
-          <h2 className="font-anonymous-pro text-3xl md:text-5xl">[Projects]</h2>
+          <BracketHeading className="font-anonymous-pro text-3xl md:text-5xl">Projects</BracketHeading>
           <p className="mt-4 font-outfit text-base text-white/75 md:mt-6 md:text-2xl">
             Products by <span className="font-medium text-white md:text-3xl">1Goutham</span>
           </p>
