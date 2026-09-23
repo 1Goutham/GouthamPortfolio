@@ -400,63 +400,24 @@ video {
 /*  Beyond teaser (homepage)                                           */
 /* ------------------------------------------------------------------ */
 
-/* Geometry, all relative to the section's content column:
-     --fig-w     illustration width as a fraction of the column
-     --card-x    centre of the green "?" card, fraction of the image width
-     --card-top  top edge of that card, fraction of the image height
-     --cta-gap   space between the CTA line and the top of the image
-   The hairline runs from the copy out to --card-x, then drops onto the card. */
+/* Geometry, relative to the section's content column:
+     --fig-w   illustration width as a fraction of the column
+     --card-x  centre of the green "?" card, fraction of the image width
+     --card-y  centre of that card, fraction of the image height */
 .beyond {
   --fig-w: 0.75;
-  --card-x: 0.595;
-  --card-top: 4.5%;
-  --cta-gap: 0.85rem;
-  --cta-lh: 1.5rem;
-  --rise: calc(var(--cta-gap) + var(--cta-lh) / 2);
-}
-@media (min-width: 768px) {
-  .beyond {
-    --cta-gap: 1rem;
-  }
-}
-.beyond-cta {
-  height: var(--cta-lh);
-  line-height: var(--cta-lh);
-  margin-bottom: var(--cta-gap);
-  width: calc((1 - var(--fig-w) + var(--card-x) * var(--fig-w)) * 100%);
-}
-.beyond-cta-text {
-  padding-right: 0.9rem;
+  --card-x: 0.552;
+  --card-y: 0.147;
 }
 .beyond-figure {
   width: calc(var(--fig-w) * 100%);
   margin-left: auto;
 }
-.beyond-line {
-  display: block;
-  background: rgba(255, 255, 255, 0.55);
-  transition: background-color 0.4s ease, transform 0.7s var(--ease-out-expo);
-}
-.beyond-line-h {
-  flex: 1 1 auto;
-  min-width: 0.75rem;
-  height: 1px;
-  transform-origin: left center;
-}
-.beyond-line-v {
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--card-x) * 100%);
-  top: calc(-1 * var(--rise));
-  bottom: calc(100% - var(--card-top));
-  width: 1px;
-  transform-origin: center top;
-}
 
-/* Entrance: copy rises, the line draws out then down, the figure settles in. */
+/* Entrance: the copy rises, then the figure settles in. */
 .beyond-cta-text,
 .beyond-figure {
-  transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo);
+  transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo), color 0.3s ease;
 }
 .beyond[data-inview="false"] .beyond-cta-text {
   opacity: 0;
@@ -466,38 +427,96 @@ video {
   opacity: 0;
   transform: translateY(16px);
 }
-.beyond[data-inview="false"] .beyond-line-h {
-  transform: scaleX(0);
-}
-.beyond[data-inview="false"] .beyond-line-v {
-  transform: scaleY(0);
-}
 .beyond[data-inview="true"] .beyond-figure {
   transition-delay: 0.1s;
 }
-/* Delays apply to the draw (transform) only, so hover colour stays instant. */
-.beyond[data-inview="true"] .beyond-line-h {
-  transition-delay: 0s, 0.45s;
-}
-.beyond[data-inview="true"] .beyond-line-v {
-  transition-delay: 0s, 0.95s;
-}
 
-/* Hover / focus: the line brightens to white, the figure brightens a touch. */
-.beyond-link:hover .beyond-line,
-.beyond-link:focus-visible .beyond-line {
-  background: #fff;
+/* Hover: the copy brightens, the figure leans toward the pointer (the drift
+   vars are set inline) and lifts, and a green bloom comes up behind the card
+   so the card itself answers the hover. */
+.beyond-link:hover .beyond-cta-text,
+.beyond-link:focus-visible .beyond-cta-text {
+  color: #fff;
 }
 .beyond-link:focus-visible .beyond-cta-text {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
 .beyond-figure img {
-  transition: filter 0.6s ease, transform 1.2s var(--ease-out-expo);
+  transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+  transition: transform 0.8s var(--ease-out-expo), filter 0.6s ease;
+  will-change: transform;
 }
-.beyond-link:hover .beyond-figure img {
+.beyond-link:hover .beyond-figure img,
+.beyond-link:focus-visible .beyond-figure img {
   filter: brightness(1.05);
-  transform: translateY(-4px);
+  transform: translate3d(var(--dx, 0px), calc(var(--dy, 0px) - 4px), 0);
+}
+.beyond-glow {
+  position: absolute;
+  left: calc(var(--card-x) * 100%);
+  top: calc(var(--card-y) * 100%);
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(157, 255, 80, 0.55) 0%, rgba(157, 255, 80, 0.16) 38%, transparent 66%);
+  filter: blur(24px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.55);
+  transition: opacity 0.6s ease, transform 1s var(--ease-out-expo);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.beyond-link:hover .beyond-glow,
+.beyond-link:focus-visible .beyond-glow {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* The "[ Beyond ]" label that rides with the cursor over the stage. Its
+   outer span is moved from JS; the pill inside springs open on entry. */
+.beyond-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform;
+}
+.beyond-cursor-pill {
+  display: block;
+  transform: translate(-50%, -50%) scale(0);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: #000;
+  color: #9DFF50;
+  border: 1px solid rgba(157, 255, 80, 0.4);
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.9);
+  transition: transform 0.45s var(--ease-spring), opacity 0.25s ease;
+  opacity: 0;
+}
+.beyond-stage[data-hover="true"] .beyond-cursor-pill {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+/* On a real pointer the label replaces the cursor. */
+@media (hover: hover) and (pointer: fine) {
+  .beyond-stage[data-hover="true"],
+  .beyond-stage[data-hover="true"] a {
+    cursor: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beyond-cursor {
+    display: none;
+  }
+  .beyond-stage[data-hover="true"],
+  .beyond-stage[data-hover="true"] a {
+    cursor: pointer;
+  }
 }
 
 /* Fade to black that TransitionLink lays over the page before it navigates. */
