@@ -964,3 +964,70 @@ video {
 .contact-heading .contact-char {
   transition: transform 0.45s var(--ease-out-expo);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Projects page                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Header rises in once fonts are ready (the page arrives from the veil). */
+.projects-page[data-ready="false"] .projects-rise {
+  opacity: 0;
+}
+.projects-page[data-ready="true"] .projects-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(200ms + var(--i, 0) * 120ms);
+}
+
+/* Every asterisk turns with the scroll position (--turn on the page root). */
+.turn-star {
+  display: inline-block;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+
+/* Row hover: the index turns green and slides in, the logo lights up. */
+.project-index {
+  display: inline-block;
+  transition: color 0.35s ease, transform 0.5s var(--ease-out-expo);
+}
+.project-row:hover .project-index {
+  color: #9DFF50;
+  transform: translateX(6px);
+}
+.project-logo {
+  --mx: 50%;
+  --my: 50%;
+  transform: perspective(500px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.6s var(--ease-out-expo), background-color 0.4s ease;
+  will-change: transform;
+}
+.project-row:hover .project-logo {
+  background-color: #313131;
+}
+.project-row:hover .project-logo .project-tile-light {
+  opacity: 1;
+}
+.project-logo img {
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.project-logo:hover img {
+  transform: translateZ(14px) scale(1.06);
+}
+
+/* Features brighten one after another, left to right, while the row is
+   hovered; a single feature under the cursor tints green. */
+.project-feature {
+  display: inline;
+  white-space: nowrap; /* a feature and its star wrap together */
+  transition: color 0.35s ease;
+  transition-delay: calc(var(--i, 0) * 40ms);
+}
+.project-row:hover .project-feature {
+  color: rgba(255, 255, 255, 0.92);
+}
+.project-feature:hover {
+  color: #9DFF50 !important;
+  transition-delay: 0ms;
+}
