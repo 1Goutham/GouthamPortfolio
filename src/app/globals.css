@@ -986,7 +986,64 @@ video {
   will-change: transform;
 }
 
-/* Row hover: the index turns green and slides in, the logo lights up. */
+/* Row entrance: once the row is in view its pieces rise in order (index,
+   logo, name, tagline, description, then the features one by one, then the
+   actions), each on --i. */
+.project-row[data-inview="false"] .pr-item,
+.project-row[data-inview="false"] .project-feature {
+  opacity: 0;
+}
+.project-row[data-inview="true"] .pr-item {
+  animation: hero-rise 0.85s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+.project-row[data-inview="true"] .project-feature {
+  animation: hero-rise 0.7s var(--ease-out-expo) both;
+  animation-delay: calc(var(--k, 5) * 80ms + var(--i, 0) * 45ms);
+}
+
+/* Row hover: the divider draws green from the left, a spotlight follows the
+   cursor (--rx/--ry), the index turns green and slides in, the logo lights up. */
+.project-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.project-row::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #9DFF50;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s var(--ease-out-expo);
+  pointer-events: none;
+}
+.project-row:hover::after {
+  transform: scaleX(1);
+}
+.project-row > .project-spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    320px circle at var(--rx, 50%) var(--ry, 50%),
+    rgba(255, 255, 255, 0.045),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.project-row:hover > .project-spot {
+  opacity: 1;
+}
 .project-index {
   display: inline-block;
   transition: color 0.35s ease, transform 0.5s var(--ease-out-expo);
@@ -1019,7 +1076,7 @@ video {
 /* Features brighten one after another, left to right, while the row is
    hovered; a single feature under the cursor tints green. */
 .project-feature {
-  display: inline;
+  display: inline-block;
   white-space: nowrap; /* a feature and its star wrap together */
   transition: color 0.35s ease;
   transition-delay: calc(var(--i, 0) * 40ms);

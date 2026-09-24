@@ -178,66 +178,114 @@ function Logo({ id, name }) {
 
 function ProjectRow({ project, index }) {
   const n = String(index + 1).padStart(2, "0");
+  const ref = useRef(null);
+  const raf = useRef(0);
+  const [inView, setInView] = useState(false);
+
+  // Choreograph the row in once it enters the viewport (see .pr-item in CSS).
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  // A soft spotlight follows the cursor across the row.
+  const onPointerMove = useCallback((e) => {
+    const el = ref.current;
+    if (!el || e.pointerType !== "mouse") return;
+    const r = el.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      el.style.setProperty("--rx", `${x.toFixed(0)}px`);
+      el.style.setProperty("--ry", `${y.toFixed(0)}px`);
+    });
+  }, []);
+
+  let k = 0;
+  const item = () => ({ className: "pr-item", style: { "--i": k++ } });
+
   return (
-    <FadeContent duration={900} threshold={0.15}>
-      <article className="project-row grid gap-5 border-t border-white/10 py-12 md:grid-cols-[88px_1fr] md:gap-8 md:py-16">
-        <span className="project-index font-anonymous-pro text-sm text-white/40 md:text-base md:pt-4">{n}</span>
+    <article
+      ref={ref}
+      data-inview={inView}
+      onPointerMove={onPointerMove}
+      className="project-row relative grid gap-5 py-12 md:grid-cols-[88px_1fr_88px] md:gap-8 md:py-16"
+    >
+      <span className="project-spot" aria-hidden="true" />
+      {/* Index sticks beside its row while the row scrolls past on desktop. */}
+      <span className="pr-item project-index font-anonymous-pro text-sm text-white/40 md:sticky md:top-32 md:self-start md:pt-5 md:text-base" style={{ "--i": k++ }}>
+        {n}
+      </span>
 
-        <div>
-          <div className="flex items-center gap-4 md:gap-5">
+      <div>
+        <div className="flex items-center gap-4 md:gap-5">
+          <span {...item()}>
             <Logo id={project.id} name={project.name} />
-            <div className="min-w-0">
-              <BracketHeading as="h2" className="font-anonymous-pro text-2xl leading-none md:text-4xl">
-                {project.name}
-              </BracketHeading>
-              <p className="mt-1.5 font-outfit text-sm font-medium text-white/85 md:mt-2 md:text-base">
-                {project.tagline}
-              </p>
-            </div>
-          </div>
-
-          <p className="mt-6 max-w-2xl font-outfit text-sm font-light leading-relaxed text-white/85 md:mt-7 md:text-base">
-            {project.description}
-          </p>
-
-          {/* Features brighten in order on row hover; each one tints green on its own. */}
-          <p className="project-features mt-5 max-w-2xl font-outfit text-[13px] leading-loose text-white/60 md:mt-6 md:text-sm">
-            {project.features.map((f, i) => (
-              <span key={f} className="project-feature" style={{ "--i": i }}>
-                {f}
-                {i < project.features.length - 1 && <Star className="mx-2 text-[0.85em] text-white/40" />}
-              </span>
-            ))}
-          </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-x-7 gap-y-4 md:mt-8">
-            <a
-              href={project.live}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Explore ${project.name}, opens in a new tab`}
-              className="bracket-link group font-anonymous-pro text-lg text-white md:text-xl"
-            >
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text inline-flex items-center gap-1.5">
-                Explore
-                <ArrowUpRight className="nudge-diag h-[0.9em] w-[0.9em]" strokeWidth={2} aria-hidden="true" />
-              </span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </a>
-            <a
-              href={project.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`${project.name} on GitHub, opens in a new tab`}
-              className="social-btn flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/80"
-            >
-              <Github className="h-[17px] w-[17px]" strokeWidth={1.75} aria-hidden="true" />
-            </a>
+          </span>
+          <div className="min-w-0">
+            <BracketHeading as="h2" style={{ "--i": k++ }} className="pr-item font-anonymous-pro text-2xl leading-none md:text-4xl">
+              {project.name}
+            </BracketHeading>
+            <p {...item()} className="pr-item mt-1.5 font-outfit text-sm font-medium text-white/85 md:mt-2 md:text-base">
+              {project.tagline}
+            </p>
           </div>
         </div>
-      </article>
-    </FadeContent>
+
+        <p {...item()} className="pr-item mt-6 max-w-2xl font-outfit text-sm font-light leading-relaxed text-white/85 md:mt-7 md:text-base">
+          {project.description}
+        </p>
+
+        {/* Features arrive one by one, brighten in order on row hover, and each tints green on its own. */}
+        <p className="project-features mt-5 max-w-2xl font-outfit text-[13px] leading-loose text-white/60 md:mt-6 md:text-sm">
+          {project.features.map((f, i) => (
+            <span key={f} className="project-feature" style={{ "--i": i, "--k": k }}>
+              {f}
+              {i < project.features.length - 1 && <Star className="mx-2 text-[0.85em] text-white/40" />}
+            </span>
+          ))}
+        </p>
+
+        <div {...item()} className="pr-item mt-7 flex flex-wrap items-center gap-x-7 gap-y-4 md:mt-8" style={{ "--i": k + 3 }}>
+          <a
+            href={project.live}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Explore ${project.name}, opens in a new tab`}
+            className="bracket-link group font-anonymous-pro text-lg text-white md:text-xl"
+          >
+            <span className="bracket-link-l" aria-hidden="true">[</span>
+            <span className="bracket-link-text inline-flex items-center gap-1.5">
+              Explore
+              <ArrowUpRight className="nudge-diag h-[0.9em] w-[0.9em]" strokeWidth={2} aria-hidden="true" />
+            </span>
+            <span className="bracket-link-r" aria-hidden="true">]</span>
+          </a>
+          <a
+            href={project.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${project.name} on GitHub, opens in a new tab`}
+            className="social-btn flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-white/80"
+          >
+            <Github className="h-[17px] w-[17px]" strokeWidth={1.75} aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -281,7 +329,7 @@ export default function ProjectsIndex() {
         </TransitionLink>
       </nav>
 
-      <div className="mx-auto max-w-3xl px-6 pb-24 pt-10 md:px-12 md:pb-32 md:pt-16">
+      <div className="mx-auto max-w-4xl px-6 pb-24 pt-10 md:px-12 md:pb-32 md:pt-16">
         {/* Title row, centred like the Beyond page's name row. */}
         <header className="projects-rise flex items-center justify-center gap-4 md:gap-5" style={{ "--i": 0 }}>
           <BracketHeading as="h1" className="font-anonymous-pro text-xl md:text-3xl">
@@ -302,7 +350,7 @@ export default function ProjectsIndex() {
         </div>
 
         <FadeContent duration={900} threshold={0.2} className="mt-12 md:mt-16">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 md:pl-[120px]">
             <TransitionLink href="/" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
               <span className="bracket-link-text">Back home</span>
