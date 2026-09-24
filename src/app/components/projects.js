@@ -1,5 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import FadeContent from "./layout/fade-in";
+import TransitionLink from "./layout/transition-link";
 import BracketHeading from "./layout/bracket-heading";
 import ProjectTile from "./project-tile";
 
@@ -12,8 +13,6 @@ const PROJECTS = [
   { id: "ideaguard", title: "IdeaGuard AI", href: "https://ideaguard-ai-zeta.vercel.app/" },
 ];
 
-// Where "Explore more" goes. Point this at the projects page once it exists.
-const EXPLORE_HREF = "https://github.com/1Goutham";
 
 export default function Projects() {
   return (
@@ -44,15 +43,13 @@ export default function Projects() {
             approach the journey from concept and design to development and implementation.
           </p>
 
-          <a
-            href={EXPLORE_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
+          <TransitionLink
+            href="/projects"
             className="btn-tactile group mt-8 inline-flex h-11 items-center gap-1.5 rounded-lg bg-white px-6 font-outfit text-sm font-medium text-black shadow-md hover:bg-[#f2f2f2] md:mt-10 md:text-base"
           >
             Explore more
             <ArrowUpRight className="nudge-diag h-4 w-4" strokeWidth={2} aria-hidden="true" />
-          </a>
+          </TransitionLink>
         </FadeContent>
       </div>
     </section>
