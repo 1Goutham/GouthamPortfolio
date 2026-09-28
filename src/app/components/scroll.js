@@ -8,11 +8,9 @@ export default function Scrolltext() {
       <ScrollVelocity
         texts={[
           <span key="line1">
-            <span className="font-semibold">Research</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
-            <span className="font-semibold">Design</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
-            <span className="font-semibold">Build</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
-            <span className="font-semibold">Ship</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
-            Notice the <span className="font-semibold">2px</span>&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>
+            Good <span className="font-semibold">design</span> makes you stay&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
+            Solid <span className="font-semibold">code</span> makes it work&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>&nbsp;&nbsp;&nbsp;&nbsp;
+            The right <span className="font-semibold">AI</span> makes it think&nbsp;&nbsp;&nbsp;&nbsp;<span className="marquee-star">✦</span>
           </span>,
         ]}
         velocity={50}
