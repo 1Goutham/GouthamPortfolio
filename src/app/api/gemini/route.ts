@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { answer, GeminiError, type Turn } from '@/lib/gtalk';
+import { answer, ProviderError, type Turn } from '@/lib/gtalk';
 
 export const runtime = 'nodejs';
 
@@ -31,13 +31,13 @@ function parseHistory(raw: unknown): Turn[] {
 }
 
 /**
- * Map an upstream Gemini failure to what the visitor should see. Gemini's own
- * message rides along as `detail` (it never contains the key) so the cause is
- * visible in the browser as well as the server log.
+ * Map an upstream provider failure to what the visitor should see. The
+ * provider's own message rides along as `detail` (it never contains the key)
+ * so the cause is visible in the browser as well as the server log.
  */
-function upstreamError(err: GeminiError): { status: number; error: string; detail: string } {
-  const detail = err.message.replace(/^Gemini .*? failed \(\d+\): /, '');
-  const keyRejected = err.status === 403 || (err.status === 400 && /api key/i.test(err.message));
+function upstreamError(err: ProviderError): { status: number; error: string; detail: string } {
+  const detail = err.message.replace(/^(Gemini|Grok) .*? failed \(\d+\): /, '');
+  const keyRejected = err.status === 401 || err.status === 403 || (err.status === 400 && /api key/i.test(err.message));
   if (keyRejected) return { status: 403, error: 'The assistant is not configured correctly.', detail };
   if (err.status === 429) return { status: 429, error: 'Too many questions right now. Give it a moment.', detail };
   if (err.status === 504) return { status: 504, error: 'The assistant took too long to reply. Please try again.', detail };
@@ -69,13 +69,13 @@ export async function POST(req: NextRequest) {
     const result = await answer(question, parseHistory(body.history));
     return NextResponse.json(result);
   } catch (err) {
-    if (err instanceof GeminiError) {
+    if (err instanceof ProviderError) {
       console.error(err.message);
       const { status, error, detail } = upstreamError(err);
       return NextResponse.json({ error, detail }, { status });
     }
     console.error('G-Talk error:', err);
-    const message = err instanceof Error && err.message.includes('GEMINI_API_KEY') ? 'Assistant is not configured.' : 'Internal Server Error';
+    const message = err instanceof Error && /API_KEY|No provider configured/.test(err.message) ? 'Assistant is not configured.' : 'Internal Server Error';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
