@@ -22,17 +22,17 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## G-Talk (chatbot)
 
-G-Talk answers visitor questions with a single Gemini call per question:
+G-Talk answers visitor questions with a single model call per question, through xAI's Grok or Google's Gemini:
 
 1. The knowledge base in `src/data/knowledge.ts` is a short list of entries about Goutham (bio, experience, skills, projects, contact).
-2. `src/lib/gtalk.ts` folds the whole list into the system prompt, grouped by section, and asks `gemini-3.6-flash` to answer only from it. The last few turns of the conversation are sent along for follow-ups.
+2. `src/lib/gtalk.ts` folds the whole list into the system prompt, grouped by section, and asks the model (`grok-4-fast` or `gemini-3.6-flash`) to answer only from it. The last few turns of the conversation are sent along for follow-ups. When both providers are configured the first is tried and the other answers if it fails.
 3. The API route `src/app/api/gemini/route.ts` validates the request, applies a light per-IP rate limit and returns `{ reply }`.
 
 There is no embedding or retrieval step, so nothing needs to be indexed or warmed up.
 
 ### Setup
 
-Copy `.env.example` to `.env.local` and set `GEMINI_API_KEY` (from Google AI Studio). `GEMINI_CHAT_MODEL` is an optional override.
+Copy `.env.example` to `.env.local` and set `XAI_API_KEY` (from console.x.ai) and/or `GEMINI_API_KEY` (from Google AI Studio). Either one is enough; with both, Grok goes first unless `GTALK_PROVIDER=gemini`. `XAI_CHAT_MODEL` and `GEMINI_CHAT_MODEL` are optional overrides.
 
 ### Adding knowledge
 

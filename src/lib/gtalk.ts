@@ -3,27 +3,41 @@ import { KNOWLEDGE } from '../data/knowledge';
 /**
  * G-Talk answering, kept deliberately simple:
  *
- *   question ──► Gemini (knowledge base in the system prompt) ──► reply
+ *   question ──► Grok or Gemini (knowledge base in the system prompt) ──► reply
  *
  * The knowledge base is small enough to hand to the model whole, so there is
- * no embedding step, no index to build and exactly one API call per question.
+ * no embedding step, no index to build and one API call per question.
+ *
+ * Two providers are wired in: xAI's Grok (OpenAI-compatible chat completions)
+ * and Google's Gemini. Whichever keys are set are used; when both are, the
+ * first one is tried and the other answers if it fails. GTALK_PROVIDER picks
+ * which goes first ("grok" or "gemini"); unset, Grok goes first when its key
+ * is present.
  */
 
 const API_BASE = process.env.GEMINI_API_BASE || 'https://generativelanguage.googleapis.com/v1beta';
 const CHAT_MODEL = process.env.GEMINI_CHAT_MODEL || 'gemini-3.6-flash';
+const XAI_API_BASE = process.env.XAI_API_BASE || 'https://api.x.ai/v1';
+const XAI_CHAT_MODEL = process.env.XAI_CHAT_MODEL || 'grok-4-fast';
 const TIMEOUT_MS = 25_000;
 const HISTORY_TURNS = 6;
 
 export type Turn = { role: 'user' | 'model'; text: string };
-export type Answer = { reply: string };
+export type Provider = 'grok' | 'gemini';
+export type Answer = { reply: string; provider: Provider };
 
-export class GeminiError extends Error {
+/** An upstream model call that failed. `provider` names which one. */
+export class ProviderError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  provider: Provider;
+  constructor(provider: Provider, status: number, message: string) {
     super(message);
     this.status = status;
+    this.provider = provider;
   }
 }
+/** Kept for callers that still import the old name. */
+export const GeminiError = ProviderError;
 
 const FALLBACK_REPLY = "I'm not sure how to answer that. Try asking about Goutham's skills, projects or experience.";
 
@@ -76,7 +90,7 @@ async function call(key: string, path: string, init: RequestInit = {}): Promise<
     });
   } catch (err) {
     const reason = err instanceof Error ? err.message : String(err);
-    throw new GeminiError(504, `Gemini request failed: ${reason}`);
+    throw new ProviderError('gemini', 504, `Gemini request failed: ${reason}`);
   }
 }
 
@@ -117,7 +131,7 @@ function replyText(data: GenerateResponse): string {
   );
 }
 
-export async function answer(question: string, history: Turn[] = []): Promise<Answer> {
+async function askGemini(question: string, history: Turn[]): Promise<Answer> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
 
@@ -164,7 +178,7 @@ export async function answer(question: string, history: Turn[] = []): Promise<An
 
   if (!res.ok) {
     const detail = await res.text().catch(() => '');
-    throw new GeminiError(res.status, `Gemini ${model} failed (${res.status}): ${geminiMessage(detail)}`);
+    throw new ProviderError('gemini', res.status, `Gemini ${model} failed (${res.status}): ${geminiMessage(detail)}`);
   }
 
   let data = (await res.json()) as GenerateResponse;
@@ -177,5 +191,98 @@ export async function answer(question: string, history: Turn[] = []): Promise<An
   }
 
   const reply = replyText(data);
-  return { reply: reply || FALLBACK_REPLY };
+  return { reply: reply || FALLBACK_REPLY, provider: 'gemini' };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Grok (xAI)                                                          */
+/* ------------------------------------------------------------------ */
+
+type ChatCompletion = {
+  choices?: { message?: { content?: string }; finish_reason?: string }[];
+};
+
+async function askGrok(question: string, history: Turn[]): Promise<Answer> {
+  const key = process.env.XAI_API_KEY;
+  if (!key) throw new Error('XAI_API_KEY is not set');
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...history.slice(-HISTORY_TURNS).map((t) => ({ role: t.role === 'model' ? 'assistant' : 'user', content: t.text })),
+    { role: 'user', content: question },
+  ];
+  const body = (max_tokens: number) => ({
+    model: XAI_CHAT_MODEL,
+    messages,
+    temperature: 0.3,
+    max_tokens,
+    stream: false,
+  });
+
+  const post = async (max_tokens: number): Promise<Response> => {
+    try {
+      return await fetch(`${XAI_API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
+        body: JSON.stringify(body(max_tokens)),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      throw new ProviderError('grok', 504, `Grok request failed: ${reason}`);
+    }
+  };
+
+  let res = await post(1024);
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '');
+    throw new ProviderError('grok', res.status, `Grok ${XAI_CHAT_MODEL} failed (${res.status}): ${geminiMessage(detail)}`);
+  }
+  let data = (await res.json()) as ChatCompletion;
+
+  // Same guard as Gemini: never hand back half a sentence.
+  if (data.choices?.[0]?.finish_reason === 'length') {
+    res = await post(4096);
+    if (res.ok) data = (await res.json()) as ChatCompletion;
+  }
+
+  const reply = data.choices?.[0]?.message?.content?.trim() ?? '';
+  return { reply: reply || FALLBACK_REPLY, provider: 'grok' };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Provider selection                                                  */
+/* ------------------------------------------------------------------ */
+
+/** Providers with a key set, in the order to try them. */
+export function providerOrder(): Provider[] {
+  const hasGrok = Boolean(process.env.XAI_API_KEY);
+  const hasGemini = Boolean(process.env.GEMINI_API_KEY);
+  const preferred = (process.env.GTALK_PROVIDER || '').toLowerCase();
+  const order: Provider[] = preferred === 'gemini' ? ['gemini', 'grok'] : ['grok', 'gemini'];
+  return order.filter((p) => (p === 'grok' ? hasGrok : hasGemini));
+}
+
+const ASK: Record<Provider, (q: string, h: Turn[]) => Promise<Answer>> = { grok: askGrok, gemini: askGemini };
+
+/**
+ * Answer with the first configured provider; if it fails upstream (bad key,
+ * quota, outage, timeout) and another is configured, answer with that one
+ * instead. Only the last failure is thrown.
+ */
+export async function answer(question: string, history: Turn[] = []): Promise<Answer> {
+  const order = providerOrder();
+  if (order.length === 0) throw new Error('No provider configured: set XAI_API_KEY and/or GEMINI_API_KEY');
+
+  let lastError: unknown;
+  for (const provider of order) {
+    try {
+      return await ASK[provider](question, history);
+    } catch (err) {
+      lastError = err;
+      if (!(err instanceof ProviderError)) throw err;
+      console.error(`G-Talk: ${provider} failed, ${order.indexOf(provider) < order.length - 1 ? 'trying the next provider' : 'no provider left'}:`, err.message);
+    }
+  }
+  throw lastError;
 }
