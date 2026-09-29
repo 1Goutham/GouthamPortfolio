@@ -50,7 +50,7 @@ KNOWLEDGE:
 ${knowledgeText()}`;
 
 type GenerateResponse = {
-  candidates?: { content?: { parts?: { text?: string }[] } }[];
+  candidates?: { content?: { parts?: { text?: string; thought?: boolean }[] }; finishReason?: string }[];
   promptFeedback?: { blockReason?: string };
 };
 
@@ -106,6 +106,17 @@ async function generate(key: string, model: string, body: unknown): Promise<Resp
   return call(key, `models/${model}:generateContent`, { method: 'POST', body: JSON.stringify(body) });
 }
 
+/** Visible text of the first candidate (thought parts, when present, are skipped). */
+function replyText(data: GenerateResponse): string {
+  return (
+    data.candidates?.[0]?.content?.parts
+      ?.filter((p) => !p.thought)
+      .map((p) => p.text ?? '')
+      .join('')
+      .trim() ?? ''
+  );
+}
+
 export async function answer(question: string, history: Turn[] = []): Promise<Answer> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY is not set');
@@ -114,21 +125,40 @@ export async function answer(question: string, history: Turn[] = []): Promise<An
     ...history.slice(-HISTORY_TURNS).map((t) => ({ role: t.role, parts: [{ text: t.text }] })),
     { role: 'user', parts: [{ text: question }] },
   ];
-  const body = {
+
+  // On the current Flash models the output budget is shared with the model's
+  // hidden "thinking" tokens, so a small cap cuts the visible answer off
+  // mid-sentence. Give it room, and ask the model not to think out loud for
+  // what is a short factual reply. Older models reject thinkingConfig, so fall
+  // back to a plain request on a 400 that names it.
+  const makeBody = (maxOutputTokens: number, thinking: boolean) => ({
     systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
     contents,
-    generationConfig: { temperature: 0.3, maxOutputTokens: 400 },
-  };
+    generationConfig: {
+      temperature: 0.3,
+      maxOutputTokens,
+      ...(thinking ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+    },
+  });
 
   let model = discoveredModel ?? CHAT_MODEL;
-  let res = await generate(key, model, body);
+  let thinking = true;
+  let res = await generate(key, model, makeBody(1024, thinking));
+
+  if (res.status === 400) {
+    const detail = await res.clone().text().catch(() => '');
+    if (/thinking/i.test(detail)) {
+      thinking = false;
+      res = await generate(key, model, makeBody(1024, thinking));
+    }
+  }
 
   // The configured model is gone for this key: find one that works and retry once.
   if (res.status === 404 && !process.env.GEMINI_CHAT_MODEL) {
     const found = await discoverModel(key);
     if (found && found !== model) {
       model = found;
-      res = await generate(key, model, body);
+      res = await generate(key, model, makeBody(1024, thinking));
     }
   }
 
@@ -137,7 +167,15 @@ export async function answer(question: string, history: Turn[] = []): Promise<An
     throw new GeminiError(res.status, `Gemini ${model} failed (${res.status}): ${geminiMessage(detail)}`);
   }
 
-  const data = (await res.json()) as GenerateResponse;
-  const reply = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? '').join('').trim();
+  let data = (await res.json()) as GenerateResponse;
+
+  // Ran out of budget anyway (a model that insists on thinking): retry once
+  // with a much larger cap rather than hand back half a sentence.
+  if (data.candidates?.[0]?.finishReason === 'MAX_TOKENS') {
+    const retry = await generate(key, model, makeBody(4096, thinking));
+    if (retry.ok) data = (await retry.json()) as GenerateResponse;
+  }
+
+  const reply = replyText(data);
   return { reply: reply || FALLBACK_REPLY };
 }
