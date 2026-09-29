@@ -218,7 +218,7 @@ export default function BeyondStory() {
 
         <div className="mt-8 space-y-6 md:mt-10">
           <p className={`beyond-rise ${para}`} style={{ "--i": 3 }}>
-            <span className="font-bold text-black">Hey, hello. Vanakkam!</span> I&rsquo;m Goutham. I&rsquo;m a little curious,
+            <span className="font-bold text-black">Hey, Vanakkam!</span> I&rsquo;m Goutham. I&rsquo;m a little curious,
             a little obsessive, and I tend to notice small things - sometimes a little too much. I can spend a
             surprising amount of time wondering if something is{" "}
             {/* It is. Hover it and it settles into place. */}
@@ -300,6 +300,22 @@ export default function BeyondStory() {
             </p>
           </FadeContent>
         </div>
+
+        <FadeContent duration={900} threshold={0.2} className="mt-14 md:mt-20">
+          <span className="block h-px w-full bg-black/15" aria-hidden="true" />
+          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 md:mt-10">
+            <TransitionLink href="/" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-2xl">
+              <span className="bracket-link-l" aria-hidden="true">[</span>
+              <span className="bracket-link-text">Back home</span>
+              <span className="bracket-link-r" aria-hidden="true">]</span>
+            </TransitionLink>
+            <TransitionLink href="/#contact" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-2xl">
+              <span className="bracket-link-l" aria-hidden="true">[</span>
+              <span className="bracket-link-text">Let&rsquo;s talk</span>
+              <span className="bracket-link-r" aria-hidden="true">]</span>
+            </TransitionLink>
+          </div>
+        </FadeContent>
       </article>
     </main>
   );

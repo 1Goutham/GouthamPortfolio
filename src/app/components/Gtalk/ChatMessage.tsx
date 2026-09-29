@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { useTypingEffect } from "./useTypingEffect";
 
 interface ChatMessageProps {
@@ -15,6 +15,14 @@ export default function ChatMessage({ userQuestion, botReply }: ChatMessageProps
   const typedText = useTypingEffect(botReplyStr);
   const isString = typeof botReply === "string";
 
+  // The reply box scrolls, but its scrollbar is hidden: keep the newest line
+  // in view as the text types out so a long answer never looks cut off.
+  const boxRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = boxRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [typedText]);
+
   return (
     <div className="w-full flex justify-center items-start px-4 py-6">
       <div className="rise-in w-full max-w-3xl h-[450px] md:h-[220px] bg-[#F2F2F2] rounded-xl p-6 flex md:flex-row flex-col justify-between items-start overflow-hidden">
@@ -23,6 +31,7 @@ export default function ChatMessage({ userQuestion, botReply }: ChatMessageProps
             {userQuestion}
           </p>
           <div
+            ref={boxRef}
             data-lenis-prevent
             className="text-sm md:text-lg text-gray-800 leading-relaxed overflow-y-auto md:pr-2 h-40 md:h-full scrollbar-hide"
           >
