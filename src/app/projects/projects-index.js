@@ -17,7 +17,7 @@ const NAV_ITEMS = [
 ];
 
 // Logos live at /public/<id>.png (the homepage marks); full-page phone captures
-// of each product live at /public/screens/.
+// of each product live at the root of /public.
 const PROJECTS = [
   {
     id: "ideako",
@@ -37,7 +37,8 @@ const PROJECTS = [
     ],
     live: "https://ideako.vercel.app/",
     github: "https://github.com/1Goutham/Ideako",
-    screen: "/screens/Ideakoss.jpg",
+    screen: "/Ideakoss.jpg",
+    screenBg: "#efeeea",
   },
   {
     id: "ztudylock",
@@ -57,7 +58,8 @@ const PROJECTS = [
     ],
     live: "https://ztudylock.vercel.app/",
     github: "https://github.com/1Goutham/ZtudyLock",
-    screen: "/screens/ZLss.jpg",
+    screen: "/ZLss.jpg",
+    screenBg: "#0a0a0a",
   },
   {
     id: "fabricnest",
@@ -77,7 +79,8 @@ const PROJECTS = [
     ],
     live: "https://aiecommerce-site.vercel.app/",
     github: "https://github.com/1Goutham/fabric-store",
-    screen: "/screens/FNss.jpg",
+    screen: "/FNss.jpg",
+    screenBg: "#0a0a0a",
   },
   {
     id: "ideaguard",
@@ -97,7 +100,8 @@ const PROJECTS = [
     ],
     live: "https://ideaguard-ai-zeta.vercel.app/",
     github: "https://github.com/1Goutham/IdeaGuardAI",
-    screen: "/screens/IGss.jpg",
+    screen: "/IGss.jpg",
+    screenBg: "#0f0f0f",
   },
 ];
 
@@ -295,7 +299,7 @@ function ProjectRow({ project, index }) {
 
       {/* The phone: a short tour of the product. Centred under the text on phones. */}
       <div className="flex justify-center pt-4 md:justify-end md:pt-0">
-        <Phone src={project.screen} alt={`${project.name} on a phone`} />
+        <Phone src={project.screen} bg={project.screenBg} alt={`${project.name} on a phone`} />
       </div>
     </article>
   );

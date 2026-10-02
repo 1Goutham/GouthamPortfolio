@@ -16,7 +16,7 @@ import { useCallback, useEffect, useRef } from "react";
  *
  * The frame is drawn with gradients and stacked shadows: no image assets.
  */
-export default function Phone({ src, alt, className = "" }) {
+export default function Phone({ src, alt, bg = "#000", className = "" }) {
   const stage = useRef(null);
   const body = useRef(null);
   const sim = useRef({ rx: 0, ry: 0, tx: 0, ty: 0, raf: 0, on: false });
@@ -79,6 +79,7 @@ export default function Phone({ src, alt, className = "" }) {
       onPointerMove={onPointerMove}
       onPointerLeave={onPointerLeave}
       className={`phone-stage ${className}`}
+      style={{ "--screen-bg": bg }}
     >
       <div ref={body} className="phone">
         <span className="phone-btn phone-btn-mute" aria-hidden="true" />

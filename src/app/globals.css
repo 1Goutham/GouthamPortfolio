@@ -1347,7 +1347,7 @@ video {
   inset: 8px;
   border-radius: calc(var(--radius) - 8px);
   overflow: hidden;
-  background: #000;
+  background: var(--screen-bg, #000); /* the page's own colour shows below a short capture */
   container-type: size;
   transform: translateZ(1px);
 }
