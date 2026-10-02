@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
+import Asterisk from "../components/layout/asterisk";
 
 // The taped print at /public/beyondpic.png is shown at its own proportions;
 // the tape in the artwork is the pivot the photo swings from, so
@@ -157,8 +158,8 @@ function ScrollStar() {
     };
   }, []);
   return (
-    <span ref={ref} className="beyond-star font-outfit text-2xl leading-none text-black md:text-3xl" aria-hidden="true">
-      &#10035;
+    <span ref={ref} className="beyond-star text-2xl leading-none text-black md:text-3xl" aria-hidden="true">
+      <Asterisk />
     </span>
   );
 }
