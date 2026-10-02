@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useRef } from "react";
 import Image from "next/image";
 import ScrollReveal from "./layout/scrollreveal";
 import AnimatedContent from "./layout/movement";
@@ -12,29 +11,6 @@ const TAGLINE = ["AI,", "Code", "&", "Product."];
 const SKILLS_IMAGE_SRC = "/skills-portrait.png";
 
 export default function Skills() {
-  // The radar leans a few degrees toward the cursor, like the hero portrait.
-  const frameRef = useRef(null);
-  const raf = useRef(0);
-  const onPointerMove = useCallback((e) => {
-    const el = frameRef.current;
-    if (!el || e.pointerType !== "mouse") return;
-    const r = el.getBoundingClientRect();
-    const px = (e.clientX - r.left) / r.width - 0.5;
-    const py = (e.clientY - r.top) / r.height - 0.5;
-    if (raf.current) return;
-    raf.current = requestAnimationFrame(() => {
-      raf.current = 0;
-      el.style.setProperty("--tilt-x", `${(-py * 10).toFixed(2)}deg`);
-      el.style.setProperty("--tilt-y", `${(px * 12).toFixed(2)}deg`);
-    });
-  }, []);
-  const onPointerLeave = useCallback(() => {
-    const el = frameRef.current;
-    if (!el) return;
-    el.style.setProperty("--tilt-x", "0deg");
-    el.style.setProperty("--tilt-y", "0deg");
-  }, []);
-
   return (
     <div
       id="skills"
@@ -51,7 +27,10 @@ export default function Skills() {
           scale={1.03}
           threshold={0.15}
         >
-          <div ref={frameRef} onPointerMove={onPointerMove} onPointerLeave={onPointerLeave} className="skills-radar">
+          {/* Hover: a radar sweep turns around the chart's circle (geometry in CSS). */}
+          <div className="skills-radar relative">
+            <span className="skills-sweep" aria-hidden="true" />
+            <span className="skills-ring" aria-hidden="true" />
             <Image
               className="w-[280px] md:w-[440px] aspect-square object-contain"
               src={SKILLS_IMAGE_SRC}
