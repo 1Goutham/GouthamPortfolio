@@ -24,7 +24,7 @@ gsap.registerPlugin(ScrollTrigger);
 // ---------------------------------------------------------------------------
 const CONTACT = {
   email: 'gouthamgopinath.tsi@gmail.com',
-  location: 'Chennai, India',
+  location: 'Coimbatore, India',
 };
 
 const SOCIALS = [

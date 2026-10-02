@@ -7,6 +7,7 @@ import MinimalNav from "../components/layout/navbar";
 import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 import BracketHeading from "../components/layout/bracket-heading";
+import Asterisk from "../components/layout/asterisk";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
@@ -124,7 +125,7 @@ function useScrollTurn(rootRef) {
 function Star({ className = "" }) {
   return (
     <span className={`turn-star ${className}`} aria-hidden="true">
-      &#10035;
+      <Asterisk />
     </span>
   );
 }

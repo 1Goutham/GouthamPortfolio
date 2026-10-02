@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { Waveform } from "@uiball/loaders";
 import ChatMessage from "./Gtalk/ChatMessage";
 import InputBox from "./Gtalk/InputBox";
+import Asterisk from "./layout/asterisk";
 
 // The ஜி-Talk lettering lives at /public/G-talk-logo.png.
 const LOGO_SRC = "/G-talk-logo.png";
@@ -117,7 +118,7 @@ export default function Gtalk() {
 
   return (
     <section id="Gtalk" className="gtalk bg-black px-6 py-16 font-outfit text-white md:px-12 md:py-24" data-mood={mood}>
-      <div className="gtalk-card mx-auto grid max-w-5xl overflow-hidden rounded-2xl md:grid-cols-[38%_1fr]">
+      <div className="gtalk-card mx-auto grid max-w-7xl overflow-hidden rounded-2xl md:grid-cols-[36%_1fr]">
         {/* Left: identity panel */}
         <div className="gtalk-id relative flex flex-col items-center justify-between bg-white px-6 py-8 text-black md:py-10">
           <p className="gtalk-caption text-xs text-black/80 md:text-sm">
@@ -143,7 +144,7 @@ export default function Gtalk() {
               <span className="bracket-link-r" aria-hidden="true">]</span>
             </span>
             <span ref={starRef} className="turn-star text-lg leading-none md:text-xl" aria-hidden="true">
-              &#10035;
+              <Asterisk />
             </span>
             <p className="leading-tight">
               <span className="block text-[11px] font-bold md:text-xs">Conversations</span>
