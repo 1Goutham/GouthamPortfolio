@@ -8,7 +8,13 @@ import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 import BracketHeading from "../components/layout/bracket-heading";
 import Asterisk from "../components/layout/asterisk";
-import Phone from "../components/layout/phone";
+import dynamic from "next/dynamic";
+
+// The 3D phone needs WebGL and the browser, so it loads client-side only.
+const Phone3D = dynamic(() => import("../components/layout/phone3d"), {
+  ssr: false,
+  loading: () => <div className="phone3d" aria-hidden="true" />,
+});
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
@@ -233,7 +239,7 @@ function ProjectRow({ project, index }) {
       ref={ref}
       data-inview={inView}
       onPointerMove={onPointerMove}
-      className="project-row relative grid gap-6 py-12 md:grid-cols-[72px_minmax(0,1fr)_300px] md:items-center md:gap-10 md:py-20"
+      className="project-row relative grid gap-6 py-12 md:grid-cols-[72px_minmax(0,1fr)_320px] md:items-center md:gap-10 md:py-20"
     >
       <span className="project-spot" aria-hidden="true" />
       {/* Index sticks beside its row while the row scrolls past on desktop. */}
@@ -298,8 +304,8 @@ function ProjectRow({ project, index }) {
       </div>
 
       {/* The phone: a short tour of the product. Centred under the text on phones. */}
-      <div className="flex justify-center pt-4 md:justify-end md:pt-0">
-        <Phone src={project.screen} bg={project.screenBg} alt={`${project.name} on a phone`} />
+      <div className="flex justify-center pt-2 md:justify-end md:pt-0">
+        <Phone3D src={project.screen} bg={project.screenBg} />
       </div>
     </article>
   );
