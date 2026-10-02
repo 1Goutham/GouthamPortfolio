@@ -807,76 +807,76 @@ video {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Project tiles                                                      */
+/*  Projects teaser (homepage)                                         */
 /* ------------------------------------------------------------------ */
 
-/* Flat dark squares. A soft spotlight (--mx/--my) tracks the cursor across
-   the tile, the icon leans toward it (--px/--py), the tile lifts, and the
-   product name slides in along the bottom. Hovering one tile steps the
-   others back a touch so the row reads as one object. */
-.project-tile {
-  --mx: 50%;
-  --my: 50%;
+/* Entrance: everything rises in on --i once the section is in view. */
+.projects[data-inview="false"] .projects-rise {
+  opacity: 0;
+}
+.projects[data-inview="true"] .projects-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* The character idles with a float and leans toward whichever mark is
+   hovered (--hot is the mark's index, -1 for none). */
+.projects-char {
+  animation: float-y 6s ease-in-out infinite;
+}
+.projects-char img {
+  transform-origin: 50% 100%;
+  transition: transform 0.6s var(--ease-spring);
+}
+.projects:has(.project-mark:hover) .projects-char img,
+.projects:has(.project-mark:focus-visible) .projects-char img {
+  transform: translateX(calc(4px + var(--hot, 0) * 2px)) rotate(calc(-2deg - var(--hot, 0) * 1deg)) scale(1.04);
+}
+
+/* Marks: ring and lift on hover, the icon pops, the name floats up; the
+   other marks step back while one is hovered. */
+.project-mark {
   transition:
-    background-color 0.4s ease,
-    transform 0.55s var(--ease-out-expo),
-    opacity 0.45s ease,
-    box-shadow 0.55s var(--ease-out-expo);
+    background-color 0.3s ease,
+    transform 0.45s var(--ease-out-expo),
+    box-shadow 0.45s var(--ease-out-expo),
+    opacity 0.35s ease;
   will-change: transform;
 }
-.project-tile:hover,
-.project-tile:focus-visible {
-  background-color: #313131;
-  transform: translateY(-5px);
-  box-shadow: 0 28px 44px -26px rgba(0, 0, 0, 0.95);
+.project-mark:hover,
+.project-mark:focus-visible {
+  background-color: #383838;
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 18px 30px -18px rgba(0, 0, 0, 0.9);
 }
-.project-tile:focus-visible {
+.project-mark:focus-visible {
   box-shadow: 0 0 0 2px #9DFF50;
 }
-.project-tile:active {
-  transform: translateY(-2px) scale(0.985);
+.project-mark:active {
+  transform: translateY(-1px) scale(0.95);
   transition-duration: 0.1s;
 }
-.project-tile-light {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    140px circle at var(--mx) var(--my),
-    rgba(255, 255, 255, 0.13),
-    rgba(255, 255, 255, 0.04) 45%,
-    transparent 70%
-  );
+.project-mark-icon {
+  transition: transform 0.5s var(--ease-spring);
+}
+.project-mark:hover .project-mark-icon,
+.project-mark:focus-visible .project-mark-icon {
+  transform: scale(1.14);
+}
+.project-mark-name {
   opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
+  transform: translate(-50%, 6px) scale(0.92);
+  transform-origin: bottom center;
+  transition: opacity 0.25s ease, transform 0.45s var(--ease-spring);
 }
-.project-tile:hover .project-tile-light,
-.project-tile:focus-visible .project-tile-light {
+.project-mark:hover .project-mark-name,
+.project-mark:focus-visible .project-mark-name {
   opacity: 1;
-}
-.project-tile-icon {
-  transform: translate3d(var(--px, 0px), var(--py, 0px), 0);
-  transition: transform 0.7s var(--ease-out-expo), filter 0.4s ease;
-  will-change: transform;
-}
-.project-tile:hover .project-tile-icon,
-.project-tile:focus-visible .project-tile-icon {
-  transform: translate3d(var(--px, 0px), calc(var(--py, 0px) - 7%), 0) scale(1.05);
-  filter: brightness(1.08);
-}
-.project-tile-name {
-  opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.35s ease, transform 0.5s var(--ease-out-expo);
-}
-.project-tile:hover .project-tile-name,
-.project-tile:focus-visible .project-tile-name {
-  opacity: 1;
-  transform: translateY(0);
+  transform: translate(-50%, 0) scale(1);
 }
 @media (hover: hover) {
-  .project-grid:has(.project-tile:hover) .project-tile:not(:hover) {
-    opacity: 0.55;
+  .projects-marks:has(.project-mark:hover) .project-mark:not(:hover) {
+    opacity: 0.5;
   }
 }
 
@@ -1108,6 +1108,19 @@ video {
 }
 .project-row:hover .project-logo {
   background-color: #313131;
+}
+.project-tile-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    140px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0.04) 45%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
 }
 .project-row:hover .project-logo .project-tile-light {
   opacity: 1;
