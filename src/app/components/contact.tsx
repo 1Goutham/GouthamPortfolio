@@ -51,7 +51,7 @@ function SplitHeading({
   ...rest
 }: { text: string; className?: string } & React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <h1 className={className} aria-label={text} {...rest}>
+    <h2 className={className} aria-label={text} {...rest}>
       {text.split(' ').map((word, wi) => (
         <span key={wi} className="inline-block overflow-hidden align-bottom pb-[0.08em]" aria-hidden="true">
           {word.split('').map((ch, ci) => (
@@ -62,7 +62,7 @@ function SplitHeading({
           {wi < text.split(' ').length - 1 && <span className="inline-block w-[0.22em]" />}
         </span>
       ))}
-    </h1>
+    </h2>
   );
 }
 

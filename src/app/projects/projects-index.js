@@ -8,6 +8,7 @@ import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 import BracketHeading from "../components/layout/bracket-heading";
 import Asterisk from "../components/layout/asterisk";
+import Phone from "../components/layout/phone";
 
 const NAV_ITEMS = [
   { label: "Home", href: "/" },
@@ -15,7 +16,8 @@ const NAV_ITEMS = [
   { label: "Projects", href: "/projects" },
 ];
 
-// Logos live at /public/<id>.png, the same marks the homepage tiles use.
+// Logos live at /public/<id>.png (the homepage marks); full-page phone captures
+// of each product live at the root of /public.
 const PROJECTS = [
   {
     id: "ideako",
@@ -35,6 +37,8 @@ const PROJECTS = [
     ],
     live: "https://ideako.vercel.app/",
     github: "https://github.com/1Goutham/Ideako",
+    screen: "/Ideakoss.jpg",
+    screenBg: "#efeeea",
   },
   {
     id: "ztudylock",
@@ -54,6 +58,8 @@ const PROJECTS = [
     ],
     live: "https://ztudylock.vercel.app/",
     github: "https://github.com/1Goutham/ZtudyLock",
+    screen: "/ZLss.jpg",
+    screenBg: "#0a0a0a",
   },
   {
     id: "fabricnest",
@@ -73,6 +79,8 @@ const PROJECTS = [
     ],
     live: "https://aiecommerce-site.vercel.app/",
     github: "https://github.com/1Goutham/fabric-store",
+    screen: "/FNss.jpg",
+    screenBg: "#0a0a0a",
   },
   {
     id: "ideaguard",
@@ -92,6 +100,8 @@ const PROJECTS = [
     ],
     live: "https://ideaguard-ai-zeta.vercel.app/",
     github: "https://github.com/1Goutham/IdeaGuardAI",
+    screen: "/IGss.jpg",
+    screenBg: "#0f0f0f",
   },
 ];
 
@@ -223,7 +233,7 @@ function ProjectRow({ project, index }) {
       ref={ref}
       data-inview={inView}
       onPointerMove={onPointerMove}
-      className="project-row relative grid gap-5 py-12 md:grid-cols-[88px_1fr_88px] md:gap-8 md:py-16"
+      className="project-row relative grid gap-6 py-12 md:grid-cols-[72px_minmax(0,1fr)_300px] md:items-center md:gap-10 md:py-20"
     >
       <span className="project-spot" aria-hidden="true" />
       {/* Index sticks beside its row while the row scrolls past on desktop. */}
@@ -286,6 +296,11 @@ function ProjectRow({ project, index }) {
           </a>
         </div>
       </div>
+
+      {/* The phone: a short tour of the product. Centred under the text on phones. */}
+      <div className="flex justify-center pt-4 md:justify-end md:pt-0">
+        <Phone src={project.screen} bg={project.screenBg} alt={`${project.name} on a phone`} />
+      </div>
     </article>
   );
 }
@@ -330,7 +345,7 @@ export default function ProjectsIndex() {
         </TransitionLink>
       </nav>
 
-      <div className="mx-auto max-w-4xl px-6 pb-24 pt-10 md:px-12 md:pb-32 md:pt-16">
+      <div className="mx-auto max-w-6xl px-6 pb-24 pt-10 md:px-12 md:pb-32 md:pt-16">
         {/* Title row, centred like the Beyond page's name row. */}
         <header className="projects-rise flex items-center justify-center gap-4 md:gap-5" style={{ "--i": 0 }}>
           <BracketHeading as="h1" className="font-anonymous-pro text-xl md:text-3xl">
@@ -351,7 +366,7 @@ export default function ProjectsIndex() {
         </div>
 
         <FadeContent duration={900} threshold={0.2} className="mt-12 md:mt-16">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 md:pl-[120px]">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 md:pl-[112px]">
             <TransitionLink href="/" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
               <span className="bracket-link-text">Back home</span>

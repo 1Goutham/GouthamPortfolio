@@ -141,7 +141,7 @@ export const ScrollVelocity = ({
     return (
       <div
         ref={wrapperRef}
-        className={`${parallaxClassName ?? ""} relative overflow-hidden`}
+        className={`${parallaxClassName ?? ""} relative w-full overflow-hidden`}
         style={parallaxStyle}
         onPointerEnter={(e) => {
           if (e.pointerType === "mouse") slow.current = true;
@@ -161,7 +161,7 @@ export const ScrollVelocity = ({
   }
 
   return (
-    <section>
+    <section className="w-full">
       {texts.map((text, index) => (
         <VelocityText
           key={index}
