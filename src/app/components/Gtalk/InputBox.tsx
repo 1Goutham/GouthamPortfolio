@@ -1,34 +1,45 @@
-import Image from "next/image";
+"use client";
 
-export default function InputBox({
-  input,
-  setInput,
-  sendMessage,
-  handleKeyDown,
-}: {
+import { forwardRef } from "react";
+import { SendHorizontal } from "lucide-react";
+
+type Props = {
   input: string;
   setInput: (val: string) => void;
   sendMessage: () => void;
   handleKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
-}) {
+  busy?: boolean;
+};
+
+/** Light pill on the dark panel; the send button takes off when a message goes. */
+const InputBox = forwardRef<HTMLInputElement, Props>(function InputBox(
+  { input, setInput, sendMessage, handleKeyDown, busy = false },
+  ref
+) {
   return (
-<div className="flex w-[300px] md:w-[770px] flex-nowrap rounded-full bg-[#E8E8E8] p-1 items-center gap-1 overflow-hidden transition-shadow duration-300 focus-within:shadow-[0_0_0_3px_rgba(0,0,0,0.08)]">
-  <input
-    type="text"
-    value={input}
-    onChange={(e) => setInput(e.target.value)}
-    onKeyDown={handleKeyDown}
-    className="flex-grow min-w-0 px-4 py-2 text-black placeholder:text-[#969696] bg-transparent outline-none"
-    placeholder="Write a message"
-    aria-label="Ask G-Talk a question"
-  />
-  <button
-    onClick={sendMessage}
-    aria-label="Send message"
-    className="btn-tactile bg-black px-4 py-2 h-10 rounded-full flex items-center gap-2 whitespace-nowrap shrink-0 cursor-pointer"
-  >
-    <Image src="/vector.png" alt="" width={13} height={13} className="nudge-x" />
-  </button>
-</div>
+    <div className="gtalk-input flex w-full items-center gap-1 rounded-full bg-[#e9e9e9] p-1 pl-2" data-busy={busy}>
+      <input
+        ref={ref}
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        disabled={busy}
+        className="min-w-0 flex-grow bg-transparent px-3 py-2 text-sm text-black outline-none placeholder:text-[#8a8a8a] md:text-[15px]"
+        placeholder={busy ? "Thinking…" : "Type something to get started…"}
+        aria-label="Ask G-Talk a question"
+      />
+      <button
+        type="button"
+        onClick={sendMessage}
+        disabled={busy}
+        aria-label="Send message"
+        className="gtalk-send btn-tactile flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-black text-white disabled:cursor-default"
+      >
+        <SendHorizontal className="gtalk-send-icon h-4 w-4" strokeWidth={2} aria-hidden="true" />
+      </button>
+    </div>
   );
-}
+});
+
+export default InputBox;

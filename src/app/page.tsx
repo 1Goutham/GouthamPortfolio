@@ -8,7 +8,7 @@ import BeyondTeaser from "./components/beyond-teaser";
 
 // Below-the-fold, JS-heavy sections are code-split so the initial bundle stays lean.
 const Gtalk = dynamic(() => import("./components/Gtalk"), {
-  loading: () => <div className="bg-black h-[600px] md:h-[500px]" aria-hidden />,
+  loading: () => <div className="bg-black h-[760px] md:h-[620px]" aria-hidden />,
 });
 const Contact = dynamic(() => import("./components/contact"));
 

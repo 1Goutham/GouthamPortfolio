@@ -1,53 +1,49 @@
 "use client";
 
-import Image from "next/image";
-import ReactMarkdown from "react-markdown";
 import React, { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import { useTypingEffect } from "./useTypingEffect";
 
 interface ChatMessageProps {
-  userQuestion: string;
-  botReply: string | React.JSX.Element;
+  question: string;
+  reply: string | null;
+  thinking: React.ReactNode;
 }
 
-export default function ChatMessage({ userQuestion, botReply }: ChatMessageProps) {
-  const botReplyStr = typeof botReply === "string" ? botReply : "";
-  const typedText = useTypingEffect(botReplyStr);
-  const isString = typeof botReply === "string";
+/**
+ * One exchange: the question in bold, then the reply typing out underneath
+ * with a caret that blinks while there is more to come.
+ */
+export default function ChatMessage({ question, reply, thinking }: ChatMessageProps) {
+  const typed = useTypingEffect(reply ?? "", 18);
+  const done = reply !== null && typed.length >= reply.length;
 
-  // The reply box scrolls, but its scrollbar is hidden: keep the newest line
-  // in view as the text types out so a long answer never looks cut off.
+  // The reply scrolls if it is long; keep the newest line in view as it types.
   const boxRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = boxRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [typedText]);
+  }, [typed]);
 
   return (
-    <div className="w-full flex justify-center items-start px-4 py-6">
-      <div className="rise-in w-full max-w-3xl h-[450px] md:h-[220px] bg-[#F2F2F2] rounded-xl p-6 flex md:flex-row flex-col justify-between items-start overflow-hidden">
-        <div className="md:w-2/3 w-full flex flex-col gap-3 overflow-hidden h-full">
-          <p className="text-lg md:text-2xl font-medium text-black">
-            {userQuestion}
-          </p>
-          <div
-            ref={boxRef}
-            data-lenis-prevent
-            className="text-sm md:text-lg text-gray-800 leading-relaxed overflow-y-auto md:pr-2 h-40 md:h-full scrollbar-hide"
-          >
-            {isString ? <ReactMarkdown>{typedText}</ReactMarkdown> : botReply}
-          </div>
-        </div>
-        <div className="md:w-1/3 h-[100px] md:h-[280px] flex justify-end items-end">
-          <Image
-            src="/response-avatar.webp"
-            alt="AI Avatar"
-            width={300}
-            height={300}
-            sizes="(max-width: 768px) 140px, 300px"
-            className="object-contain translate-y-8 md:-translate-y-20"
-          />
-        </div>
+    <div className="gtalk-exchange">
+      <p className="gtalk-rise text-base font-semibold text-white md:text-lg" style={{ "--i": 0 } as React.CSSProperties}>
+        {question}
+      </p>
+      <div
+        ref={boxRef}
+        data-lenis-prevent
+        className="gtalk-rise gtalk-reply mt-2 max-h-[200px] overflow-y-auto text-sm leading-relaxed text-white/85 scrollbar-hide md:max-h-[230px] md:text-[15px]"
+        style={{ "--i": 1 } as React.CSSProperties}
+        aria-live="polite"
+      >
+        {reply === null ? (
+          thinking
+        ) : (
+          <span className={done ? "" : "gtalk-typing"}>
+            <ReactMarkdown>{typed}</ReactMarkdown>
+          </span>
+        )}
       </div>
     </div>
   );
