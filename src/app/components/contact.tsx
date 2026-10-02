@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import toast from 'react-hot-toast';
 import {
   ArrowRight,
@@ -16,7 +15,6 @@ import {
   MapPin,
 } from 'lucide-react';
 
-gsap.registerPlugin(ScrollTrigger);
 
 // ---------------------------------------------------------------------------
 // Edit these to change what the section shows. Leave a social `href` empty to
@@ -106,38 +104,58 @@ export default function Contact() {
   const update = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  // Scroll-driven entrance: heading characters rise, then the two columns fade up.
+  // Entrance: heading characters rise, then the two columns fade up. Played
+  // the moment the section enters the viewport (an IntersectionObserver, so
+  // it does not depend on scroll positions measured before lazy sections
+  // above finished loading).
   useEffect(() => {
     const root = sectionRef.current;
     if (!root) return;
 
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        gsap.from('.contact-char', {
-          yPercent: 110,
-          rotate: 3,
-          opacity: 0,
-          duration: 0.9,
-          ease: 'power4.out',
-          stagger: 0.028,
-          scrollTrigger: { trigger: root, start: 'top 75%', once: true },
-          onComplete: () => {
-            waveReady.current = true;
-          },
-        });
-        gsap.from('.contact-reveal', {
-          y: 28,
-          opacity: 0,
-          duration: 0.9,
-          ease: 'power3.out',
-          stagger: 0.08,
-          scrollTrigger: { trigger: root, start: 'top 60%', once: true },
-        });
-      });
-    }, root);
+    const chars = root.querySelectorAll('.contact-char');
+    const blocks = root.querySelectorAll('.contact-reveal');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      waveReady.current = true;
+      return;
+    }
 
-    return () => ctx.revert();
+    gsap.set(chars, { yPercent: 110, rotate: 3, opacity: 0 });
+    gsap.set(blocks, { y: 28, opacity: 0 });
+
+    let played = false;
+    const play = () => {
+      if (played) return;
+      played = true;
+      gsap.to(chars, {
+        yPercent: 0,
+        rotate: 0,
+        opacity: 1,
+        duration: 0.9,
+        ease: 'power4.out',
+        stagger: 0.028,
+        onComplete: () => {
+          waveReady.current = true;
+        },
+      });
+      gsap.to(blocks, { y: 0, opacity: 1, duration: 0.9, ease: 'power3.out', stagger: 0.08, delay: 0.2 });
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          play();
+          io.disconnect();
+        }
+      },
+      { threshold: 0.05, rootMargin: '0px 0px -5% 0px' }
+    );
+    io.observe(root);
+
+    return () => {
+      io.disconnect();
+      gsap.killTweensOf([chars, blocks]);
+    };
   }, []);
 
   // Magnetic button: drifts a little toward the cursor, snaps back on leave.
