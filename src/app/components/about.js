@@ -40,7 +40,7 @@ export default function About() {
         <div className="space-y-6">
           {/* Header */}
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
-            <BracketHeading as="h1" className="text-white font-anonymous-pro text-3xl pt-5 md:pt-0 md:text-5xl">
+            <BracketHeading as="h2" className="text-white font-anonymous-pro text-3xl pt-5 md:pt-0 md:text-5xl">
               About Me!
             </BracketHeading>
           </ScrollReveal>
@@ -48,10 +48,10 @@ export default function About() {
           {/* Intro */}
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div className="mt-3 md:mt-10">
-              <h1 className="text-white font-outfit text-base md:text-2xl">
+              <h3 className="text-white font-outfit text-base md:text-2xl">
                 Hey, I’m{" "}
                 <span className="text-lg md:text-3xl font-medium link-underline">Goutham</span>
-              </h1>
+              </h3>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
                 - a fullstack dev with a creative edge. I blend AI, design, and code to turn ideas into thoughtful digital products.
               </p>
@@ -61,9 +61,9 @@ export default function About() {
           {/* AI – Dev + Design */}
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div className="mt-3 md:mt-6">
-              <h1 className="text-white font-medium font-outfit text-base lg:text-2xl">
+              <h3 className="text-white font-medium font-outfit text-base lg:text-2xl">
                 AI <span className="text-base font-thin">&ndash;</span> Dev <span className="text-base font-thin">+</span> Design
-              </h1>
+              </h3>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
                 Where ideas meet intelligent systems,<br />
                 thoughtful design, and solid engineering.
@@ -74,9 +74,9 @@ export default function About() {
           {/* Experience */}
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div className="mt-3 md:mt-6">
-              <h1 className="text-white font-medium font-outfit text-base lg:text-2xl">
+              <h3 className="text-white font-medium font-outfit text-base lg:text-2xl">
                 Experience
-              </h1>
+              </h3>
               <p className="text-white font-outfit font-thin text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
                 <span className="row-hover">Freelance Product Creator</span><br />
                 <span className="row-hover">Digital Engineer &ndash; DeepWeaver</span>

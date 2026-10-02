@@ -616,7 +616,7 @@ video {
 /* Pipeline steps: a black marker fills in behind the word on hover. */
 .journey-step {
   position: relative;
-  display: inline-block;
+  display: inline;
   padding: 0 0.15em;
   margin: 0 -0.15em;
   isolation: isolate;

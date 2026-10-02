@@ -4,7 +4,7 @@ import ScrollVelocity from "./layout/scrollingtext";
 
 export default function Scrolltext() {
   return (
-    <div className="marquee bg-white py-2 md:py-4 flex justify-center items-center">
+    <div className="marquee w-full overflow-hidden bg-white py-2 md:py-4">
       <ScrollVelocity
         texts={[
           <span key="line1">
