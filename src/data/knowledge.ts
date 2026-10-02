@@ -1,7 +1,7 @@
 /**
  * G-Talk knowledge base.
  *
- * The whole list is handed to Gemini in G-Talk's system prompt, grouped by
+ * The whole list is handed to the model in G-Talk's system prompt, grouped by
  * `title`. Keep each entry short and on a single topic (roughly 40-120 words)
  * so the prompt stays small. Add, edit or remove entries freely; changes go
  * live with the next deploy.
@@ -67,7 +67,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'project-gtalk',
     title: 'Projects',
-    text: `G-Talk is the assistant on this portfolio. It is a small Gemini 3.6 Flash chatbot: a curated knowledge base about Goutham is given to the model in its system prompt, and each visitor question is answered in a single API call, grounded in that knowledge only.`,
+    text: `G-Talk is the assistant on this portfolio, built by Goutham himself. It answers from a curated knowledge base about Goutham, so visitors can learn about his skills, experience and projects in a conversation. It only speaks about Goutham and his work, and it keeps its answers short and grounded in that knowledge.`,
   },
   {
     id: 'interests',
