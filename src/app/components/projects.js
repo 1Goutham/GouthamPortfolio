@@ -56,7 +56,7 @@ export default function Projects() {
       data-inview={inView}
       style={{ "--hot": hot }}
     >
-      <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-16">
         {/* Left: name, heading, button */}
         <div>
           <TransitionLink
@@ -86,7 +86,7 @@ export default function Projects() {
 
         {/* Right: pitch, then the character pointing at the four marks */}
         <div>
-          <p className="projects-rise text-base font-light leading-relaxed text-white/90 text-justify md:text-lg" style={{ "--i": 1 }}>
+          <p className="projects-rise text-base font-light leading-relaxed text-white/90 md:text-lg" style={{ "--i": 1 }}>
             A few things I&rsquo;ve designed and built from the ground up - blending thoughtful UX, full-stack
             engineering, and AI to turn ideas into useful digital products. Each project reflects how I
             approach the journey from concept and design to development and implementation.
