@@ -372,6 +372,17 @@ export default function ProjectsIndex() {
         </div>
 
         <FadeContent duration={900} threshold={0.2} className="mt-12 md:mt-16">
+          <p className="mb-8 font-outfit text-[11px] text-white/35 md:pl-[112px] md:text-xs">
+            Phone model:{" "}
+            <a href="https://sketchfab.com/3d-models/mobile-phone-4a97a633ad584ba19110e1730f7744c1" target="_blank" rel="noopener noreferrer" className="link-underline hover:text-white/60">
+              &ldquo;Mobile phone&rdquo; by Alain Sorazu
+            </a>
+            , licensed{" "}
+            <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener noreferrer" className="link-underline hover:text-white/60">
+              CC BY-SA 4.0
+            </a>
+            .
+          </p>
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 md:pl-[112px]">
             <TransitionLink href="/" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
