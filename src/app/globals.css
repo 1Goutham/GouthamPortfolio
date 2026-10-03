@@ -917,9 +917,10 @@ video {
    gets a radar sweep that turns while hovered, and a ring that pulses out
    once on entry. --cx/--cy/--r locate the circle inside the artwork. */
 .skills-radar {
-  --cx: 50%;
-  --cy: 46.5%;
-  --r: 38.5%;
+  /* The ring's centre and radius, measured from the artwork (1220x1242). */
+  --cx: 49.9%;
+  --cy: 50.7%;
+  --r: 37.7%;
 }
 .skills-radar img {
   position: relative;
