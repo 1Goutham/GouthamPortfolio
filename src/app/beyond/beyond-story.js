@@ -198,7 +198,7 @@ export default function BeyondStory() {
         </TransitionLink>
       </nav>
 
-      <article className="mx-auto max-w-3xl px-6 pb-24 pt-6 md:px-12 md:pb-32 md:pt-10">
+      <article className="mx-auto max-w-6xl px-6 pb-24 pt-6 md:px-12 md:pb-32 md:pt-10">
         {/* Photo, then the name row underneath it. */}
         <header className="flex flex-col items-center">
           <HangingPhoto ready={ready} />
