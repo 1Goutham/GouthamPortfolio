@@ -20,6 +20,17 @@ export default function Projects() {
   const [inView, setInView] = useState(false);
   const [hot, setHot] = useState(-1);
 
+  // Fetch the Projects page's phone model in the background now, so the
+  // phones are already in cache by the time the visitor gets there.
+  useEffect(() => {
+    if (document.querySelector('link[href="/models/iphone.glb"]')) return;
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.as = "fetch";
+    link.href = "/models/iphone.glb";
+    document.head.appendChild(link);
+  }, []);
+
   // Play the entrance once the section is in the viewport.
   useEffect(() => {
     const el = ref.current;
