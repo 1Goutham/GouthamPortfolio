@@ -76,7 +76,7 @@ export default function About() {
             Hey, I&rsquo;m Goutham.
           </h3>
           <p {...rise()} className="about-rise mt-3 font-outfit text-sm leading-relaxed text-white/65 md:text-base">
-            A full-stack developer and product designer from Coimbatore, building AI products end to end: the
+            A full-stack developer and product designer, building AI products end to end: the
             research, the interface, the code, and the model behind it.
           </p>
 
