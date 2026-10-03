@@ -208,7 +208,7 @@ export default function BeyondStory() {
             <ScrollStar />
             <p className="font-outfit">
               <span className="block text-sm font-bold leading-snug md:text-base">A bit more about me :)</span>
-              <span className="block text-xs leading-snug text-black/70 md:text-sm">and some blahh blahhhhhh</span>
+              <span className="block text-xs leading-snug text-black/70 md:text-sm">not the r&eacute;sum&eacute; version</span>
             </p>
           </div>
         </header>
