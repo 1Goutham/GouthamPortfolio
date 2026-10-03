@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import BracketHeading from "./layout/bracket-heading";
-import TransitionLink from "./layout/transition-link";
 
 // Drop your new portrait in at /public/about-portrait.png to swap the photo.
 const PORTRAIT_SRC = "/about-portrait.png";
@@ -94,18 +93,6 @@ export default function About() {
             ))}
           </dl>
 
-          <div {...rise()} className="about-rise mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 md:mt-10">
-            <TransitionLink href="/beyond" className="bracket-link font-anonymous-pro text-base text-white md:text-xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">More</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </TransitionLink>
-            <a href="#contact" className="bracket-link font-anonymous-pro text-base text-white md:text-xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">Let&rsquo;s talk</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </a>
-          </div>
         </div>
       </div>
 
