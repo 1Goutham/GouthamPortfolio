@@ -8,7 +8,7 @@ import * as THREE from "three";
 /**
  * An iPhone, lit so the frame catches light as it turns, with the product
  * capture painted onto its screen. The model keeps its own materials; the
- * file is meshopt-compressed with WebP textures (about 1 MB).
+ * file is decimated and meshopt-compressed with WebP textures (about 540 KB).
  *
  *  - Rests at a three-quarter angle and breathes slowly.
  *  - Turns with the scroll as its row moves through the viewport.
@@ -85,7 +85,7 @@ function roundedPlane(w, h, rTop, rBottom = rTop) {
   return geo;
 }
 
-function PhoneModel({ src, bg, hostRef, onReady }) {
+function PhoneModel({ src, bg, hostRef, ready, onReady }) {
   const { scene } = useGLTF(MODEL);
   const tex = useLoader(THREE.TextureLoader, src);
   const outer = useRef();
@@ -172,8 +172,8 @@ function PhoneModel({ src, bg, hostRef, onReady }) {
   }, [tex]);
 
   // Light the scene from the shared studio map, then compile every shader
-  // off the critical path. The canvas only starts its render loop (and fades
-  // in) once that is done, so the first frame never stalls the page.
+  // off the critical path. The phone stays invisible (and the canvas clear)
+  // until that is done, so its first frame never stalls the page.
   const gl = useThree((s) => s.gl);
   const scene3 = useThree((s) => s.scene);
   const camera = useThree((s) => s.camera);
@@ -275,7 +275,7 @@ function PhoneModel({ src, bg, hostRef, onReady }) {
   });
 
   return (
-    <group ref={outer} rotation={[REST.x, REST.y, 0]}>
+    <group ref={outer} rotation={[REST.x, REST.y, 0]} visible={ready}>
       <primitive object={model} />
       {geos && screen && (
         <group position={[screen.x, screen.y, screen.z + 0.004]}>
@@ -314,35 +314,27 @@ function Wake() {
 
 useGLTF.preload(MODEL);
 
+let order = 0; // mount order of the phones on the page, for the stagger
+
 export default function Phone3D({ src, bg = "#000", className = "" }) {
   const host = useRef(null);
   const [ready, setReady] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
-  // A phone's canvas is created only once it comes within a screen of the
-  // viewport (and stays), and renders only while near it. So the page loads
-  // with one phone's worth of work, not four, and off-screen phones cost
-  // nothing.
+  // Every phone is set up at page load, one after another a few hundred
+  // milliseconds apart so the work never lands in a single frame. Each then
+  // renders only while near the viewport; off-screen phones cost nothing.
   const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
   useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 150 + (order++ % 8) * 450);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
     const el = host.current;
     if (!el) return;
-    const near = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setMounted(true);
-          near.disconnect();
-        }
-      },
-      { rootMargin: "100% 0px" }
-    );
-    const vis = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { rootMargin: "80px 0px" });
-    near.observe(el);
-    vis.observe(el);
-    return () => {
-      near.disconnect();
-      vis.disconnect();
-    };
+    const io = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { rootMargin: "80px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
   return (
     <div ref={host} className={`phone3d ${className}`} data-ready={ready} aria-label="3D phone showing the product" role="img">
@@ -350,7 +342,7 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
       {mounted && (
       <Canvas
         dpr={[1, 1.5]}
-        frameloop={active && ready ? "always" : "never"}
+        frameloop={active ? "always" : "never"}
         camera={{ position: [0, 0, 14], fov: 28 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}
@@ -360,7 +352,7 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
           <ambientLight intensity={0.25} />
           <directionalLight position={[-4, 6, 6]} intensity={1.6} color="#dfe6ff" />
           <directionalLight position={[5, -2, 4]} intensity={0.6} color="#ffe9d2" />
-          <PhoneModel src={src} bg={bg} hostRef={host} onReady={onReady} />
+          <PhoneModel src={src} bg={bg} hostRef={host} ready={ready} onReady={onReady} />
         </Suspense>
       </Canvas>
       )}
