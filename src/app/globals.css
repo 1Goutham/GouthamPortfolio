@@ -1325,10 +1325,28 @@ video {
   }
 }
 .phone3d canvas {
+  position: relative;
   opacity: 0;
   transition: opacity 0.9s var(--ease-out-expo);
 }
 .phone3d[data-ready="true"] canvas {
+  opacity: 1;
+}
+/* Soft ground shadow, drawn by CSS instead of a per-canvas shadow pass. */
+.phone3d-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -2.5%;
+  width: 72%;
+  height: 8%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.35) 45%, transparent 72%);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out-expo) 0.2s;
+  pointer-events: none;
+}
+.phone3d[data-ready="true"] .phone3d-shadow {
   opacity: 1;
 }
 .project-row[data-inview="false"] .phone3d {

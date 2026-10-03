@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
-import { useGLTF, ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { useGLTF } from "@react-three/drei";
 import * as THREE from "three";
 
 /**
@@ -20,6 +20,43 @@ import * as THREE from "three";
  */
 
 const MODEL = "/models/iphone.glb";
+
+/* A small studio environment drawn once as an equirectangular texture and
+   shared by every phone: a soft sky-to-floor gradient with two bright
+   softboxes, so the clearcoat picks up long highlights as it turns. Far
+   cheaper than baking a cubemap of light panels per canvas. */
+let envTexture = null;
+function studioEnv() {
+  if (envTexture) return envTexture;
+  const W = 128;
+  const H = 64;
+  const data = new Float32Array(W * H * 4);
+  for (let y = 0; y < H; y++) {
+    const v = y / (H - 1); // 0 = top (sky), 1 = bottom (floor)
+    for (let x = 0; x < W; x++) {
+      const u = x / (W - 1);
+      let r = 0.05 + (1 - v) * 0.3;
+      let g = 0.05 + (1 - v) * 0.32;
+      let b = 0.07 + (1 - v) * 0.4;
+      // Key softbox: wide, high, slightly cool. Fill: lower, warm, right.
+      const key = Math.exp(-(((u - 0.3) / 0.16) ** 2 + ((v - 0.28) / 0.1) ** 2));
+      const fill = Math.exp(-(((u - 0.78) / 0.1) ** 2 + ((v - 0.55) / 0.16) ** 2));
+      r += key * 3.2 + fill * 1.6;
+      g += key * 3.3 + fill * 1.35;
+      b += key * 3.6 + fill * 1.1;
+      const i = (y * W + x) * 4;
+      data[i] = r;
+      data[i + 1] = g;
+      data[i + 2] = b;
+      data[i + 3] = 1;
+    }
+  }
+  envTexture = new THREE.DataTexture(data, W, H, THREE.RGBAFormat, THREE.FloatType);
+  envTexture.mapping = THREE.EquirectangularReflectionMapping;
+  envTexture.colorSpace = THREE.LinearSRGBColorSpace;
+  envTexture.needsUpdate = true;
+  return envTexture;
+}
 const TARGET_H = 6.0; // world units the phone is scaled to stand
 const REST = { x: 0.08, y: -0.5 };
 
@@ -134,9 +171,22 @@ function PhoneModel({ src, bg, hostRef, onReady }) {
     tex.needsUpdate = true;
   }, [tex]);
 
+  // Light the scene from the shared studio map, then compile every shader
+  // off the critical path. The canvas only starts its render loop (and fades
+  // in) once that is done, so the first frame never stalls the page.
+  const gl = useThree((s) => s.gl);
+  const scene3 = useThree((s) => s.scene);
+  const camera = useThree((s) => s.camera);
   useEffect(() => {
-    onReady?.();
-  }, [onReady]);
+    scene3.environment = studioEnv();
+    let alive = true;
+    const done = () => alive && onReady?.();
+    if (gl.compileAsync) gl.compileAsync(scene3, camera).then(done, done);
+    else done();
+    return () => {
+      alive = false;
+    };
+  }, [gl, scene3, camera, onReady]);
 
   // Pointer: lean while hovered, drag to spin (host is the whole column).
   useEffect(() => {
@@ -268,40 +318,52 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
   const host = useRef(null);
   const [ready, setReady] = useState(false);
   const onReady = useCallback(() => setReady(true), []);
-  // Render only while the phone is near the viewport; off-screen phones cost
-  // nothing, so a page of four never has more than two rendering at once.
+  // A phone's canvas is created only once it comes within a screen of the
+  // viewport (and stays), and renders only while near it. So the page loads
+  // with one phone's worth of work, not four, and off-screen phones cost
+  // nothing.
+  const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
   useEffect(() => {
     const el = host.current;
     if (!el) return;
-    const io = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { rootMargin: "80px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
+    const near = new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting) {
+          setMounted(true);
+          near.disconnect();
+        }
+      },
+      { rootMargin: "100% 0px" }
+    );
+    const vis = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { rootMargin: "80px 0px" });
+    near.observe(el);
+    vis.observe(el);
+    return () => {
+      near.disconnect();
+      vis.disconnect();
+    };
   }, []);
   return (
     <div ref={host} className={`phone3d ${className}`} data-ready={ready} aria-label="3D phone showing the product" role="img">
+      <span className="phone3d-shadow" aria-hidden="true" />
+      {mounted && (
       <Canvas
         dpr={[1, 1.5]}
-        frameloop={active ? "always" : "never"}
+        frameloop={active && ready ? "always" : "never"}
         camera={{ position: [0, 0, 14], fov: 28 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}
       >
         <Wake />
         <Suspense fallback={null}>
-          <ambientLight intensity={0.3} />
-          <directionalLight position={[-4, 6, 6]} intensity={1.8} color="#dfe6ff" />
-          <directionalLight position={[5, -2, 4]} intensity={0.7} color="#ffe9d2" />
-          <Environment resolution={256} frames={1}>
-            <Lightformer intensity={3} form="rect" position={[0, 6, 2]} scale={[12, 3, 1]} color="#ffffff" />
-            <Lightformer intensity={2} form="rect" position={[-8, 1, 3]} rotation={[0, Math.PI / 3, 0]} scale={[6, 10, 1]} color="#dfe6ff" />
-            <Lightformer intensity={1.2} form="rect" position={[8, -1, 2]} rotation={[0, -Math.PI / 3, 0]} scale={[5, 10, 1]} color="#ffe9d2" />
-            <Lightformer intensity={0.6} form="circle" position={[0, -6, -4]} scale={6} color="#b9c4d6" />
-          </Environment>
+          <ambientLight intensity={0.25} />
+          <directionalLight position={[-4, 6, 6]} intensity={1.6} color="#dfe6ff" />
+          <directionalLight position={[5, -2, 4]} intensity={0.6} color="#ffe9d2" />
           <PhoneModel src={src} bg={bg} hostRef={host} onReady={onReady} />
-          <ContactShadows position={[0, -3.5, 0]} opacity={0.55} scale={9} blur={2.6} far={4} color="#000" frames={1} />
         </Suspense>
       </Canvas>
+      )}
     </div>
   );
 }
