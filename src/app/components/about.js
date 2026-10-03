@@ -8,12 +8,11 @@ import TransitionLink from "./layout/transition-link";
 // Drop your new portrait in at /public/about-portrait.png to swap the photo.
 const PORTRAIT_SRC = "/about-portrait.png";
 
-// The facts, in the order a reader wants them: what now, what before, where.
+// The facts, in the order a reader wants them: what now, what before, and the degree.
 const FACTS = [
   { label: "Now", value: "Digital Engineer, DeepWeaver.AI", note: "remote, Australia" },
   { label: "Before", value: "Freelance designer & developer", note: "2023 to 2024" },
-  { label: "Studied", value: "B.Tech, AI & Data Science", note: "Sri Eshwar College, 2025" },
-  { label: "Based", value: "Coimbatore, India", note: "open to remote" },
+  { label: "Education", value: "B.Tech, AI & Data Science", note: "Sri Eshwar College, 2025" },
 ];
 
 export default function About() {
@@ -81,10 +80,6 @@ export default function About() {
             A full-stack developer and product designer from Coimbatore, building AI products end to end: the
             research, the interface, the code, and the model behind it.
           </p>
-          <p {...rise()} className="about-rise mt-3 font-outfit text-sm leading-relaxed text-white md:text-base">
-            Design decides what to build. Engineering decides whether it works. I do both, so nothing gets lost
-            in between.
-          </p>
 
           {/* Facts: hairline rows, a mono label and the value, which slides on hover. */}
           <dl className="mt-8 md:mt-10">
@@ -102,7 +97,7 @@ export default function About() {
           <div {...rise()} className="about-rise mt-8 flex flex-wrap items-center gap-x-7 gap-y-3 md:mt-10">
             <TransitionLink href="/beyond" className="bracket-link font-anonymous-pro text-base text-white md:text-xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">My story</span>
+              <span className="bracket-link-text">More</span>
               <span className="bracket-link-r" aria-hidden="true">]</span>
             </TransitionLink>
             <a href="#contact" className="bracket-link font-anonymous-pro text-base text-white md:text-xl">
