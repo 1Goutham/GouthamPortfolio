@@ -67,7 +67,7 @@ export default function Skills() {
                   </span>
                 ))}
               </h3>
-              <p className="text-black font-outfit text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
+              <p className="text-black/70 font-outfit text-xs leading-relaxed md:text-base mt-1 md:mt-3 max-w-md">
                 I bring together full-stack engineering, AI, and product design to build digital experiences from the
                 first sketch to deployment.
               </p>
@@ -77,7 +77,7 @@ export default function Skills() {
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div>
               {/* The one line that matters, on its own. */}
-              <p className="text-black font-outfit text-sm font-medium leading-snug md:text-lg max-w-md">
+              <p className="text-black font-outfit text-xs leading-relaxed md:text-base max-w-md">
                 I care about how things look, how systems work, and whether the final product genuinely solves a
                 problem.
               </p>
