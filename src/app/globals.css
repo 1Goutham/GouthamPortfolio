@@ -1048,8 +1048,13 @@ video {
   animation-delay: calc(var(--k, 5) * 80ms + var(--i, 0) * 45ms);
 }
 
-/* Row hover: the divider draws green from the left, a spotlight follows the
-   cursor (--rx/--ry), the index turns green and slides in, the logo lights up. */
+/* Row hover: the divider brightens from the left, a spotlight follows the
+   cursor (--rx/--ry, moved on the compositor), the index and features
+   brighten, the logo lights up. White on white: the only colour on this
+   page is in the products themselves. */
+.project-row {
+  overflow: clip; /* keeps the spotlight inside the row without breaking the sticky index */
+}
 .project-row::before {
   content: "";
   position: absolute;
@@ -1066,7 +1071,7 @@ video {
   left: 0;
   right: 0;
   height: 1px;
-  background: #9DFF50;
+  background: rgba(255, 255, 255, 0.4);
   transform: scaleX(0);
   transform-origin: left;
   transition: transform 0.9s var(--ease-out-expo);
@@ -1077,15 +1082,18 @@ video {
 }
 .project-row > .project-spot {
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    320px circle at var(--rx, 50%) var(--ry, 50%),
-    rgba(255, 255, 255, 0.045),
-    transparent 70%
-  );
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.045), transparent 50%);
+  transform: translate3d(var(--rx, 50%), var(--ry, 50%), 0);
   opacity: 0;
   transition: opacity 0.5s ease;
   pointer-events: none;
+  will-change: transform, opacity;
 }
 .project-row:hover > .project-spot {
   opacity: 1;
@@ -1095,8 +1103,21 @@ video {
   transition: color 0.35s ease, transform 0.5s var(--ease-out-expo);
 }
 .project-row:hover .project-index {
-  color: #9DFF50;
+  color: rgba(255, 255, 255, 0.9);
   transform: translateX(6px);
+}
+/* On this page the brackets stay white: dim at rest, full on hover. */
+.project-row .bracket-link-l,
+.project-row .bracket-link-r {
+  color: rgba(255, 255, 255, 0.5);
+}
+.project-row .bracket-link:hover .bracket-link-l,
+.project-row .bracket-link:hover .bracket-link-r,
+.project-row .bracket-link:focus-visible .bracket-link-l,
+.project-row .bracket-link:focus-visible .bracket-link-r,
+.project-row .bracket-heading:hover .bracket-link-l,
+.project-row .bracket-heading:hover .bracket-link-r {
+  color: #fff;
 }
 .project-logo {
   --mx: 50%;
@@ -1133,7 +1154,7 @@ video {
 }
 
 /* Features brighten one after another, left to right, while the row is
-   hovered; a single feature under the cursor tints green. */
+   hovered; the one under the cursor goes full white. */
 .project-feature {
   display: inline-block;
   white-space: nowrap; /* a feature and its star wrap together */
@@ -1144,7 +1165,7 @@ video {
   color: rgba(255, 255, 255, 0.92);
 }
 .project-feature:hover {
-  color: #9DFF50 !important;
+  color: #fff !important;
   transition-delay: 0ms;
 }
 
