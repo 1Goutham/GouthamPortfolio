@@ -1,14 +1,14 @@
 "use client";
 
-import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useGLTF, ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 
 /**
- * A real phone: "Mobile phone" by Alain Sorazu (Sketchfab, CC BY-SA 4.0),
- * lit so the frame catches light as it turns, with the product capture
- * painted onto its screen.
+ * An iPhone, lit so the frame catches light as it turns, with the product
+ * capture painted onto its screen. The model keeps its own materials; the
+ * file is meshopt-compressed with WebP textures (about 1 MB).
  *
  *  - Rests at a three-quarter angle and breathes slowly.
  *  - Turns with the scroll as its row moves through the viewport.
@@ -19,8 +19,8 @@ import * as THREE from "three";
  *    page's own colour fills the strip below it.
  */
 
-const MODEL = "/models/phone.glb";
-const TARGET_H = 6.2; // world units the phone is scaled to stand
+const MODEL = "/models/iphone.glb";
+const TARGET_H = 6.0; // world units the phone is scaled to stand
 const REST = { x: 0.08, y: -0.5 };
 
 /** Rounded rectangle, optionally with square bottom corners, UVs 0..1. */
@@ -48,42 +48,30 @@ function roundedPlane(w, h, rTop, rBottom = rTop) {
   return geo;
 }
 
-function PhoneModel({ src, bg, hostRef }) {
+function PhoneModel({ src, bg, hostRef, onReady }) {
   const { scene } = useGLTF(MODEL);
   const tex = useLoader(THREE.TextureLoader, src);
   const outer = useRef();
   const state = useRef({ ty: 0, vy: 0, dragging: false, lastX: 0, lastT: 0, hover: 0, hx: 0, hy: 0 });
 
-  // One copy of the model per phone, re-materialed: titanium case, black
-  // glass, and the screen mesh darkened so our screen plane sits on it.
-  const { model, screen } = useMemo(() => {
+  // One copy of the model per phone. Its materials stay as authored; the
+  // screen mesh goes black so our screen plane sits on it, and the front
+  // camera parts are noted so the Dynamic Island can be drawn over the image.
+  const { model, screen, island } = useMemo(() => {
     const model = scene.clone(true);
     let screenMesh = null;
+    const islandMeshes = [];
     model.traverse((o) => {
       if (!o.isMesh) return;
       const name = o.material?.name || "";
-      if (name === "Screen") {
+      const part = o.parent?.name || "";
+      if (name === "COLOUR_Cherry_Screen") {
         screenMesh = o;
         o.material = new THREE.MeshStandardMaterial({ color: "#000", roughness: 0.3, metalness: 0.1 });
-      } else if (name === "Case" || name === "White") {
-        o.material = new THREE.MeshPhysicalMaterial({
-          color: name === "Case" ? "#2e2e32" : "#5a5a5f",
-          metalness: 0.85,
-          roughness: 0.32,
-          clearcoat: 1,
-          clearcoatRoughness: 0.2,
-          envMapIntensity: 1.3,
-        });
-      } else if (name === "Black" || name === "Button") {
-        o.material = new THREE.MeshPhysicalMaterial({ color: "#0b0b0d", metalness: 0.6, roughness: 0.4, clearcoat: 0.6 });
-      } else if (name.startsWith("Camera") || name === "Flash") {
-        o.material = new THREE.MeshPhysicalMaterial({
-          color: name === "Flash" ? "#d9d4c0" : "#101218",
-          metalness: 0.5,
-          roughness: 0.2,
-          clearcoat: 1,
-        });
+      } else if (part.startsWith("Front_Cam_Glass") || part.startsWith("Front_Sensor")) {
+        islandMeshes.push(o);
       }
+      if (o.material && "envMapIntensity" in o.material) o.material.envMapIntensity = 1.2;
       o.castShadow = false;
       o.receiveShadow = false;
     });
@@ -111,27 +99,44 @@ function PhoneModel({ src, bg, hostRef }) {
       sb.getCenter(sc);
       screen = { w: ss.x, h: ss.y, x: sc.x, y: sc.y, z: sb.max.z };
     }
-    return { model, screen };
+    // Dynamic Island: the union of the front camera and sensor, relative to
+    // the screen's centre.
+    let island = null;
+    if (screen && islandMeshes.length) {
+      const ib = new THREE.Box3();
+      islandMeshes.forEach((m) => ib.expandByObject(m));
+      const is = new THREE.Vector3();
+      const ic = new THREE.Vector3();
+      ib.getSize(is);
+      ib.getCenter(ic);
+      island = { w: is.x, h: is.y, x: ic.x - screen.x, y: ic.y - screen.y };
+    }
+    return { model, screen, island };
   }, [scene]);
 
   // Screen geometry: a bg-coloured plane the size of the screen, and the
   // capture at full screen width anchored to the top (its own aspect).
   const geos = useMemo(() => {
     if (!screen) return null;
-    const r = Math.min(screen.w, screen.h) * 0.085;
+    const r = screen.w * 0.164; // the model's own screen corner radius
     const imgH = Math.min(screen.h, screen.w * (tex.image.height / tex.image.width));
     return {
       back: roundedPlane(screen.w, screen.h, r),
       img: roundedPlane(screen.w, imgH, r, imgH < screen.h - 0.001 ? 0 : r),
       imgY: screen.h / 2 - imgH / 2,
+      island: island ? roundedPlane(island.w * 1.12, island.h * 1.12, (island.h * 1.12) / 2) : null,
     };
-  }, [screen, tex]);
+  }, [screen, island, tex]);
 
   useLayoutEffect(() => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = 4;
     tex.needsUpdate = true;
   }, [tex]);
+
+  useEffect(() => {
+    onReady?.();
+  }, [onReady]);
 
   // Pointer: lean while hovered, drag to spin (host is the whole column).
   useEffect(() => {
@@ -220,7 +225,7 @@ function PhoneModel({ src, bg, hostRef }) {
   });
 
   return (
-    <group ref={outer}>
+    <group ref={outer} rotation={[REST.x, REST.y, 0]}>
       <primitive object={model} />
       {geos && screen && (
         <group position={[screen.x, screen.y, screen.z + 0.004]}>
@@ -230,6 +235,11 @@ function PhoneModel({ src, bg, hostRef }) {
           <mesh geometry={geos.img} position={[0, geos.imgY, 0.002]}>
             <meshBasicMaterial map={tex} toneMapped={false} />
           </mesh>
+          {geos.island && (
+            <mesh geometry={geos.island} position={[island.x, island.y, 0.004]}>
+              <meshBasicMaterial color="#000" toneMapped={false} />
+            </mesh>
+          )}
           {/* Glass: a faint glossy sheet so the screen catches the studio lights. */}
           <mesh geometry={geos.back} position={[0, 0, 0.005]}>
             <meshPhysicalMaterial transparent opacity={0.07} roughness={0.05} metalness={0} clearcoat={1} color="#fff" depthWrite={false} />
@@ -257,6 +267,7 @@ useGLTF.preload(MODEL);
 export default function Phone3D({ src, bg = "#000", className = "" }) {
   const host = useRef(null);
   const [ready, setReady] = useState(false);
+  const onReady = useCallback(() => setReady(true), []);
   // Render only while the phone is near the viewport; off-screen phones cost
   // nothing, so a page of four never has more than two rendering at once.
   const [active, setActive] = useState(false);
@@ -275,7 +286,6 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
         camera={{ position: [0, 0, 14], fov: 28 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}
-        onCreated={() => setReady(true)}
       >
         <Wake />
         <Suspense fallback={null}>
@@ -288,7 +298,7 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
             <Lightformer intensity={1.2} form="rect" position={[8, -1, 2]} rotation={[0, -Math.PI / 3, 0]} scale={[5, 10, 1]} color="#ffe9d2" />
             <Lightformer intensity={0.6} form="circle" position={[0, -6, -4]} scale={6} color="#b9c4d6" />
           </Environment>
-          <PhoneModel src={src} bg={bg} hostRef={host} />
+          <PhoneModel src={src} bg={bg} hostRef={host} onReady={onReady} />
           <ContactShadows position={[0, -3.5, 0]} opacity={0.55} scale={9} blur={2.6} far={4} color="#000" frames={1} />
         </Suspense>
       </Canvas>

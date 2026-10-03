@@ -360,7 +360,6 @@ export default function Contact() {
                   )}
                 </span>
               </button>
-              <p className="text-xs text-white/40">Usually replies within a day.</p>
             </div>
           </form>
         </div>
