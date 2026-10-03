@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Canvas, useFrame, useLoader, useThree } from "@react-three/fiber";
 import { useGLTF, ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -183,6 +183,9 @@ function PhoneModel({ src, bg, hostRef }) {
     };
   }, [hostRef]);
 
+  // The host's position is measured only when the page has scrolled or
+  // resized, never every frame, so the render loop forces no layout.
+  const rect = useRef({ sy: -1, vh: 0, mid: 0 });
   useFrame((_, dt) => {
     const g = outer.current;
     if (!g) return;
@@ -193,9 +196,14 @@ function PhoneModel({ src, bg, hostRef }) {
     let scroll = 0;
     const host = hostRef.current;
     if (host) {
-      const r = host.getBoundingClientRect();
-      const mid = r.top + r.height / 2;
-      scroll = THREE.MathUtils.clamp((window.innerHeight / 2 - mid) / (window.innerHeight / 2), -1, 1);
+      const c = rect.current;
+      if (c.sy !== window.scrollY || c.vh !== window.innerHeight) {
+        const r = host.getBoundingClientRect();
+        c.sy = window.scrollY;
+        c.vh = window.innerHeight;
+        c.mid = r.top + r.height / 2;
+      }
+      scroll = THREE.MathUtils.clamp((c.vh / 2 - c.mid) / (c.vh / 2), -1, 1);
     }
 
     if (!s.dragging) {
@@ -232,20 +240,44 @@ function PhoneModel({ src, bg, hostRef }) {
   );
 }
 
+/* When a paused canvas is switched back to "always", the shared render loop
+   may already have stopped; a single invalidate() restarts it. The store
+   applies the new frameloop asynchronously, so watch the store, not the prop. */
+function Wake() {
+  const frameloop = useThree((s) => s.frameloop);
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (frameloop === "always") invalidate();
+  }, [frameloop, invalidate]);
+  return null;
+}
+
 useGLTF.preload(MODEL);
 
 export default function Phone3D({ src, bg = "#000", className = "" }) {
   const host = useRef(null);
   const [ready, setReady] = useState(false);
+  // Render only while the phone is near the viewport; off-screen phones cost
+  // nothing, so a page of four never has more than two rendering at once.
+  const [active, setActive] = useState(false);
+  useEffect(() => {
+    const el = host.current;
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setActive(e.isIntersecting), { rootMargin: "80px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
     <div ref={host} className={`phone3d ${className}`} data-ready={ready} aria-label="3D phone showing the product" role="img">
       <Canvas
-        dpr={[1, 2]}
+        dpr={[1, 1.5]}
+        frameloop={active ? "always" : "never"}
         camera={{ position: [0, 0, 14], fov: 28 }}
-        gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
+        gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}
         onCreated={() => setReady(true)}
       >
+        <Wake />
         <Suspense fallback={null}>
           <ambientLight intensity={0.3} />
           <directionalLight position={[-4, 6, 6]} intensity={1.8} color="#dfe6ff" />
@@ -254,10 +286,10 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
             <Lightformer intensity={3} form="rect" position={[0, 6, 2]} scale={[12, 3, 1]} color="#ffffff" />
             <Lightformer intensity={2} form="rect" position={[-8, 1, 3]} rotation={[0, Math.PI / 3, 0]} scale={[6, 10, 1]} color="#dfe6ff" />
             <Lightformer intensity={1.2} form="rect" position={[8, -1, 2]} rotation={[0, -Math.PI / 3, 0]} scale={[5, 10, 1]} color="#ffe9d2" />
-            <Lightformer intensity={0.6} form="circle" position={[0, -6, -4]} scale={6} color="#9DFF50" />
+            <Lightformer intensity={0.6} form="circle" position={[0, -6, -4]} scale={6} color="#b9c4d6" />
           </Environment>
           <PhoneModel src={src} bg={bg} hostRef={host} />
-          <ContactShadows position={[0, -3.5, 0]} opacity={0.55} scale={9} blur={2.6} far={4} color="#000" />
+          <ContactShadows position={[0, -3.5, 0]} opacity={0.55} scale={9} blur={2.6} far={4} color="#000" frames={1} />
         </Suspense>
       </Canvas>
     </div>
