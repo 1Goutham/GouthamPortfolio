@@ -17,7 +17,7 @@ export default function Skills() {
   return (
     <div
       id="skills"
-      className="flex flex-col md:flex-row w-full bg-white items-center md:min-h-[560px] py-10 md:py-16"
+      className="flex flex-col md:flex-row w-full bg-white items-center md:min-h-[560px] py-12 md:py-16 gap-6 md:gap-0"
     >
       {/* Image Section */}
       <div className="w-full md:w-1/2 flex justify-center items-center order-1 px-6">
@@ -35,12 +35,12 @@ export default function Skills() {
             <span className="skills-sweep" aria-hidden="true" />
             <span className="skills-ring" aria-hidden="true" />
             <Image
-              className="w-[280px] md:w-[440px] aspect-square object-contain"
+              className="w-[250px] md:w-[440px] aspect-square object-contain"
               src={SKILLS_IMAGE_SRC}
               alt="Goutham - portrait framed by a radar of curious, precise, expressive, intuitive and thoughtful"
               width={880}
               height={880}
-              sizes="(max-width: 768px) 280px, 440px"
+              sizes="(max-width: 768px) 250px, 440px"
               draggable={false}
             />
           </div>
@@ -59,7 +59,7 @@ export default function Skills() {
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div>
               {/* Each word underlines in turn, left to right, on hover. */}
-              <h3 className="skills-tagline text-black font-outfit text-base md:text-2xl">
+              <h3 className="skills-tagline text-black font-outfit text-xl md:text-2xl">
                 {TAGLINE.map((w, i) => (
                   <span key={w} className="skills-word" style={{ "--i": i }}>
                     {w}
@@ -67,7 +67,7 @@ export default function Skills() {
                   </span>
                 ))}
               </h3>
-              <p className="text-black/70 font-outfit text-xs leading-relaxed md:text-base mt-1 md:mt-3 max-w-md">
+              <p className="text-black/70 font-outfit text-sm leading-relaxed md:text-base mt-2 md:mt-3 max-w-md">
                 I bring together full-stack engineering, AI, and product design to build digital experiences from the
                 first sketch to deployment.
               </p>
@@ -77,7 +77,7 @@ export default function Skills() {
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div>
               {/* The one line that matters, on its own. */}
-              <p className="text-black font-outfit text-xs leading-relaxed md:text-base max-w-md">
+              <p className="text-black font-outfit text-sm leading-relaxed md:text-base max-w-md">
                 I care about how things look, how systems work, and whether the final product genuinely solves a
                 problem.
               </p>

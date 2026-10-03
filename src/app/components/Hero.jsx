@@ -156,7 +156,7 @@ export default function Hero() {
         </a>
       </nav>
 
-      <div className="relative mx-auto flex min-h-[560px] max-w-6xl flex-col items-center justify-center gap-10 px-6 pb-16 pt-6 md:min-h-[680px] md:flex-row md:gap-16 md:px-12 md:pb-24">
+      <div className="relative mx-auto flex max-w-6xl flex-col items-center justify-center gap-8 px-6 pb-14 pt-4 md:min-h-[680px] md:flex-row md:gap-16 md:px-12 md:pb-24 md:pt-6">
         {/* Portrait: the "[ Vanakamm! ]" lettering is baked into the artwork. */}
         <div
           ref={frameRef}
