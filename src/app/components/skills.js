@@ -5,7 +5,10 @@ import ScrollReveal from "./layout/scrollreveal";
 import AnimatedContent from "./layout/movement";
 import BracketHeading from "./layout/bracket-heading";
 
-const TAGLINE = ["AI,", "Code", "&", "Product."];
+const TAGLINE = ["Engineering", "meets", "imagination."];
+
+// What I work across. Each tag wears the site's brackets and answers the cursor.
+const TAGS = ["Full-stack development", "AI engineering", "Product design", "System architecture", "Creative technology"];
 
 // Drop the new skills artwork (portrait + radar) in at /public/skills-portrait.png to swap the image.
 const SKILLS_IMAGE_SRC = "/skills-portrait.png";
@@ -65,16 +68,28 @@ export default function Skills() {
                 ))}
               </h3>
               <p className="text-black font-outfit text-xs md:text-base mt-1 md:mt-3 text-justify max-w-md">
-                I bring together AI, full-stack engineering, and product design to build thoughtful digital products. I turn ideas into clean, scalable experiences with the right mix of technology, design, and intelligent systems.
+                I bring together full-stack engineering, AI, and product design to build digital experiences from the
+                first sketch to deployment.
               </p>
             </div>
           </ScrollReveal>
 
           <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
             <div>
-              <p className="text-black font-outfit text-xs md:text-base text-justify max-w-md">
-                I care about what makes a product work — clear interactions, polished interfaces, solid engineering, and AI that adds real value.
+              {/* The one line that matters, on its own. */}
+              <p className="text-black font-outfit text-sm font-medium leading-snug md:text-lg max-w-md">
+                I care about how things look, how systems work, and whether the final product genuinely solves a
+                problem.
               </p>
+              <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-3 md:mt-6 md:gap-x-7" aria-label="Areas of work">
+                {TAGS.map((t) => (
+                  <li key={t} className="bracket-link bracket-link-dark font-anonymous-pro text-sm text-black md:text-base">
+                    <span className="bracket-link-l" aria-hidden="true">[</span>
+                    <span className="bracket-link-text">{t}</span>
+                    <span className="bracket-link-r" aria-hidden="true">]</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </ScrollReveal>
         </div>
