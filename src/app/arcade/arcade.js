@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "../components/layout/transition-link";
 import BracketHeading from "../components/layout/bracket-heading";
-import Asterisk from "../components/layout/asterisk";
 import { GAMES, W, H } from "./games";
+import Asterisk from "../components/layout/asterisk";
 
 const BEST_KEY = (id) => `gg-arcade-${id}`;
 const MUTE_KEY = "gg-arcade-mute";
@@ -197,46 +197,33 @@ function Screen({ Game, level, sprite, muted, onBack, onNext, onCleared }) {
   return (
     <div className="arcade-rise" style={{ "--i": 0 }}>
       {/* Marquee strip above the screen: level, title, task; score on the right. */}
-      <div className="flex items-end justify-between gap-6 border-b border-white/10 pb-3">
-        <div>
-          <p className="font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/40">Level {String(level + 1).padStart(2, "0")}</p>
-          <h2 className="mt-1 font-anonymous-pro text-2xl leading-none text-white md:text-3xl">[ {Game.title} ]</h2>
-          <p className="mt-2 font-outfit text-sm text-white/60">{Game.task}.</p>
-        </div>
-        <div className="text-right font-anonymous-pro">
-          <p className="text-4xl leading-none text-white tabular-nums md:text-5xl">{String(score).padStart(3, "0")}</p>
-          <p className="mt-1 text-xs text-white/40">best {String(best).padStart(3, "0")}</p>
-        </div>
+      <div className="flex items-end justify-between gap-6 pb-4 font-anonymous-pro">
+        <h2 className="text-2xl leading-none text-white md:text-3xl">
+          <span className="text-white/35">{String(level + 1).padStart(2, "0")}</span> [ {Game.title} ]
+        </h2>
+        <p className="text-2xl leading-none tabular-nums text-white md:text-3xl">
+          {score}
+          <span className="text-white/35"> / {Game.goal}</span>
+        </p>
       </div>
-      <div className="arcade-screen relative mt-5 w-full overflow-hidden rounded-lg bg-black" style={{ aspectRatio: `${W} / ${H}` }}>
+      <div className="arcade-screen relative w-full overflow-hidden rounded-md bg-black" style={{ aspectRatio: `${W} / ${H}` }}>
         <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" aria-label={`${Game.title} game`} />
-        {phase !== "playing" && (
-          <div className="arcade-overlay pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-            {phase === "over" ? (
-              <>
-                <p className="font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/50">
-                  {score >= Game.goal ? "Level cleared" : "Game over"}
-                </p>
-                <p className="mt-1 font-anonymous-pro text-4xl text-white">{score}</p>
-                <p className="mt-3 font-outfit text-xs text-white/60 arcade-blink">
-                  {score >= Game.goal && onNext ? "next level is open" : "press anything to go again"}
-                </p>
-              </>
-            ) : (
-              <>
-                <p className="max-w-[240px] font-outfit text-sm text-white/80">{Game.how}</p>
-                <p className="mt-3 font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/50 arcade-blink">press {Game.keys} to start</p>
-              </>
-            )}
+        {phase === "over" && (
+          <div className="arcade-overlay absolute inset-0 flex flex-col items-center justify-center text-center">
+            <p className="font-anonymous-pro text-5xl leading-none text-white md:text-6xl">
+              {score}
+              {score >= Game.goal && <Asterisk className="ml-2 align-[0.05em] text-[0.5em] text-white/70" />}
+            </p>
+            <div className="mt-6 flex items-center gap-7">
+              <Bracket onClick={() => { gameRef.current?.reset(); setPhase("ready"); setScore(0); }}>again</Bracket>
+              {score >= Game.goal && onNext && <Bracket onClick={onNext}>next</Bracket>}
+            </div>
           </div>
         )}
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <p className="font-anonymous-pro text-xs text-white/40">{Game.keys} <span className="mx-1 text-white/25">·</span> esc</p>
-        <span className="flex items-center gap-6">
-          {phase === "over" && score >= Game.goal && onNext && <Bracket onClick={onNext}>Next</Bracket>}
-          <Bracket onClick={onBack}>Arcade</Bracket>
-        </span>
+      <div className="mt-4 flex items-center justify-between">
+        <p className="font-anonymous-pro text-xs text-white/35">best {best}</p>
+        <Bracket onClick={onBack} className="!text-sm md:!text-base">back</Bracket>
       </div>
     </div>
   );
@@ -323,8 +310,8 @@ export default function Arcade() {
               <BracketHeading as="h1" className="font-anonymous-pro text-xl md:text-3xl">Arcade</BracketHeading>
               <Asterisk className="text-2xl leading-none md:text-3xl" />
               <p className="font-outfit">
-                <span className="block text-sm font-bold leading-snug md:text-base">Five levels, one me</span>
-                <span className="block text-xs leading-snug text-white/65 md:text-sm">Clear one to open the next</span>
+                <span className="block text-sm font-bold leading-snug md:text-base">Just for fun :)</span>
+                <span className="block text-xs leading-snug text-white/65 md:text-sm">nothing serious, really</span>
               </p>
             </header>
 
@@ -360,10 +347,10 @@ export default function Arcade() {
                         <span className="arcade-row-title block font-anonymous-pro text-xl text-white md:text-2xl">
                           <span className="arcade-row-l" aria-hidden="true">[</span> {G.title} <span className="arcade-row-r" aria-hidden="true">]</span>
                         </span>
-                        <span className="mt-1 block font-outfit text-xs text-white/55 md:text-sm">{locked ? "Clear the level before it" : G.task}</span>
+                        <span className="mt-1 block font-outfit text-xs text-white/50 md:text-sm">{G.task}</span>
                       </span>
-                      <span className="font-anonymous-pro text-xs text-white/40 md:text-sm">
-                        {locked ? "locked" : done ? "cleared" : bests[G.id] ? `best ${bests[G.id]}` : "play"}
+                      <span className="flex items-center justify-end font-anonymous-pro text-sm text-white/40 md:text-base">
+                        {done ? <Asterisk className="text-white" /> : bests[G.id] ? bests[G.id] : ""}
                       </span>
                     </button>
                   </li>
