@@ -99,20 +99,20 @@ export class Run {
       } else return;
     }
     this.t += dt;
-    this.speed = Math.min(270, 120 + this.t * 5);
+    this.speed = Math.min(260, 110 + this.t * 4.5);
     this.dist += this.speed * dt;
     this.score = Math.floor(this.dist / 20);
 
     // Jump: impulse on press, lighter gravity while held and rising.
     if (input.action && p.ground) {
-      p.vy = -235;
+      p.vy = -245;
       p.ground = false;
       p.holdT = 0;
       sfx.jump();
     }
     const holding = input.actionHeld && p.vy < 0 && p.holdT < 0.16;
     if (holding) p.holdT += dt;
-    p.vy += (holding ? 420 : 760) * dt;
+    p.vy += (holding ? 400 : 720) * dt;
     p.y += p.vy * dt;
     const floor = this.groundY - p.size / 2 + this.feet;
     if (p.y >= floor) {
@@ -124,8 +124,8 @@ export class Run {
     // Obstacles.
     this.nextIn -= dt;
     if (this.nextIn <= 0) {
-      const h = rnd(12, 26);
-      const w = rnd(9, 15);
+      const h = rnd(10, 16 + Math.min(10, this.t * 0.5)); // blocks grow with time
+      const w = rnd(9, 14);
       this.obs.push({ x: W + 10, y: this.groundY - h, w, h });
       if (Math.random() < 0.3) this.obs.push({ x: W + 10 + w + 4, y: this.groundY - h * 0.7, w: w * 0.8, h: h * 0.7 });
       this.nextIn = rnd(0.8, 1.5) * (120 / this.speed) + 0.3;
@@ -137,7 +137,7 @@ export class Run {
       if (s.x < -4) s.x = W + 4;
     }
 
-    const box = { x: p.x - p.size / 2 + 4, y: p.y - p.size / 2 + 3, w: p.size - 8, h: p.size - 3 - this.feet };
+    const box = { x: p.x - p.size / 2 + 5, y: p.y - p.size / 2 + 4, w: p.size - 10, h: p.size - 4 - this.feet };
     if (this.obs.some((o) => hit(box, o))) {
       this.over = true;
       sfx.hit();
@@ -178,7 +178,7 @@ export class Flap {
     this.p = { x: 72, y: H / 2, vy: 0, size: 20 };
     this.gates = [];
     this.nextX = W + 40;
-    this.speed = 92;
+    this.speed = 100;
     this.t = 0;
   }
   update(dt, input, sfx) {
@@ -203,10 +203,10 @@ export class Flap {
     // Gates every 118px, gap narrows slowly.
     this.nextX -= this.speed * dt;
     if (this.nextX <= W) {
-      const gap = Math.max(46, 62 - this.t * 0.4);
+      const gap = Math.max(40, 54 - this.t * 0.5);
       const cy = rnd(36 + gap / 2, H - 36 - gap / 2);
       this.gates.push({ x: W + 10, cy, gap, w: 14, passed: false });
-      this.nextX += 118;
+      this.nextX += 108;
     }
     for (const g of this.gates) {
       g.x -= this.speed * dt;
@@ -387,8 +387,8 @@ export class Pong {
       sfx.tick();
     }
     // The house tracks the ball, a little late and a little off.
-    const target = b.vx > 0 ? b.y + Math.sin(performance.now() / 400) * 10 : H / 2;
-    this.ai.y += clamp(target - this.ai.y, -1, 1) * Math.min(Math.abs(target - this.ai.y), 118 * dt);
+    const target = b.vx > 0 ? b.y + Math.sin(performance.now() / 400) * 14 : H / 2;
+    this.ai.y += clamp(target - this.ai.y, -1, 1) * Math.min(Math.abs(target - this.ai.y), 104 * dt);
     this.ai.y = clamp(this.ai.y, this.ai.h / 2, H - this.ai.h / 2);
 
     const bounce = (p, dir) => {
