@@ -1393,3 +1393,158 @@ video {
 .about-row:hover .about-note {
   color: rgba(255, 255, 255, 0.7);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Hero dock and the 2px game                                         */
+/* ------------------------------------------------------------------ */
+
+.dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.dock-toggle,
+.dock-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: #fff;
+}
+.dock-toggle {
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.dock-toggle:hover,
+.dock-toggle:focus-visible {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.dock-toggle:active {
+  transform: scale(0.94);
+}
+.dock[data-open="true"] .dock-toggle {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+/* The face blinks every few seconds; the eyes squash to a line. */
+.dock-face {
+  display: block;
+}
+.dock-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dock-blink 5.2s ease-in-out infinite;
+}
+@keyframes dock-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%, 98%      { transform: scaleY(0.1); }
+}
+/* Open: the items unfold upward one by one, with a label to the left. */
+.dock-items {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+.dock[data-open="true"] .dock-items {
+  pointer-events: auto;
+}
+.dock-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  transition: opacity 0.35s ease, transform 0.5s var(--ease-out-expo);
+  outline: none;
+  cursor: pointer;
+}
+.dock[data-open="true"] .dock-item {
+  opacity: 1;
+  transform: none;
+}
+.dock[data-open="true"] .dock-item:nth-child(3) { transition-delay: 0ms; }
+.dock[data-open="true"] .dock-item:nth-child(2) { transition-delay: 50ms; }
+.dock[data-open="true"] .dock-item:nth-child(1) { transition-delay: 100ms; }
+.dock-mark {
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.dock-item:hover .dock-mark,
+.dock-item:focus-visible .dock-mark {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.06);
+}
+.dock-char {
+  width: 30px;
+  height: auto;
+}
+.dock-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.3s ease, transform 0.4s var(--ease-out-expo), color 0.3s ease;
+}
+.dock-item:hover .dock-label,
+.dock-item:focus-visible .dock-label {
+  opacity: 1;
+  transform: none;
+  color: #fff;
+}
+@media (hover: none) {
+  .dock[data-open="true"] .dock-label {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The game stage: a guide hairline and the line you move. */
+.game {
+  animation: fade-in 0.3s ease both;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.game-stage {
+  cursor: ns-resize;
+  touch-action: none;
+}
+.game-guide,
+.game-line {
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  top: 50%;
+  height: 1px;
+}
+.game-guide {
+  background: rgba(255, 255, 255, 0.25);
+}
+.game-line {
+  height: 2px;
+  background: #fff;
+  transform: translateY(calc(var(--off, 0px) - 1px));
+}
+.game-flash {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  animation: hero-rise 0.3s var(--ease-out-expo) both;
+}
+.game-stage[data-flash="perfect"] {
+  border-color: rgba(255, 255, 255, 0.6);
+}
