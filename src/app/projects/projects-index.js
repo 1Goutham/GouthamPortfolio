@@ -32,7 +32,7 @@ const PROJECTS = [
     description:
       "An AI creative workspace that learns your voice, understands your references, and helps turn rough ideas into original social content.",
     outcome:
-      "Generations start from how you already write, not from a blank prompt, so what comes back is closer to something you would actually post.",
+      "Starts from how you write, so drafts come back ready to post.",
     features: [
       "Personal voice profile",
       "Reference library",
@@ -55,7 +55,7 @@ const PROJECTS = [
     description:
       "An AI study workspace that turns your own learning material into a personalised study system — helping you understand concepts, practise, identify weaknesses, and revise what actually needs attention.",
     outcome:
-      "Built around the student's own material rather than a generic syllabus, so the plan, the quizzes and the revision all point at the gaps that are really there.",
+      "Built on the student's own notes, so revision targets the real gaps.",
     features: [
       "Material-aware AI tutor",
       "Concept extraction",
@@ -78,7 +78,7 @@ const PROJECTS = [
     description:
       "A full-stack commerce platform built around discovery, personalisation, and real purchasing — combining a premium storefront with intelligent product discovery, recommendations, secure checkout, and progressive personalisation.",
     outcome:
-      "A complete commerce stack rather than a storefront demo: real Stripe checkout, orders and an admin system sit behind the discovery layer.",
+      "Real Stripe checkout, orders and admin, not a storefront demo.",
     features: [
       "Intent-based discovery",
       "AI shopping assistant",
@@ -101,7 +101,7 @@ const PROJECTS = [
     description:
       "An AI product intelligence workspace that researches, stress-tests, and turns early-stage ideas into evidence-backed product strategy.",
     outcome:
-      "Turns the vague ‘is this a good idea?’ into a structured answer: market, risks, assumptions to test and an MVP plan a team can act on.",
+      "Turns a rough idea into market, risks and an MVP plan.",
     features: [
       "Market research",
       "Competitive analysis",
@@ -274,10 +274,8 @@ function ProjectRow({ project, index }) {
           {project.description}
         </p>
 
-        {/* Why it matters: the one line that says what the product changes. */}
-        <p {...item()} className="pr-item mt-4 max-w-2xl font-outfit text-sm leading-relaxed text-white md:text-base">
-          <span className="font-anonymous-pro text-xs uppercase tracking-[0.12em] text-white/40 md:text-sm">Why it matters</span>
-          <Star className="mx-2 text-[0.85em] text-white/40" />
+        {/* One plain line on what the product changes. */}
+        <p {...item()} className="pr-item mt-3 max-w-2xl font-outfit text-sm leading-relaxed text-white md:text-base">
           {project.outcome}
         </p>
 
