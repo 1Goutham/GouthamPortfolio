@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import MinimalNav from './layout/navbar';
+import HeroDock from './hero-dock';
 
 // Drop the profile artwork (face + "[ Vanakamm! ]" lettering) in at
 // /public/heropageprofile.png to swap the picture.
@@ -197,6 +198,11 @@ export default function Hero() {
             <BracketLink href="#contact">Let&rsquo;s talk</BracketLink>
           </div>
         </div>
+      </div>
+
+      {/* The dock in the corner: Beyond, Projects, and a small game. */}
+      <div className="hero-line absolute bottom-6 right-6 z-20 md:bottom-8 md:right-12" style={{ "--i": 5 }}>
+        <HeroDock />
       </div>
     </header>
   );
