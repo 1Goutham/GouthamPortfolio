@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
     deviceSizes: [360, 640, 768, 1024, 1280, 1536, 1920],
   },
+  async redirects() {
+    return [{ source: "/fun", destination: "/arcade", permanent: true }];
+  },
   experimental: {
     // Tree-shake heavy animation libs down to what is actually imported.
     optimizePackageImports: ["framer-motion", "gsap", "lucide-react", "react-markdown"],

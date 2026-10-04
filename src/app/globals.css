@@ -1502,29 +1502,73 @@ video {
 .arcade-avatar {
   image-rendering: pixelated;
 }
-.arcade-cab {
-  transition: border-color 0.3s ease, background-color 0.3s ease, transform 0.5s var(--ease-out-expo);
+/* Level rows: the hairline brightens, the brackets ease outward, the number
+   turns white. Locked rows are dim and still. */
+.arcade-row {
+  transition: border-color 0.4s ease;
+  cursor: pointer;
 }
-.arcade-cab:hover,
-.arcade-cab:focus-visible {
-  border-color: rgba(255, 255, 255, 0.45);
-  background-color: #141414;
-  transform: translateY(-2px);
+.arcade-row:hover,
+.arcade-row:focus-visible {
+  border-color: rgba(255, 255, 255, 0.4);
 }
-.arcade-cab[data-locked="true"] {
-  opacity: 0.4;
+.arcade-row-no {
+  transition: color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.arcade-row:hover .arcade-row-no {
+  color: #fff;
+  transform: translateX(4px);
+}
+.arcade-row-l,
+.arcade-row-r {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.4s var(--ease-out-expo), color 0.3s ease;
+}
+.arcade-row:hover .arcade-row-l { transform: translateX(-4px); color: #fff; }
+.arcade-row:hover .arcade-row-r { transform: translateX(4px); color: #fff; }
+.arcade-row[data-locked="true"] {
+  opacity: 0.35;
   cursor: not-allowed;
 }
-.arcade-cab[data-locked="true"]:hover {
+.arcade-row[data-locked="true"]:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.arcade-row[data-locked="true"]:hover .arcade-row-no,
+.arcade-row[data-locked="true"]:hover .arcade-row-l,
+.arcade-row[data-locked="true"]:hover .arcade-row-r {
   transform: none;
-  border-color: rgba(255, 255, 255, 0.12);
-  background-color: #0d0d0d;
+  color: inherit;
 }
-.arcade-cab-no {
-  transition: color 0.3s ease;
+.arcade-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: background-color 0.4s ease, border-color 0.4s ease;
 }
-.arcade-cab:hover .arcade-cab-no {
-  color: #fff;
+.arcade-dot[data-state="done"] {
+  background: #fff;
+  border-color: #fff;
+}
+.arcade-dot[data-state="locked"] {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+/* The screen: a hairline frame, a soft glow, scanlines and a vignette. */
+.arcade-screen {
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 0 0 6px #0a0a0a,
+    0 0 0 7px rgba(255, 255, 255, 0.08),
+    0 30px 60px -30px rgba(0, 0, 0, 0.9);
+}
+.arcade-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
 }
 .arcade-screen canvas {
   image-rendering: pixelated;
@@ -1536,10 +1580,12 @@ video {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 1;
   background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px);
   mix-blend-mode: screen;
 }
 .arcade-overlay {
+  z-index: 2;
   background: rgba(0, 0, 0, 0.55);
 }
 @keyframes arcade-blink {

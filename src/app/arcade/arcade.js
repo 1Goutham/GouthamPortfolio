@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "../components/layout/transition-link";
 import BracketHeading from "../components/layout/bracket-heading";
+import Asterisk from "../components/layout/asterisk";
 import { GAMES, W, H } from "./games";
 
 const BEST_KEY = (id) => `gg-arcade-${id}`;
@@ -195,16 +196,19 @@ function Screen({ Game, level, sprite, muted, onBack, onNext, onCleared }) {
 
   return (
     <div className="arcade-rise" style={{ "--i": 0 }}>
-      <div className="flex items-baseline justify-between font-anonymous-pro">
-        <h2 className="text-xl text-white md:text-2xl">
-          <span className="text-white/40">{String(level + 1).padStart(2, "0")}</span> [ {Game.title} ]
-        </h2>
-        <p className="text-sm text-white/50">
-          <span className="text-white">{score}</span> <span className="mx-1">·</span> best {best}
-        </p>
+      {/* Marquee strip above the screen: level, title, task; score on the right. */}
+      <div className="flex items-end justify-between gap-6 border-b border-white/10 pb-3">
+        <div>
+          <p className="font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/40">Level {String(level + 1).padStart(2, "0")}</p>
+          <h2 className="mt-1 font-anonymous-pro text-2xl leading-none text-white md:text-3xl">[ {Game.title} ]</h2>
+          <p className="mt-2 font-outfit text-sm text-white/60">{Game.task}.</p>
+        </div>
+        <div className="text-right font-anonymous-pro">
+          <p className="text-4xl leading-none text-white tabular-nums md:text-5xl">{String(score).padStart(3, "0")}</p>
+          <p className="mt-1 text-xs text-white/40">best {String(best).padStart(3, "0")}</p>
+        </div>
       </div>
-      <p className="mt-1 font-outfit text-xs text-white/55">Task: {Game.task}.</p>
-      <div className="arcade-screen relative mt-3 w-full overflow-hidden rounded-md border border-white/15 bg-black" style={{ aspectRatio: `${W} / ${H}` }}>
+      <div className="arcade-screen relative mt-5 w-full overflow-hidden rounded-lg bg-black" style={{ aspectRatio: `${W} / ${H}` }}>
         <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" aria-label={`${Game.title} game`} />
         {phase !== "playing" && (
           <div className="arcade-overlay pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
@@ -228,7 +232,7 @@ function Screen({ Game, level, sprite, muted, onBack, onNext, onCleared }) {
         )}
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-        <p className="font-outfit text-xs text-white/45">{Game.keys}. Esc for the arcade.</p>
+        <p className="font-anonymous-pro text-xs text-white/40">{Game.keys} <span className="mx-1 text-white/25">·</span> esc</p>
         <span className="flex items-center gap-6">
           {phase === "over" && score >= Game.goal && onNext && <Bracket onClick={onNext}>Next</Bracket>}
           <Bracket onClick={onBack}>Arcade</Bracket>
@@ -249,7 +253,7 @@ export default function Arcade() {
   // The avatar, drawn down to 16px once so it reads as a sprite when scaled.
   useEffect(() => {
     const img = new window.Image();
-    img.src = "/fun/avatar.png";
+    img.src = "/arcade/avatar.png";
     img.onload = () => {
       const c = document.createElement("canvas");
       c.width = 24;
@@ -300,60 +304,80 @@ export default function Arcade() {
 
   return (
     <main className="arcade min-h-screen bg-black text-white" data-ready={ready}>
-      <div className="mx-auto max-w-2xl px-6 pb-24 pt-8 md:pt-12">
-        <header className="arcade-rise flex items-center justify-between" style={{ "--i": 0 }}>
-          <TransitionLink href="/" aria-label="Home" className="transition-transform duration-500 ease-out hover:rotate-[-6deg] hover:scale-105">
-            <Image src="/logo.png" width={36} height={36} alt="Goutham logo" priority />
-          </TransitionLink>
-          <button type="button" onClick={toggleMute} className="font-anonymous-pro text-sm text-white/60 transition-colors hover:text-white" aria-pressed={muted}>
-            [ sound {muted ? "off" : "on"} ]
-          </button>
-        </header>
+      <nav className="arcade-rise relative z-10 flex items-center justify-between px-6 py-6 md:px-12" style={{ "--i": 0 }}>
+        <TransitionLink href="/" aria-label="Home" className="transition-transform duration-500 ease-out hover:rotate-[-6deg] hover:scale-105">
+          <Image src="/logo.png" width={40} height={40} alt="Goutham logo" priority />
+        </TransitionLink>
+        <button type="button" onClick={toggleMute} className="bracket-link font-anonymous-pro text-sm text-white md:text-base" aria-pressed={muted}>
+          <span className="bracket-link-l" aria-hidden="true">[</span>
+          <span className="bracket-link-text">sound {muted ? "off" : "on"}</span>
+          <span className="bracket-link-r" aria-hidden="true">]</span>
+        </button>
+      </nav>
 
+      <div className="mx-auto max-w-3xl px-6 pb-24 pt-6 md:px-12 md:pb-32 md:pt-10">
         {!Game ? (
           <>
-            <div className="arcade-rise mt-12 flex items-center gap-4 md:mt-16" style={{ "--i": 1 }}>
-              <Image src="/fun/avatar.png" alt="" width={56} height={56} className="arcade-avatar h-12 w-12 md:h-14 md:w-14" draggable={false} />
-              <div>
-                <BracketHeading as="h1" className="font-anonymous-pro text-2xl md:text-4xl">Arcade</BracketHeading>
-                <p className="mt-1 font-outfit text-sm text-white/60 md:text-base">Five levels, five tasks, one me. Clear one to open the next.</p>
+            {/* Title row, in the same shape as the Beyond and Projects pages. */}
+            <header className="arcade-rise flex items-center justify-center gap-4 md:gap-5" style={{ "--i": 1 }}>
+              <BracketHeading as="h1" className="font-anonymous-pro text-xl md:text-3xl">Arcade</BracketHeading>
+              <Asterisk className="text-2xl leading-none md:text-3xl" />
+              <p className="font-outfit">
+                <span className="block text-sm font-bold leading-snug md:text-base">Five levels, one me</span>
+                <span className="block text-xs leading-snug text-white/65 md:text-sm">Clear one to open the next</span>
+              </p>
+            </header>
+
+            {/* Progress: one dot per level, filled when cleared. */}
+            <div className="arcade-rise mt-12 flex items-center gap-3 md:mt-16" style={{ "--i": 2 }}>
+              <Image src="/arcade/avatar.png" alt="" width={56} height={56} className="arcade-avatar h-9 w-9" draggable={false} />
+              <div className="flex items-center gap-2" aria-label="Progress">
+                {GAMES.map((G, i) => (
+                  <span key={G.id} className="arcade-dot" data-state={(bests[G.id] || 0) >= G.goal ? "done" : i <= unlocked ? "open" : "locked"} />
+                ))}
               </div>
+              <span className="font-anonymous-pro text-xs text-white/40">
+                {GAMES.filter((G) => (bests[G.id] || 0) >= G.goal).length} / {GAMES.length}
+              </span>
             </div>
 
-            <ul className="mt-10 grid gap-3 sm:grid-cols-2 md:mt-12">
+            {/* The levels: hairline rows, like the project rows. */}
+            <ol className="mt-6 border-t border-white/10 md:mt-8">
               {GAMES.map((G, i) => {
                 const locked = i > unlocked;
                 const done = (bests[G.id] || 0) >= G.goal;
                 return (
-                  <li key={G.id} className="arcade-rise" style={{ "--i": 2 + i }}>
+                  <li key={G.id} className="arcade-rise" style={{ "--i": 3 + i }}>
                     <button
                       type="button"
                       disabled={locked}
                       onClick={() => setLevel(i)}
-                      className="arcade-cab group flex w-full items-center gap-4 rounded-md border border-white/12 bg-[#0d0d0d] p-4 text-left outline-none"
+                      className="arcade-row grid w-full grid-cols-[40px_1fr_auto] items-center gap-4 border-b border-white/10 py-5 text-left outline-none md:grid-cols-[56px_1fr_auto] md:py-6"
                       data-locked={locked}
                     >
-                      <span className="arcade-cab-no font-anonymous-pro text-sm text-white/35">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-anonymous-pro text-lg text-white">[ {G.title} ]</span>
-                        <span className="mt-0.5 block truncate font-outfit text-xs text-white/55">{locked ? "Clear the level before it." : `Task: ${G.task}.`}</span>
+                      <span className="arcade-row-no font-anonymous-pro text-sm text-white/35 md:text-base">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="min-w-0">
+                        <span className="arcade-row-title block font-anonymous-pro text-xl text-white md:text-2xl">
+                          <span className="arcade-row-l" aria-hidden="true">[</span> {G.title} <span className="arcade-row-r" aria-hidden="true">]</span>
+                        </span>
+                        <span className="mt-1 block font-outfit text-xs text-white/55 md:text-sm">{locked ? "Clear the level before it" : G.task}</span>
                       </span>
-                      <span className="font-anonymous-pro text-xs text-white/40">
-                        {locked ? "locked" : done ? "cleared" : bests[G.id] ? `best ${bests[G.id]}` : "new"}
+                      <span className="font-anonymous-pro text-xs text-white/40 md:text-sm">
+                        {locked ? "locked" : done ? "cleared" : bests[G.id] ? `best ${bests[G.id]}` : "play"}
                       </span>
                     </button>
                   </li>
                 );
               })}
-            </ul>
+            </ol>
 
-            <div className="arcade-rise mt-12 flex flex-wrap items-center gap-x-8 gap-y-3" style={{ "--i": 8 }}>
+            <div className="arcade-rise mt-12 flex flex-wrap items-center gap-x-8 gap-y-3 md:mt-16" style={{ "--i": 9 }}>
               <Bracket href="/">Back home</Bracket>
               <Bracket href="/beyond">Beyond</Bracket>
             </div>
           </>
         ) : (
-          <div className="mt-10 md:mt-14">
+          <div className="mt-6 md:mt-10">
             {sprite && <Screen Game={Game} level={level} sprite={sprite} muted={muted} onBack={back} onNext={next} onCleared={onCleared} />}
           </div>
         )}

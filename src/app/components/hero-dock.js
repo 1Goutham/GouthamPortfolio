@@ -9,7 +9,7 @@ import TransitionLink from "./layout/transition-link";
  * A small dock in the hero's corner. Closed, it is a black disc with a face
  * that blinks now and then. Open, it is a column of the site's round marks:
  * the Beyond icon, an arrow (the Projects page), and a question mark, which
- * leads to the arcade at /fun. No labels. Not sticky: it scrolls away with
+ * leads to the arcade at /arcade. No labels. Not sticky: it scrolls away with
  * the hero.
  */
 function Face({ className = "" }) {
@@ -58,7 +58,7 @@ export default function HeroDock() {
               <ArrowUpRight className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
             </span>
           </TransitionLink>
-          <TransitionLink href="/fun" className="dock-item" aria-label="A small game" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
+          <TransitionLink href="/arcade" className="dock-item" aria-label="A small game" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
             <span className="dock-mark font-anonymous-pro text-xl leading-none">?</span>
           </TransitionLink>
         </div>

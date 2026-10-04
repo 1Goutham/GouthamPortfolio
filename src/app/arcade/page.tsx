@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import FunPage from "./fun-page";
+import ArcadePage from "./arcade-page";
 
 export const metadata: Metadata = {
   title: "Arcade | Goutham G",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <FunPage />;
+  return <ArcadePage />;
 }

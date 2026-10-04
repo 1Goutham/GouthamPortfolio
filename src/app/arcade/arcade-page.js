@@ -2,6 +2,6 @@
 
 import Arcade from "./arcade";
 
-export default function FunPage() {
+export default function ArcadePage() {
   return <Arcade />;
 }
