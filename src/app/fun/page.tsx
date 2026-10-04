@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import FunPage from "./fun-page";
 
 export const metadata: Metadata = {
-  title: "2px out of place | Goutham G",
-  description: "A small game: nudge the line into place. Lower is better.",
+  title: "Arcade | Goutham G",
+  description: "Five small retro games, starring me. Scores stay in your browser.",
   robots: { index: false },
 };
 
