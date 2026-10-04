@@ -68,6 +68,8 @@ export class Run {
   static title = "Run";
   static how = "Jump the blocks. Hold for a higher jump.";
   static keys = "Space / tap";
+  static goal = 60;
+  static task = "Reach 60";
 
   constructor(assets) {
     this.assets = assets;
@@ -82,7 +84,8 @@ export class Run {
     this.dist = 0;
     this.p = { x: 44, y: 0, vy: 0, size: 22, ground: true, holdT: 0 };
     this.groundY = 150;
-    this.p.y = this.groundY - this.p.size / 2;
+    this.feet = 3; // the sprite's transparent padding below the chin
+    this.p.y = this.groundY - this.p.size / 2 + this.feet;
     this.obs = [];
     this.nextIn = 1.2;
     this.stars = Array.from({ length: 14 }, () => ({ x: rnd(0, W), y: rnd(10, 110), r: rnd(1.5, 3), s: rnd(0.2, 0.5) }));
@@ -98,7 +101,7 @@ export class Run {
     this.t += dt;
     this.speed = Math.min(270, 120 + this.t * 5);
     this.dist += this.speed * dt;
-    this.score = Math.floor(this.dist / 12);
+    this.score = Math.floor(this.dist / 20);
 
     // Jump: impulse on press, lighter gravity while held and rising.
     if (input.action && p.ground) {
@@ -111,7 +114,7 @@ export class Run {
     if (holding) p.holdT += dt;
     p.vy += (holding ? 420 : 760) * dt;
     p.y += p.vy * dt;
-    const floor = this.groundY - p.size / 2;
+    const floor = this.groundY - p.size / 2 + this.feet;
     if (p.y >= floor) {
       p.y = floor;
       p.vy = 0;
@@ -125,7 +128,7 @@ export class Run {
       const w = rnd(9, 15);
       this.obs.push({ x: W + 10, y: this.groundY - h, w, h });
       if (Math.random() < 0.3) this.obs.push({ x: W + 10 + w + 4, y: this.groundY - h * 0.7, w: w * 0.8, h: h * 0.7 });
-      this.nextIn = rnd(0.9, 1.7) * (120 / this.speed) + 0.35;
+      this.nextIn = rnd(0.8, 1.5) * (120 / this.speed) + 0.3;
     }
     for (const o of this.obs) o.x -= this.speed * dt;
     this.obs = this.obs.filter((o) => o.x + o.w > -10);
@@ -134,7 +137,7 @@ export class Run {
       if (s.x < -4) s.x = W + 4;
     }
 
-    const box = { x: p.x - p.size / 2 + 4, y: p.y - p.size / 2 + 4, w: p.size - 8, h: p.size - 6 };
+    const box = { x: p.x - p.size / 2 + 4, y: p.y - p.size / 2 + 3, w: p.size - 8, h: p.size - 3 - this.feet };
     if (this.obs.some((o) => hit(box, o))) {
       this.over = true;
       sfx.hit();
@@ -161,6 +164,8 @@ export class Flap {
   static title = "Flap";
   static how = "Flap through the gates. Don't touch anything.";
   static keys = "Space / tap";
+  static goal = 5;
+  static task = "Clear 5 gates";
 
   constructor(assets) {
     this.assets = assets;
@@ -247,6 +252,8 @@ export class Snake {
   static title = "Snake";
   static how = "Eat the asterisks. Don't eat yourself.";
   static keys = "Arrows / tap a side";
+  static goal = 8;
+  static task = "Eat 8 asterisks";
 
   constructor(assets) {
     this.assets = assets;
@@ -338,6 +345,8 @@ export class Pong {
   static title = "Pong";
   static how = "First to five. The ball is you.";
   static keys = "Up / down, or drag";
+  static goal = 5;
+  static task = "Beat the house";
 
   constructor(assets) {
     this.assets = assets;
@@ -425,6 +434,8 @@ export class Catch {
   static title = "Catch";
   static how = "Catch the asterisks. Dodge the crosses. Three lives.";
   static keys = "Left / right, or drag";
+  static goal = 15;
+  static task = "Catch 15";
 
   constructor(assets) {
     this.assets = assets;

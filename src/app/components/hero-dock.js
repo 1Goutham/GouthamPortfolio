@@ -8,8 +8,9 @@ import TransitionLink from "./layout/transition-link";
 /**
  * A small dock in the hero's corner. Closed, it is a black disc with a face
  * that blinks now and then. Open, it is a column of the site's round marks:
- * the character (the Beyond page), an arrow (the Projects page), and the
- * face itself, which opens the game. Not sticky: it scrolls away with the hero.
+ * the Beyond icon, an arrow (the Projects page), and a question mark, which
+ * leads to the arcade at /fun. No labels. Not sticky: it scrolls away with
+ * the hero.
  */
 function Face({ className = "" }) {
   return (
@@ -47,23 +48,18 @@ export default function HeroDock() {
     <>
       <div ref={ref} className="dock" data-open={open}>
         <div className="dock-items" aria-hidden={!open}>
-          <TransitionLink href="/beyond" className="dock-item" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
-            <span className="dock-label font-anonymous-pro">Beyond</span>
+          <TransitionLink href="/beyond" className="dock-item" aria-label="Beyond" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
             <span className="dock-mark">
-              <Image src="/project-icon.png" alt="" width={120} height={96} sizes="40px" draggable={false} className="dock-char" />
+              <Image src="/beyondicon.png" alt="" width={120} height={120} sizes="40px" draggable={false} className="dock-char" />
             </span>
           </TransitionLink>
-          <TransitionLink href="/projects" className="dock-item" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
-            <span className="dock-label font-anonymous-pro">Projects</span>
+          <TransitionLink href="/projects" className="dock-item" aria-label="Projects" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
             <span className="dock-mark">
               <ArrowUpRight className="h-[18px] w-[18px]" strokeWidth={2} aria-hidden="true" />
             </span>
           </TransitionLink>
-          <TransitionLink href="/fun" className="dock-item" tabIndex={open ? 0 : -1} aria-label="A small game" onClick={() => setOpen(false)}>
-            <span className="dock-label font-anonymous-pro">?</span>
-            <span className="dock-mark">
-              <Face />
-            </span>
+          <TransitionLink href="/fun" className="dock-item" aria-label="A small game" tabIndex={open ? 0 : -1} onClick={() => setOpen(false)}>
+            <span className="dock-mark font-anonymous-pro text-xl leading-none">?</span>
           </TransitionLink>
         </div>
         <button

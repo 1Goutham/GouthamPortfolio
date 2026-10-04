@@ -1486,29 +1486,10 @@ video {
   transform: scale(1.06);
 }
 .dock-char {
-  width: 30px;
-  height: auto;
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
 }
-.dock-label {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
-  opacity: 0;
-  transform: translateX(6px);
-  transition: opacity 0.3s ease, transform 0.4s var(--ease-out-expo), color 0.3s ease;
-}
-.dock-item:hover .dock-label,
-.dock-item:focus-visible .dock-label {
-  opacity: 1;
-  transform: none;
-  color: #fff;
-}
-@media (hover: none) {
-  .dock[data-open="true"] .dock-label {
-    opacity: 1;
-    transform: none;
-  }
-}
-
 /* The arcade: cabinets rise in, the screen has faint scanlines, and the
    avatar is drawn pixel-sharp. */
 .arcade[data-ready="false"] .arcade-rise {
@@ -1529,6 +1510,15 @@ video {
   border-color: rgba(255, 255, 255, 0.45);
   background-color: #141414;
   transform: translateY(-2px);
+}
+.arcade-cab[data-locked="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.arcade-cab[data-locked="true"]:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.12);
+  background-color: #0d0d0d;
 }
 .arcade-cab-no {
   transition: color 0.3s ease;

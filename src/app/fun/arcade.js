@@ -8,6 +8,7 @@ import { GAMES, W, H } from "./games";
 
 const BEST_KEY = (id) => `gg-arcade-${id}`;
 const MUTE_KEY = "gg-arcade-mute";
+const UNLOCK_KEY = "gg-arcade-unlocked"; // index of the highest level opened
 
 /* Tiny square-wave sounds, the way a cabinet would do it. */
 function makeSfx(getMuted) {
@@ -54,7 +55,7 @@ function Bracket({ children, onClick, href, className = "" }) {
 }
 
 /* The screen: runs one game, owns the loop, the input and the overlays. */
-function Screen({ Game, sprite, muted, onBack }) {
+function Screen({ Game, level, sprite, muted, onBack, onNext, onCleared }) {
   const canvasRef = useRef(null);
   const gameRef = useRef(null);
   const [phase, setPhase] = useState("ready"); // ready | playing | over
@@ -165,6 +166,7 @@ function Screen({ Game, sprite, muted, onBack }) {
               setBest(g.score);
             }
           } catch {}
+          if (g.score >= Game.goal) onCleared(level);
         }
       }
       setScore((s) => (s === g.score ? s : g.score));
@@ -189,25 +191,32 @@ function Screen({ Game, sprite, muted, onBack }) {
       canvas.removeEventListener("pointercancel", onUp);
       document.removeEventListener("visibilitychange", onVis);
     };
-  }, [Game, onBack]);
+  }, [Game, level, onBack, onCleared]);
 
   return (
     <div className="arcade-rise" style={{ "--i": 0 }}>
       <div className="flex items-baseline justify-between font-anonymous-pro">
-        <h2 className="text-xl text-white md:text-2xl">[ {Game.title} ]</h2>
+        <h2 className="text-xl text-white md:text-2xl">
+          <span className="text-white/40">{String(level + 1).padStart(2, "0")}</span> [ {Game.title} ]
+        </h2>
         <p className="text-sm text-white/50">
           <span className="text-white">{score}</span> <span className="mx-1">·</span> best {best}
         </p>
       </div>
+      <p className="mt-1 font-outfit text-xs text-white/55">Task: {Game.task}.</p>
       <div className="arcade-screen relative mt-3 w-full overflow-hidden rounded-md border border-white/15 bg-black" style={{ aspectRatio: `${W} / ${H}` }}>
         <canvas ref={canvasRef} width={W} height={H} className="block h-full w-full" aria-label={`${Game.title} game`} />
         {phase !== "playing" && (
           <div className="arcade-overlay pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
             {phase === "over" ? (
               <>
-                <p className="font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/50">Game over</p>
+                <p className="font-anonymous-pro text-xs uppercase tracking-[0.2em] text-white/50">
+                  {score >= Game.goal ? "Level cleared" : "Game over"}
+                </p>
                 <p className="mt-1 font-anonymous-pro text-4xl text-white">{score}</p>
-                <p className="mt-3 font-outfit text-xs text-white/60 arcade-blink">press anything to go again</p>
+                <p className="mt-3 font-outfit text-xs text-white/60 arcade-blink">
+                  {score >= Game.goal && onNext ? "next level is open" : "press anything to go again"}
+                </p>
               </>
             ) : (
               <>
@@ -220,7 +229,10 @@ function Screen({ Game, sprite, muted, onBack }) {
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <p className="font-outfit text-xs text-white/45">{Game.keys}. Esc for the arcade.</p>
-        <Bracket onClick={onBack}>Arcade</Bracket>
+        <span className="flex items-center gap-6">
+          {phase === "over" && score >= Game.goal && onNext && <Bracket onClick={onNext}>Next</Bracket>}
+          <Bracket onClick={onBack}>Arcade</Bracket>
+        </span>
       </div>
     </div>
   );
@@ -228,7 +240,8 @@ function Screen({ Game, sprite, muted, onBack }) {
 
 export default function Arcade() {
   const [sprite, setSprite] = useState(null);
-  const [Game, setGame] = useState(null);
+  const [level, setLevel] = useState(null);
+  const [unlocked, setUnlocked] = useState(0);
   const [muted, setMuted] = useState(false);
   const [bests, setBests] = useState({});
   const [ready, setReady] = useState(false);
@@ -249,7 +262,19 @@ export default function Arcade() {
     };
     try {
       setMuted(localStorage.getItem(MUTE_KEY) === "1");
+      setUnlocked(Number(localStorage.getItem(UNLOCK_KEY) || 0));
     } catch {}
+  }, []);
+
+  // Clearing a level's task opens the next one.
+  const onCleared = useCallback((i) => {
+    setUnlocked((u) => {
+      const n = Math.max(u, Math.min(i + 1, GAMES.length - 1));
+      try {
+        localStorage.setItem(UNLOCK_KEY, String(n));
+      } catch {}
+      return n;
+    });
   }, []);
 
   const loadBests = useCallback(() => {
@@ -259,7 +284,7 @@ export default function Arcade() {
     } catch {}
     setBests(b);
   }, []);
-  useEffect(loadBests, [loadBests, Game]);
+  useEffect(loadBests, [loadBests, level]);
 
   const toggleMute = () => {
     setMuted((m) => {
@@ -269,7 +294,9 @@ export default function Arcade() {
       return !m;
     });
   };
-  const back = useCallback(() => setGame(null), []);
+  const back = useCallback(() => setLevel(null), []);
+  const Game = level === null ? null : GAMES[level];
+  const next = level !== null && level < GAMES.length - 1 ? () => setLevel(level + 1) : null;
 
   return (
     <main className="arcade min-h-screen bg-black text-white" data-ready={ready}>
@@ -289,23 +316,35 @@ export default function Arcade() {
               <Image src="/fun/avatar.png" alt="" width={56} height={56} className="arcade-avatar h-12 w-12 md:h-14 md:w-14" draggable={false} />
               <div>
                 <BracketHeading as="h1" className="font-anonymous-pro text-2xl md:text-4xl">Arcade</BracketHeading>
-                <p className="mt-1 font-outfit text-sm text-white/60 md:text-base">Five small games. One me. Scores stay in this browser.</p>
+                <p className="mt-1 font-outfit text-sm text-white/60 md:text-base">Five levels, five tasks, one me. Clear one to open the next.</p>
               </div>
             </div>
 
             <ul className="mt-10 grid gap-3 sm:grid-cols-2 md:mt-12">
-              {GAMES.map((G, i) => (
-                <li key={G.id} className="arcade-rise" style={{ "--i": 2 + i }}>
-                  <button type="button" onClick={() => setGame(() => G)} className="arcade-cab group flex w-full items-center gap-4 rounded-md border border-white/12 bg-[#0d0d0d] p-4 text-left outline-none">
-                    <span className="arcade-cab-no font-anonymous-pro text-sm text-white/35">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block font-anonymous-pro text-lg text-white">[ {G.title} ]</span>
-                      <span className="mt-0.5 block truncate font-outfit text-xs text-white/55">{G.how}</span>
-                    </span>
-                    <span className="font-anonymous-pro text-xs text-white/40">{bests[G.id] ? `best ${bests[G.id]}` : "new"}</span>
-                  </button>
-                </li>
-              ))}
+              {GAMES.map((G, i) => {
+                const locked = i > unlocked;
+                const done = (bests[G.id] || 0) >= G.goal;
+                return (
+                  <li key={G.id} className="arcade-rise" style={{ "--i": 2 + i }}>
+                    <button
+                      type="button"
+                      disabled={locked}
+                      onClick={() => setLevel(i)}
+                      className="arcade-cab group flex w-full items-center gap-4 rounded-md border border-white/12 bg-[#0d0d0d] p-4 text-left outline-none"
+                      data-locked={locked}
+                    >
+                      <span className="arcade-cab-no font-anonymous-pro text-sm text-white/35">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-anonymous-pro text-lg text-white">[ {G.title} ]</span>
+                        <span className="mt-0.5 block truncate font-outfit text-xs text-white/55">{locked ? "Clear the level before it." : `Task: ${G.task}.`}</span>
+                      </span>
+                      <span className="font-anonymous-pro text-xs text-white/40">
+                        {locked ? "locked" : done ? "cleared" : bests[G.id] ? `best ${bests[G.id]}` : "new"}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
 
             <div className="arcade-rise mt-12 flex flex-wrap items-center gap-x-8 gap-y-3" style={{ "--i": 8 }}>
@@ -315,7 +354,7 @@ export default function Arcade() {
           </>
         ) : (
           <div className="mt-10 md:mt-14">
-            {sprite && <Screen Game={Game} sprite={sprite} muted={muted} onBack={back} />}
+            {sprite && <Screen Game={Game} level={level} sprite={sprite} muted={muted} onBack={back} onNext={next} onCleared={onCleared} />}
           </div>
         )}
       </div>
