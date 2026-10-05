@@ -239,6 +239,15 @@ export default function BeyondStory() {
             too profound - just trying to stay curious and enjoy the process.
           </p>
 
+          {/* The console is the link: it leans when you reach for it. */}
+          <p className={`beyond-rise ${para}`} style={{ "--i": 6 }}>
+            I&rsquo;m very into retro gaming{" "}
+            <TransitionLink href="/arcade" aria-label="Try my arcade" className="beyond-console">
+              <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="28px" draggable={false} />
+            </TransitionLink>{" "}
+            click on it - try my arcade!
+          </p>
+
           <FadeContent duration={900} threshold={0.2} className="pt-2 md:pt-4">
             <p className="font-outfit text-base md:text-lg">
               <span className="text-lg font-bold md:text-xl">Warning!</span> unnecessary personal journey ahead.
