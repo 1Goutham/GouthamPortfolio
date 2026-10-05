@@ -1586,6 +1586,17 @@ video {
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
+.arcade-sound {
+  transition: border-color 0.3s ease, color 0.3s ease, transform 0.35s var(--ease-out-expo);
+}
+.arcade-sound:hover,
+.arcade-sound:focus-visible {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+.arcade-sound:active {
+  transform: scale(0.94);
+}
 .arcade-over {
   animation: fade-in 0.35s ease both;
 }
