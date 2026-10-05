@@ -68,7 +68,6 @@ function SplitHeading({
 
 export default function Contact() {
   const sectionRef = useRef<HTMLElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const [form, setForm] = useState({ firstName: '', lastName: '', email: '', message: '' });
   const [status, setStatus] = useState<Status>('idle');
@@ -159,18 +158,6 @@ export default function Contact() {
   }, []);
 
   // Magnetic button: drifts a little toward the cursor, snaps back on leave.
-  const onButtonMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const el = buttonRef.current;
-    if (!el || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const r = el.getBoundingClientRect();
-    const dx = e.clientX - (r.left + r.width / 2);
-    const dy = e.clientY - (r.top + r.height / 2);
-    el.style.transform = `translate(${dx * 0.22}px, ${dy * 0.3}px)`;
-  };
-  const onButtonLeave = () => {
-    if (buttonRef.current) buttonRef.current.style.transform = '';
-  };
-
   const copyEmail = async () => {
     try {
       await navigator.clipboard.writeText(CONTACT.email);
@@ -338,19 +325,16 @@ export default function Contact() {
 
             <div className="flex flex-wrap items-center gap-5 pt-1">
               <button
-                ref={buttonRef}
                 type="submit"
-                onMouseMove={onButtonMove}
-                onMouseLeave={onButtonLeave}
                 disabled={status !== 'idle'}
                 aria-busy={status === 'sending'}
                 data-status={status}
-                className="send-btn group inline-flex items-center gap-3 bg-[#f5f3ef] px-8 py-4 text-[11px] font-semibold uppercase tracking-[0.25em] text-black cursor-pointer disabled:cursor-default"
+                className="send-btn btn-tactile group inline-flex h-11 items-center gap-2 rounded-full bg-white px-6 font-outfit text-sm font-medium text-black shadow-md hover:bg-[#f2f2f2] disabled:cursor-default disabled:hover:transform-none"
               >
-                <span className="relative z-10">
+                <span>
                   {status === 'sent' ? 'Sent' : status === 'sending' ? 'Sending' : 'Send message'}
                 </span>
-                <span className="relative z-10 flex h-4 w-4 items-center justify-center">
+                <span className="flex h-4 w-4 items-center justify-center">
                   {status === 'sent' ? (
                     <Check className="h-4 w-4" strokeWidth={2.5} />
                   ) : status === 'sending' ? (
