@@ -282,7 +282,7 @@ export default function Contact() {
           {/* Right: form */}
           <form onSubmit={handleSubmit} className="contact-reveal space-y-9" noValidate={false}>
             <fieldset className="space-y-3">
-              <legend className="text-sm text-white/70">Name <span className="text-white/40">(required)</span></legend>
+              <legend className="text-sm text-white/70">Name</legend>
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <label className="field">
                   <input
@@ -311,7 +311,7 @@ export default function Contact() {
             </fieldset>
 
             <label className="field block">
-              <span className="mb-3 block text-sm text-white/70">Email <span className="text-white/40">(required)</span></span>
+              <span className="mb-3 block text-sm text-white/70">Email</span>
               <input
                 type="email"
                 name="email"
@@ -324,7 +324,7 @@ export default function Contact() {
             </label>
 
             <label className="field block">
-              <span className="mb-3 block text-sm text-white/70">Message <span className="text-white/40">(required)</span></span>
+              <span className="mb-3 block text-sm text-white/70">Message</span>
               <textarea
                 name="message"
                 rows={3}
