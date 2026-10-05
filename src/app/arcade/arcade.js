@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Volume2, VolumeX } from "lucide-react";
 import TransitionLink from "../components/layout/transition-link";
 import BracketHeading from "../components/layout/bracket-heading";
 import { GAMES, W, H } from "./games";
@@ -304,11 +305,22 @@ export default function Arcade() {
         <TransitionLink href="/" aria-label="Home" className="transition-transform duration-500 ease-out hover:rotate-[-6deg] hover:scale-105">
           <Image src="/logo.png" width={40} height={40} alt="Goutham logo" priority />
         </TransitionLink>
-        <button type="button" onClick={toggleMute} className="bracket-link font-anonymous-pro text-sm text-white md:text-base" aria-pressed={muted}>
-          <span className="bracket-link-l" aria-hidden="true">[</span>
-          <span className="bracket-link-text">sound {muted ? "off" : "on"}</span>
-          <span className="bracket-link-r" aria-hidden="true">]</span>
-        </button>
+        <div className="flex items-center gap-6">
+          <TransitionLink href="/" className="bracket-link font-anonymous-pro text-sm text-white md:text-base">
+            <span className="bracket-link-l" aria-hidden="true">[</span>
+            <span className="bracket-link-text">Home</span>
+            <span className="bracket-link-r" aria-hidden="true">]</span>
+          </TransitionLink>
+          <button
+            type="button"
+            onClick={toggleMute}
+            aria-pressed={muted}
+            aria-label={muted ? "Sound off" : "Sound on"}
+            className="arcade-sound flex h-9 w-9 items-center justify-center rounded-full border border-white/15 text-white/80 outline-none"
+          >
+            {muted ? <VolumeX className="h-[17px] w-[17px]" strokeWidth={1.75} aria-hidden="true" /> : <Volume2 className="h-[17px] w-[17px]" strokeWidth={1.75} aria-hidden="true" />}
+          </button>
+        </div>
       </nav>
 
       <div className="mx-auto max-w-6xl px-6 pb-24 pt-6 md:px-12 md:pb-32 md:pt-10">
@@ -322,7 +334,7 @@ export default function Arcade() {
           </p>
         </header>
 
-        <div className="mt-10 grid items-center gap-10 md:mt-14 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-14">
+        <div className="mt-10 grid items-center gap-10 md:mt-14 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] md:gap-24">
           {/* The console. The games play on its screen. */}
           <div className={`arcade-rise mx-auto w-full transition-[max-width] duration-500 md:max-w-none ${Game && flat ? "max-w-[220px]" : "max-w-[400px]"}`} style={{ "--i": 2 }}>
             <Console playing={Game !== null && !flat} hud={hud} onPress={press} onRelease={release}>
@@ -336,37 +348,24 @@ export default function Arcade() {
           <div className="min-w-0">
             {!Game ? (
               <>
-                <div className="arcade-rise flex items-center gap-3" style={{ "--i": 3 }}>
-                  <div className="flex items-center gap-2" aria-label="Progress">
-                    {GAMES.map((G, i) => (
-                      <span key={G.id} className="arcade-dot" data-state={(bests[G.id] || 0) >= G.goal ? "done" : i <= unlocked ? "open" : "locked"} />
-                    ))}
-                  </div>
-                  <span className="font-anonymous-pro text-xs text-white/40">
-                    {GAMES.filter((G) => (bests[G.id] || 0) >= G.goal).length} / {GAMES.length}
-                  </span>
-                </div>
-                <ol className="mt-5 border-t border-white/10">
+                <ol className="grid gap-x-10 border-t border-white/10 sm:grid-cols-2">
                   {GAMES.map((G, i) => {
                     const locked = i > unlocked;
                     const done = (bests[G.id] || 0) >= G.goal;
                     return (
-                      <li key={G.id} className="arcade-rise" style={{ "--i": 4 + i }}>
+                      <li key={G.id} className="arcade-rise" style={{ "--i": 3 + i }}>
                         <button
                           type="button"
                           disabled={locked}
                           onClick={() => setLevel(i)}
-                          className="arcade-row grid w-full grid-cols-[40px_1fr_auto] items-center gap-4 border-b border-white/10 py-4 text-left outline-none md:grid-cols-[52px_1fr_auto] md:py-5"
+                          className="arcade-row grid w-full grid-cols-[32px_1fr_auto] items-center gap-3 border-b border-white/10 py-4 text-left outline-none"
                           data-locked={locked}
                         >
-                          <span className="arcade-row-no font-anonymous-pro text-sm text-white/35 md:text-base">{String(i + 1).padStart(2, "0")}</span>
-                          <span className="min-w-0">
-                            <span className="arcade-row-title block font-anonymous-pro text-xl text-white md:text-2xl">
-                              <span className="arcade-row-l" aria-hidden="true">[</span> {G.title} <span className="arcade-row-r" aria-hidden="true">]</span>
-                            </span>
-                            <span className="mt-0.5 block font-outfit text-xs text-white/50 md:text-sm">{G.task}</span>
+                          <span className="arcade-row-no font-anonymous-pro text-xs text-white/35">{String(i + 1).padStart(2, "0")}</span>
+                          <span className="arcade-row-title font-anonymous-pro text-lg text-white md:text-xl">
+                            <span className="arcade-row-l" aria-hidden="true">[</span> {G.title} <span className="arcade-row-r" aria-hidden="true">]</span>
                           </span>
-                          <span className="flex items-center justify-end font-anonymous-pro text-sm text-white/40 md:text-base">
+                          <span className="flex items-center justify-end font-anonymous-pro text-sm text-white/40">
                             {done ? <Asterisk className="text-white" /> : bests[G.id] ? bests[G.id] : ""}
                           </span>
                         </button>
@@ -374,10 +373,6 @@ export default function Arcade() {
                     );
                   })}
                 </ol>
-                <div className="arcade-rise mt-8 flex flex-wrap items-center gap-x-8 gap-y-3" style={{ "--i": 9 }}>
-                  <Bracket href="/">Back home</Bracket>
-                  <Bracket href="/beyond">Beyond</Bracket>
-                </div>
               </>
             ) : (
               <div className="arcade-rise" style={{ "--i": 0 }}>
