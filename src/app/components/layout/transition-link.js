@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -10,6 +11,10 @@ const VEIL_MS = 420;
  * A Next `Link` that fades the screen to black before it navigates, so a
  * route change reads as one continuous motion instead of a hard cut. The
  * destination page is responsible for fading its own content back in.
+ *
+ * The veil is rendered on <body>, never beside the link: a transformed or
+ * animated ancestor would otherwise turn its fixed positioning into a box
+ * the size of that ancestor.
  *
  * Modified clicks (new tab, middle click) and reduced-motion users get the
  * plain link behaviour.
@@ -37,7 +42,7 @@ export default function TransitionLink({ href, children, className = "", onClick
       <Link href={href} className={className} onClick={handleClick} {...rest}>
         {children}
       </Link>
-      {leaving && <span className="page-veil" aria-hidden="true" />}
+      {leaving && createPortal(<span className="page-veil" aria-hidden="true" />, document.body)}
     </>
   );
 }
