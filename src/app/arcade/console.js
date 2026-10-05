@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { W, H } from "./games";
 
@@ -65,6 +65,31 @@ export default function Console({ playing, hud, onPress, onRelease, children }) 
   const box = useRef(null);
   const [transform, setTransform] = useState("");
 
+  // Idle, the console leans a few degrees toward the cursor and floats, like
+  // the hero portrait. While a level plays it holds still.
+  const tiltRef = useRef(null);
+  const onPointerMove = useCallback(
+    (e) => {
+      const el = tiltRef.current;
+      if (!el || playing || e.pointerType !== "mouse") return;
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - 0.5;
+      const py = (e.clientY - r.top) / r.height - 0.5;
+      el.style.setProperty("--tilt-x", `${(-py * 8).toFixed(2)}deg`);
+      el.style.setProperty("--tilt-y", `${(px * 10).toFixed(2)}deg`);
+    },
+    [playing]
+  );
+  const resetTilt = useCallback(() => {
+    const el = tiltRef.current;
+    if (!el) return;
+    el.style.setProperty("--tilt-x", "0deg");
+    el.style.setProperty("--tilt-y", "0deg");
+  }, []);
+  useEffect(() => {
+    if (playing) resetTilt();
+  }, [playing, resetTilt]);
+
   // Recompute the screen mapping whenever the console is resized.
   useEffect(() => {
     const el = box.current;
@@ -93,7 +118,8 @@ export default function Console({ playing, hud, onPress, onRelease, children }) 
   const pct = ([l, t, w, h]) => ({ left: `${l * 100}%`, top: `${t * 100}%`, width: `${w * 100}%`, height: `${h * 100}%` });
 
   return (
-    <div ref={box} className="console relative w-full select-none" style={{ aspectRatio: `${ART.w} / ${ART.h}` }} data-playing={playing}>
+    <div ref={tiltRef} className="console-tilt" onPointerMove={onPointerMove} onPointerLeave={resetTilt} data-playing={playing}>
+    <div ref={box} className="console console-float relative w-full select-none" style={{ aspectRatio: `${ART.w} / ${ART.h}` }} data-playing={playing}>
       <Image src={ART.src} alt="A green handheld console with my face on the screen" fill sizes="(max-width: 768px) 80vw, 40vw" priority draggable={false} className="console-art object-contain" />
       {/* The screen: the canvas mapped onto the art's screen quad. */}
       <div className="console-screen absolute left-0 top-0" style={{ width: SCREEN_W, height: SCREEN_H, transform, transformOrigin: "0 0", visibility: transform ? "visible" : "hidden" }}>
@@ -107,6 +133,7 @@ export default function Console({ playing, hud, onPress, onRelease, children }) 
         <button type="button" className="console-tap absolute right-0 top-1/3 h-1/3 w-1/3" aria-label="Right" {...pad("ArrowRight")} />
       </div>
       <button ref={hud.a} type="button" className="console-key console-a absolute" style={pct(ABTN)} aria-label="A" {...pad(" ")} />
+    </div>
     </div>
   );
 }

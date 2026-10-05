@@ -1535,9 +1535,32 @@ video {
 /* The console: the art, the mapped screen, and the drawn controls that
    light on press. The screen only shows once a level is playing; idle, the
    art's own screen (the avatar) stays. */
+/* The console leans toward the cursor (the tilt vars are set from JS) and
+   floats while idle; a level playing holds it still. */
+.console-tilt {
+  transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out-expo);
+  will-change: transform;
+}
+.console-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+.console-float[data-playing="true"] {
+  animation: none;
+}
 .console-art {
   image-rendering: pixelated;
   filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.7));
+  transition: filter 0.5s ease;
+}
+.console-tilt:hover .console-art {
+  filter: drop-shadow(0 46px 56px rgba(0, 0, 0, 0.8)) brightness(1.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-float {
+    animation: none;
+  }
 }
 .console-screen {
   background: #0b0b10;
