@@ -661,6 +661,7 @@ video {
 }
 .field input,
 .field textarea {
+  display: block; /* no baseline gap under the textarea, so the focus line sits on the border */
   width: 100%;
   background: transparent;
   border: 0;
