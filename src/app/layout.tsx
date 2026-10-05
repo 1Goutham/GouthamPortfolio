@@ -1,18 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat, Anonymous_Pro, Outfit, Noto_Sans_Tamil } from "next/font/google";
+import { Anonymous_Pro, Outfit, Noto_Sans_Tamil } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
 
 import "./globals.css";
 
-// Only the fonts the UI actually uses are loaded (Geist was never referenced).
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  display: "swap",
-});
-
+// Only the fonts the UI actually uses are loaded.
 const anonymousPro = Anonymous_Pro({
   variable: "--font-anonymous-pro",
   subsets: ["latin"],
@@ -53,7 +47,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${montserrat.variable} ${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} antialiased`}
+        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} antialiased`}
       >
         <SmoothScroll />
         <Toaster

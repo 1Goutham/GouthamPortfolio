@@ -66,7 +66,6 @@ video {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-montserrat: var(--font-montserrat);
   --font-outfit: var(--font-outfit);
   --font-anonymous-pro: var(--font-anonymous-pro);
   --font-tamil: var(--font-tamil);
@@ -590,6 +589,29 @@ video {
   transform: translateY(0);
 }
 
+/* The little console in the Beyond text: it sits on the baseline, leans and
+   lifts when hovered, and settles back. */
+.beyond-console {
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  margin: 0 0.1em;
+  vertical-align: -0.3em;
+  transform: rotate(0deg);
+  transition: transform 0.5s var(--ease-spring);
+}
+.beyond-console img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.beyond-console:hover,
+.beyond-console:focus-visible {
+  transform: rotate(-10deg) translateY(-2px) scale(1.15);
+  outline: none;
+}
+
 /* Bracket links and headings on the white ground: black ink, brackets ease
    outward exactly as they do in the hero. */
 .bracket-link-dark .bracket-link-l,
@@ -661,6 +683,7 @@ video {
 }
 .field input,
 .field textarea {
+  display: block; /* no baseline gap under the textarea, so the focus line sits on the border */
   width: 100%;
   background: transparent;
   border: 0;

@@ -14,7 +14,7 @@ export default function Scrolltext() {
           </span>,
         ]}
         velocity={50}
-        scrollerStyle={{ fontFamily: "var(--font-montserrat)" }}
+        scrollerStyle={{ fontFamily: "var(--font-outfit)" }}
         className="text-black text-lg md:text-3xl font-regular"
       />
     </div>

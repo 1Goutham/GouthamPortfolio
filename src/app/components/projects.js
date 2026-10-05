@@ -20,15 +20,33 @@ export default function Projects() {
   const [inView, setInView] = useState(false);
   const [hot, setHot] = useState(-1);
 
-  // Fetch the Projects page's phone model in the background now, so the
-  // phones are already in cache by the time the visitor gets there.
+  // Fetch the Projects page's phone model in the background once this
+  // section is in view and the browser is idle, so the phones are cached by
+  // the time the visitor gets there. Skipped on slow or data-saving connections.
   useEffect(() => {
-    if (document.querySelector('link[href="/models/iphone.glb"]')) return;
-    const link = document.createElement("link");
-    link.rel = "prefetch";
-    link.as = "fetch";
-    link.href = "/models/iphone.glb";
-    document.head.appendChild(link);
+    const el = ref.current;
+    if (!el) return;
+    const c = navigator.connection;
+    if (c && (c.saveData || /2g|3g/.test(c.effectiveType || ""))) return;
+    const add = () => {
+      if (document.querySelector('link[href="/models/iphone.glb"]')) return;
+      const link = document.createElement("link");
+      link.rel = "prefetch";
+      link.as = "fetch";
+      link.href = "/models/iphone.glb";
+      document.head.appendChild(link);
+    };
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        io.disconnect();
+        if ("requestIdleCallback" in window) window.requestIdleCallback(add, { timeout: 4000 });
+        else setTimeout(add, 1500);
+      },
+      { rootMargin: "200px 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   // Play the entrance once the section is in the viewport.
