@@ -1532,32 +1532,66 @@ video {
 .arcade-dot[data-state="locked"] {
   border-color: rgba(255, 255, 255, 0.2);
 }
-/* The screen: a hairline frame and faint scanlines, nothing more. */
-.arcade-screen {
-  border: 1px solid rgba(255, 255, 255, 0.18);
+/* The console: the art, the mapped screen, and the drawn controls that
+   light on press. The screen only shows once a level is playing; idle, the
+   art's own screen (the avatar) stays. */
+.console-art {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.7));
 }
-.arcade-screen canvas {
+.console-screen {
+  background: #0b0b10;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.console[data-playing="true"] .console-screen {
+  opacity: 1;
+  pointer-events: auto;
+}
+.console-screen canvas,
+.arcade-flat canvas {
   image-rendering: pixelated;
   touch-action: none;
   cursor: crosshair;
 }
-.arcade-screen::after {
+.console-screen::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1;
-  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px);
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px);
   mix-blend-mode: screen;
+}
+.console-key {
+  border-radius: 18%;
+  background: transparent;
+  transition: background-color 0.12s ease;
+  outline: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.console-key[data-on="true"] {
+  background: rgba(255, 255, 255, 0.28);
+  mix-blend-mode: screen;
+}
+.console-a {
+  border-radius: 50%;
+}
+.console-tap {
+  background: transparent;
+  border: 0;
+  outline: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.arcade-over {
+  animation: fade-in 0.35s ease both;
 }
 @keyframes fade-in {
   from { opacity: 0; }
   to   { opacity: 1; }
-}
-.arcade-overlay {
-  z-index: 2;
-  background: rgba(0, 0, 0, 0.6);
-  animation: fade-in 0.35s ease both;
 }
 @keyframes arcade-blink {
   0%, 60%  { opacity: 1; }
