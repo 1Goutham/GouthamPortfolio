@@ -351,7 +351,7 @@ export default function Contact() {
         {/* Footer */}
         <footer className="mt-20 flex flex-col gap-3 border-t border-white/10 pt-6 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between md:text-sm">
           <p>© {new Date().getFullYear()} Goutham Gopinath</p>
-          <p className="hidden sm:block">AI Full Stack Developer &amp, Product Designer</p>
+          <p className="hidden sm:block">AI Full Stack Developer & Product Designer</p>
           <a href="#" className="group inline-flex items-center gap-1 self-start text-white/60 transition-colors hover:text-white sm:self-auto">
             Back to top
             <ArrowUpRight className="h-4 w-4 transition-transform duration-500 ease-out group-hover:-translate-y-0.5 group-hover:translate-x-0.5" strokeWidth={1.75} />
