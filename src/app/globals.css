@@ -1,0 +1,1659 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.word {
+  will-change: opacity, transform, filter;
+  transform: translate3d(0, 0, 0); /* triggers GPU acceleration */
+}
+
+@keyframes shine {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+}
+
+/* Lenis takes over scrolling when active (native smooth scroll would fight it). */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+picture,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Optional: Tailwind theme variables */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-outfit: var(--font-outfit);
+  --font-anonymous-pro: var(--font-anonymous-pro);
+  --font-tamil: var(--font-tamil);
+}
+
+::selection {
+  background: #9DFF50;
+  color: black;
+}
+
+::-moz-selection {
+  background: #9DFF50;
+  color: black;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none; 
+  scrollbar-width: none;    
+}
+
+/* ------------------------------------------------------------------ */
+/*  Micro-interactions                                                 */
+/* ------------------------------------------------------------------ */
+
+/* Tactile button: lifts on hover, presses on click, keyboard focus ring. */
+.btn-tactile {
+  transition:
+    transform 0.35s var(--ease-out-expo),
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.35s var(--ease-out-expo);
+  will-change: transform;
+}
+.btn-tactile:hover {
+  transform: translateY(-2px) scale(1.04);
+}
+.btn-tactile:active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 0.08s;
+}
+.btn-tactile:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+}
+
+/* Arrow/icon nudge on hover of its parent. */
+.nudge-x {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.group:hover .nudge-x,
+.btn-tactile:hover .nudge-x {
+  transform: translateX(4px);
+}
+
+/* Underline that grows from the left on hover. */
+.link-underline {
+  position: relative;
+}
+.link-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  height: 1px;
+  width: 100%;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.group:hover .link-underline::after,
+.link-underline:hover::after {
+  transform: scaleX(1);
+}
+
+/* Gentle idle float for hero art. */
+@keyframes float-y {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -8px, 0); }
+}
+.float-y {
+  animation: float-y 6s ease-in-out infinite;
+}
+
+/* List rows that slide right slightly and reveal a dash on hover. */
+.row-hover {
+  display: inline-block;
+  transition: transform 0.35s var(--ease-out-expo), opacity 0.3s ease;
+}
+.row-hover:hover {
+  transform: translateX(6px);
+}
+
+/* Project card: lift + brighter border on hover; 3D tilt via CSS vars. */
+.spotlight-card {
+  transform: perspective(1200px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg)) translateZ(0);
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    border-color 0.4s ease,
+    box-shadow 0.5s var(--ease-out-expo);
+  transform-style: preserve-3d;
+}
+.spotlight-card:hover {
+  border-color: rgb(82 82 82);
+  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+}
+
+/* About portrait: slow zoom + slight brighten on hover, nothing moves. */
+.about-portrait img {
+  transition: transform 1.4s var(--ease-out-expo), filter 0.8s ease;
+  will-change: transform;
+}
+.about-portrait:hover img {
+  transform: scale(1.05);
+  filter: brightness(1.06);
+}
+
+/* Inputs: border warms up and lifts a hair on focus. */
+.input-glow {
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.4s var(--ease-out-expo),
+    transform 0.4s var(--ease-out-expo),
+    background-color 0.3s ease;
+}
+.input-glow:focus {
+  border-color: rgba(255, 255, 255, 0.6);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+/* Chat suggestion chips fill in on hover. */
+.chip {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    transform 0.35s var(--ease-out-expo),
+    border-color 0.3s ease;
+}
+.chip:hover {
+  background: #000;
+  color: #fff;
+  border-color: #000;
+  transform: translateY(-2px);
+}
+.chip:active {
+  transform: translateY(0) scale(0.97);
+}
+
+/* Entrance for a freshly-rendered chat message. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.rise-in {
+  animation: rise-in 0.55s var(--ease-out-expo) both;
+}
+
+/* Wobble on hover for the little emoji avatar. */
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-6deg); }
+  75%      { transform: rotate(6deg); }
+}
+.wobble-hover:hover {
+  animation: wobble 0.6s ease-in-out;
+}
+
+/* Pause decorative animations when they are off-screen or motion is reduced. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero                                                               */
+/* ------------------------------------------------------------------ */
+
+/* Copy lines rise in one after another once fonts are ready. */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero[data-ready="false"] .hero-line {
+  opacity: 0;
+}
+.hero[data-ready="true"] .hero-line {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(120ms + var(--i, 0) * 90ms);
+}
+
+/* Portrait: fades up on load, then leans a few degrees toward the cursor
+   (the tilt vars are set inline) while the inner layer keeps its idle float. */
+@keyframes hero-portrait-in {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.hero-portrait {
+  transform: perspective(900px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out-expo);
+  will-change: transform;
+}
+.hero[data-ready="false"] .hero-portrait-inner {
+  opacity: 0;
+}
+.hero[data-ready="true"] .hero-portrait-inner {
+  animation:
+    hero-portrait-in 0.9s var(--ease-out-expo) both,
+    float-y 6s ease-in-out 0.9s infinite;
+}
+.hero-portrait img {
+  filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6));
+  transition: filter 0.5s ease;
+}
+.hero-portrait:hover img {
+  filter: drop-shadow(0 34px 48px rgba(0, 0, 0, 0.7)) brightness(1.04);
+}
+
+/* "[ label ]" links: the brackets ease outward and the label brightens. */
+.bracket-link {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  outline: none;
+}
+.bracket-link-l,
+.bracket-link-r {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.7);
+  transition: transform 0.4s var(--ease-out-expo), color 0.3s ease;
+}
+.bracket-link-text {
+  margin: 0 0.55ch;
+  color: rgba(255, 255, 255, 0.88);
+  transition: color 0.3s ease;
+}
+.bracket-link:hover .bracket-link-l,
+.bracket-link:focus-visible .bracket-link-l {
+  transform: translateX(-5px);
+  color: #9DFF50;
+}
+.bracket-link:hover .bracket-link-r,
+.bracket-link:focus-visible .bracket-link-r {
+  transform: translateX(5px);
+  color: #9DFF50;
+}
+.bracket-link:hover .bracket-link-text,
+.bracket-link:focus-visible .bracket-link-text {
+  color: #fff;
+}
+.bracket-link:active .bracket-link-l,
+.bracket-link:active .bracket-link-r {
+  transform: translateX(0);
+  transition-duration: 0.1s;
+}
+
+/* Kural: Tamil and English sit in the same grid cell. Each letter is its own
+   span; on hover the Tamil letters lift out one after another while the
+   English letters settle in behind them, then the reverse on leave. */
+.kural-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+.kural-ch {
+  display: inline-block;
+  will-change: opacity, transform, filter;
+  transition:
+    opacity 0.45s ease,
+    transform 0.7s var(--ease-out-expo),
+    filter 0.45s ease;
+}
+.kural-en {
+  pointer-events: none;
+}
+/* Resting state: Tamil in, English waiting below. */
+.kural-en .kural-ch {
+  opacity: 0;
+  transform: translateY(0.45em);
+  filter: blur(6px);
+}
+.kural[data-lang="ta"] .kural-en .kural-ch {
+  transition-delay: calc(var(--i, 0) * 9ms);
+}
+.kural[data-lang="ta"] .kural-ta .kural-ch {
+  transition-delay: calc(140ms + var(--i, 0) * 11ms);
+}
+/* Translated state: Tamil lifts away, English settles in. */
+.kural[data-lang="en"] .kural-ta .kural-ch {
+  opacity: 0;
+  transform: translateY(-0.45em);
+  filter: blur(6px);
+  transition-delay: calc(var(--i, 0) * 9ms);
+}
+.kural[data-lang="en"] .kural-en .kural-ch {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+  transition-delay: calc(140ms + var(--i, 0) * 11ms);
+}
+.kural:focus-visible .kural-ta,
+.kural:focus-visible .kural-en {
+  text-decoration: underline;
+  text-decoration-color: rgba(157, 255, 80, 0.7);
+  text-underline-offset: 4px;
+}
+
+/* Diagonal arrow nudges up-right on hover of its parent. */
+.nudge-diag {
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.group:hover .nudge-diag,
+.btn-tactile:hover .nudge-diag {
+  transform: translate(2px, -2px);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Beyond teaser (homepage)                                           */
+/* ------------------------------------------------------------------ */
+
+/* Geometry, relative to the section's content column:
+     --fig-w   illustration width as a fraction of the column
+     --card-x  centre of the green "?" card, fraction of the image width
+     --card-y  centre of that card, fraction of the image height */
+.beyond {
+  --fig-w: 0.75;
+  --card-x: 0.552;
+  --card-y: 0.147;
+}
+.beyond-figure {
+  width: calc(var(--fig-w) * 100%);
+  margin-left: auto;
+}
+
+/* Entrance: the copy rises, then the figure settles in. */
+.beyond-cta-text,
+.beyond-figure {
+  transition: opacity 0.9s var(--ease-out-expo), transform 0.9s var(--ease-out-expo), color 0.3s ease;
+}
+.beyond[data-inview="false"] .beyond-cta-text {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.beyond[data-inview="false"] .beyond-figure {
+  opacity: 0;
+  transform: translateY(16px);
+}
+.beyond[data-inview="true"] .beyond-figure {
+  transition-delay: 0.1s;
+}
+
+/* Hover: the copy brightens, the figure leans toward the pointer (the drift
+   vars are set inline) and lifts, and a green bloom comes up behind the card
+   so the card itself answers the hover. */
+.beyond-link:hover .beyond-cta-text,
+.beyond-link:focus-visible .beyond-cta-text {
+  color: #fff;
+}
+.beyond-link:focus-visible .beyond-cta-text {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.beyond-figure img {
+  transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+  transition: transform 0.8s var(--ease-out-expo), filter 0.6s ease;
+  will-change: transform;
+}
+.beyond-link:hover .beyond-figure img,
+.beyond-link:focus-visible .beyond-figure img {
+  filter: brightness(1.05);
+  transform: translate3d(var(--dx, 0px), calc(var(--dy, 0px) - 4px), 0);
+}
+.beyond-glow {
+  position: absolute;
+  left: calc(var(--card-x) * 100%);
+  top: calc(var(--card-y) * 100%);
+  width: 46%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(157, 255, 80, 0.55) 0%, rgba(157, 255, 80, 0.16) 38%, transparent 66%);
+  filter: blur(24px);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.55);
+  transition: opacity 0.6s ease, transform 1s var(--ease-out-expo);
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+.beyond-link:hover .beyond-glow,
+.beyond-link:focus-visible .beyond-glow {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* The "[ Beyond ]" label that rides with the cursor over the stage. Its
+   outer span is moved from JS; the pill inside springs open on entry. */
+.beyond-cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  pointer-events: none;
+  will-change: transform;
+}
+.beyond-cursor-pill {
+  display: block;
+  transform: translate(-50%, -50%) scale(0);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: #000;
+  color: #9DFF50;
+  border: 1px solid rgba(157, 255, 80, 0.4);
+  font-size: 0.95rem;
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 12px 30px -12px rgba(0, 0, 0, 0.9);
+  transition: transform 0.45s var(--ease-spring), opacity 0.25s ease;
+  opacity: 0;
+}
+.beyond-stage[data-hover="true"] .beyond-cursor-pill {
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+}
+/* On a real pointer the label replaces the cursor. */
+@media (hover: hover) and (pointer: fine) {
+  .beyond-stage[data-hover="true"],
+  .beyond-stage[data-hover="true"] a {
+    cursor: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .beyond-cursor {
+    display: none;
+  }
+  .beyond-stage[data-hover="true"],
+  .beyond-stage[data-hover="true"] a {
+    cursor: pointer;
+  }
+}
+
+/* Fade to black that TransitionLink lays over the page before it navigates. */
+@keyframes veil-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.page-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+  pointer-events: none;
+  animation: veil-in 0.42s ease-out both;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Beyond page                                                        */
+/* ------------------------------------------------------------------ */
+
+/* The page arrives from the black veil: the ground settles from black to
+   white, then the photo and the opening lines rise in once fonts are ready. */
+@keyframes beyond-ground-in {
+  from { background-color: #000; }
+  to   { background-color: #fff; }
+}
+.beyond-page {
+  animation: beyond-ground-in 0.7s ease-out both;
+}
+.beyond-page[data-ready="false"] .beyond-rise {
+  opacity: 0;
+}
+.beyond-page[data-ready="true"] .beyond-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(250ms + var(--i, 0) * 90ms);
+}
+
+/* The taped photo. `--swing` is driven by the spring in beyond-story.js and
+   the print pivots around the tape, so `--pivot-x` / `--pivot-y` are where
+   the tape sits in the artwork (fractions of the image size). The shadow is
+   baked into the artwork. */
+.beyond-photo {
+  --pivot-x: 52%;
+  --pivot-y: 19%;
+  --swing: 0deg;
+  cursor: default;
+  touch-action: pan-y;
+}
+.beyond-photo img {
+  transform-origin: var(--pivot-x) var(--pivot-y);
+  transform: rotate(var(--swing));
+  will-change: transform;
+}
+
+/* The asterisk turns with the scroll position (see ScrollStar). */
+.beyond-star {
+  display: inline-block;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+
+/* "2px out of place" sits 2px out of place. Hovering it fixes that. */
+.beyond-2px {
+  display: inline-block;
+  transform: translateY(2px);
+  transition: transform 0.55s var(--ease-out-expo);
+  cursor: default;
+}
+.beyond-2px:hover {
+  transform: translateY(0);
+}
+
+/* The little console in the Beyond text: it sits on the baseline, leans and
+   lifts when hovered, and settles back. */
+.beyond-console {
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  margin: 0 0.1em;
+  vertical-align: -0.3em;
+  transform: rotate(0deg);
+  transition: transform 0.5s var(--ease-spring);
+}
+.beyond-console img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.beyond-console:hover,
+.beyond-console:focus-visible {
+  transform: rotate(-10deg) translateY(-2px) scale(1.15);
+  outline: none;
+}
+
+/* Bracket links and headings on the white ground: black ink, brackets ease
+   outward exactly as they do in the hero. */
+.bracket-link-dark .bracket-link-l,
+.bracket-link-dark .bracket-link-r {
+  color: rgba(0, 0, 0, 0.6);
+}
+.bracket-link-dark .bracket-link-text {
+  color: rgba(0, 0, 0, 0.85);
+}
+.bracket-link-dark:hover .bracket-link-l,
+.bracket-link-dark:hover .bracket-link-r,
+.bracket-link-dark:focus-visible .bracket-link-l,
+.bracket-link-dark:focus-visible .bracket-link-r,
+.bracket-link-dark:hover .bracket-link-text,
+.bracket-link-dark:focus-visible .bracket-link-text {
+  color: #000;
+}
+
+/* Black "Contact" button: a dark focus ring instead of the white one. */
+.btn-tactile-dark:focus-visible {
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+}
+
+/* Pipeline steps: a black marker fills in behind the word on hover. */
+.journey-step {
+  position: relative;
+  display: inline;
+  padding: 0 0.15em;
+  margin: 0 -0.15em;
+  isolation: isolate;
+  transition: color 0.3s ease;
+  cursor: default;
+}
+.journey-step::before {
+  content: "";
+  position: absolute;
+  inset: 0.05em -0.05em;
+  z-index: -1;
+  background: #000;
+  border-radius: 3px;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.journey-step:hover {
+  color: #9DFF50;
+}
+.journey-step:hover::before {
+  transform: scaleX(1);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Contact section                                                    */
+/* ------------------------------------------------------------------ */
+
+/* Faint film grain over the dark ground. */
+.grain {
+  opacity: 0.07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+  mix-blend-mode: screen;
+}
+
+/* Underline-only fields: a hairline that brightens and a second line that
+   draws in from the left on focus. */
+.field {
+  position: relative;
+  display: block;
+}
+.field input,
+.field textarea {
+  display: block; /* no baseline gap under the textarea, so the focus line sits on the border */
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 0.5rem 0;
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+.field input::placeholder,
+.field textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+  transition: color 0.3s ease, transform 0.4s var(--ease-out-expo);
+}
+.field input:focus::placeholder,
+.field textarea:focus::placeholder {
+  color: rgba(255, 255, 255, 0.55);
+  transform: translateX(4px);
+}
+.field:focus-within input,
+.field:focus-within textarea {
+  border-bottom-color: rgba(255, 255, 255, 0.45);
+}
+.field:focus-within > span:first-child {
+  color: #fff;
+}
+.field-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.55s var(--ease-out-expo);
+  pointer-events: none;
+}
+.field:focus-within .field-line {
+  transform: scaleX(1);
+}
+/* Autofill shouldn't paint the browser's yellow box. */
+.field input:-webkit-autofill {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #000 inset;
+  transition: background-color 9999s ease-out;
+}
+
+/* Contact rows nudge right; the icon brightens and tilts. */
+.contact-row {
+  transition: transform 0.45s var(--ease-out-expo), color 0.3s ease;
+}
+.contact-row:hover {
+  transform: translateX(6px);
+}
+.contact-icon {
+  transition: color 0.3s ease, transform 0.45s var(--ease-out-expo);
+}
+.contact-row:hover .contact-icon {
+  color: #fff;
+  transform: rotate(-8deg) scale(1.08);
+}
+
+/* Social buttons fill white and lift on hover. */
+.social-btn {
+  transition:
+    background-color 0.35s ease,
+    color 0.35s ease,
+    border-color 0.35s ease,
+    transform 0.45s var(--ease-out-expo);
+}
+.social-btn:hover,
+.social-btn:focus-visible {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  transform: translateY(-3px) rotate(-6deg);
+  outline: none;
+}
+.social-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Send button: magnetic drift is set inline; the sweep + press live here. */
+/* Send: the site's one solid button. The arrow nudges; while sending a dot
+   breathes; once sent the label and a check stay, and it stops reacting. */
+.send-btn[data-status="sent"],
+.send-btn[data-status="sending"] {
+  transform: none !important;
+}
+@keyframes send-dot {
+  0%, 100% { transform: scale(0.6); opacity: 0.4; }
+  50%      { transform: scale(1); opacity: 1; }
+}
+.send-dot {
+  animation: send-dot 0.9s ease-in-out infinite;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Minimal nav                                                        */
+/* ------------------------------------------------------------------ */
+.mnav-glow {
+  transition:
+    left 0.5s var(--ease-out-expo),
+    width 0.5s var(--ease-out-expo),
+    opacity 0.35s ease;
+}
+.mnav-line {
+  transition:
+    left 0.6s var(--ease-out-expo),
+    width 0.6s var(--ease-out-expo);
+}
+/* Label roll: the text slides up and its twin slides in from below. */
+.mnav-roll-inner {
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.mnav-link:hover .mnav-roll-inner,
+.mnav-link:focus-visible .mnav-roll-inner {
+  transform: translateY(-50%);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Projects teaser (homepage)                                         */
+/* ------------------------------------------------------------------ */
+
+/* Entrance: everything rises in on --i once the section is in view. */
+.projects[data-inview="false"] .projects-rise {
+  opacity: 0;
+}
+.projects[data-inview="true"] .projects-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* The character idles with a float and leans toward whichever mark is
+   hovered (--hot is the mark's index, -1 for none). */
+.projects-char {
+  animation: float-y 6s ease-in-out infinite;
+}
+.projects-char img {
+  transform-origin: 50% 100%;
+  transition: transform 0.6s var(--ease-spring);
+}
+.projects:has(.project-mark:hover) .projects-char img,
+.projects:has(.project-mark:focus-visible) .projects-char img {
+  transform: translateX(calc(4px + var(--hot, 0) * 2px)) rotate(calc(-2deg - var(--hot, 0) * 1deg)) scale(1.04);
+}
+
+/* Marks: ring and lift on hover, the icon pops, the name floats up; the
+   other marks step back while one is hovered. */
+.project-mark {
+  transition:
+    background-color 0.3s ease,
+    transform 0.45s var(--ease-out-expo),
+    box-shadow 0.45s var(--ease-out-expo),
+    opacity 0.35s ease;
+  will-change: transform;
+}
+.project-mark:hover,
+.project-mark:focus-visible {
+  background-color: #383838;
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 18px 30px -18px rgba(0, 0, 0, 0.9);
+}
+.project-mark:focus-visible {
+  box-shadow: 0 0 0 2px #9DFF50;
+}
+.project-mark:active {
+  transform: translateY(-1px) scale(0.95);
+  transition-duration: 0.1s;
+}
+.project-mark-icon {
+  transition: transform 0.5s var(--ease-spring);
+}
+.project-mark:hover .project-mark-icon,
+.project-mark:focus-visible .project-mark-icon {
+  transform: scale(1.14);
+}
+.project-mark-name {
+  opacity: 0;
+  transform: translate(-50%, 6px) scale(0.92);
+  transform-origin: bottom center;
+  transition: opacity 0.25s ease, transform 0.45s var(--ease-spring);
+}
+.project-mark:hover .project-mark-name,
+.project-mark:focus-visible .project-mark-name {
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+}
+@media (hover: hover) {
+  .projects-marks:has(.project-mark:hover) .project-mark:not(:hover) {
+    opacity: 0.5;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Site-wide micro-interactions                                       */
+/* ------------------------------------------------------------------ */
+
+/* Section headings share the hero's bracket language. At rest the brackets
+   are the heading's own colour; on hover they ease outward and tint green. */
+.bracket-heading {
+  white-space: normal;
+}
+.bracket-heading .bracket-link-l,
+.bracket-heading .bracket-link-r,
+.bracket-heading .bracket-link-text {
+  color: inherit;
+}
+.bracket-heading:hover .bracket-link-l,
+.bracket-heading:hover .bracket-link-r {
+  color: #9DFF50;
+}
+.bracket-link-dark.bracket-heading:hover .bracket-link-l,
+.bracket-link-dark.bracket-heading:hover .bracket-link-r {
+  color: #000;
+}
+
+/* About portrait: parallax drift against the cursor (vars set inline). */
+.about-portrait img {
+  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.06);
+  transition: transform 1s var(--ease-out-expo), filter 0.8s ease;
+}
+.about-portrait:hover img {
+  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.09);
+}
+
+/* Skills radar. The artwork is a white square on a white ground, so no
+   shadow or tilt (both outline the square). Instead the chart's own circle
+   gets a radar sweep that turns while hovered, and a ring that pulses out
+   once on entry. --cx/--cy/--r locate the circle inside the artwork. */
+.skills-radar {
+  /* The ring's centre and radius, measured from the artwork (1220x1242). */
+  --cx: 49.9%;
+  --cy: 50.7%;
+  --r: 37.7%;
+}
+.skills-radar img {
+  position: relative;
+  z-index: 0;
+  transition: transform 0.9s var(--ease-out-expo);
+}
+.skills-radar:hover img {
+  transform: scale(1.015);
+}
+.skills-sweep,
+.skills-ring {
+  position: absolute;
+  left: var(--cx);
+  top: var(--cy);
+  width: calc(var(--r) * 2);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: multiply;
+}
+.skills-sweep {
+  background: conic-gradient(
+    from 0deg,
+    rgba(0, 0, 0, 0) 0deg,
+    rgba(0, 0, 0, 0.12) 46deg,
+    rgba(0, 0, 0, 0.2) 60deg,
+    rgba(0, 0, 0, 0) 61deg,
+    rgba(0, 0, 0, 0) 360deg
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+@keyframes skills-turn {
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+.skills-radar:hover .skills-sweep {
+  opacity: 1;
+  animation: skills-turn 3.2s linear infinite;
+}
+.skills-ring {
+  border: 1px solid rgba(0, 0, 0, 0.35);
+  opacity: 0;
+}
+@keyframes skills-ping {
+  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0.6; }
+  100% { transform: translate(-50%, -50%) scale(1.02); opacity: 0; }
+}
+.skills-radar:hover .skills-ring {
+  animation: skills-ping 1.4s var(--ease-out-expo) both;
+}
+
+/* Skills tagline: each word underlines in turn, left to right. */
+.skills-word {
+  position: relative;
+  display: inline-block;
+  white-space: pre;
+}
+.skills-word::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0.25em;
+  bottom: -0.08em;
+  height: 2px;
+  background: #000;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s var(--ease-out-expo);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+.skills-tagline:hover .skills-word::after {
+  transform: scaleX(1);
+}
+
+/* Marquee stars turn a half-turn while the line is under the cursor. */
+.marquee-star {
+  display: inline-block;
+  transition: transform 0.9s var(--ease-out-expo), color 0.4s ease;
+}
+.marquee:hover .marquee-star {
+  transform: rotate(180deg) scale(1.15);
+  color: #6dcf1e;
+}
+
+/* Contact heading letters: the wave is written inline; this is its ease. */
+.contact-heading .contact-char {
+  transition: transform 0.45s var(--ease-out-expo);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Projects page                                                      */
+/* ------------------------------------------------------------------ */
+
+/* Header rises in once fonts are ready (the page arrives from the veil). */
+.projects-page[data-ready="false"] .projects-rise {
+  opacity: 0;
+}
+.projects-page[data-ready="true"] .projects-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(200ms + var(--i, 0) * 120ms);
+}
+
+/* Every asterisk turns with the scroll position (--turn on the page root). */
+.turn-star {
+  display: inline-block;
+  transform: rotate(var(--turn, 0deg));
+  transition: transform 0.25s ease-out;
+  will-change: transform;
+}
+
+/* Row entrance: once the row is in view its pieces rise in order (index,
+   logo, name, tagline, description, then the features one by one, then the
+   actions), each on --i. */
+.project-row[data-inview="false"] .pr-item,
+.project-row[data-inview="false"] .project-feature {
+  opacity: 0;
+}
+.project-row[data-inview="true"] .pr-item {
+  animation: hero-rise 0.85s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+.project-row[data-inview="true"] .project-feature {
+  animation: hero-rise 0.7s var(--ease-out-expo) both;
+  animation-delay: calc(var(--k, 5) * 80ms + var(--i, 0) * 45ms);
+}
+
+/* Row hover: the divider brightens from the left, a spotlight follows the
+   cursor (--rx/--ry, moved on the compositor), the index and features
+   brighten, the logo lights up. White on white: the only colour on this
+   page is in the products themselves. */
+.project-row {
+  overflow: clip; /* keeps the spotlight inside the row without breaking the sticky index */
+}
+.project-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.project-row::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s var(--ease-out-expo);
+  pointer-events: none;
+}
+.project-row:hover::after {
+  transform: scaleX(1);
+}
+.project-row > .project-spot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 640px;
+  height: 640px;
+  margin: -320px 0 0 -320px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.045), transparent 50%);
+  transform: translate3d(var(--rx, 50%), var(--ry, 50%), 0);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+.project-row:hover > .project-spot {
+  opacity: 1;
+}
+.project-index {
+  display: inline-block;
+  transition: color 0.35s ease, transform 0.5s var(--ease-out-expo);
+}
+.project-row:hover .project-index {
+  color: rgba(255, 255, 255, 0.9);
+  transform: translateX(6px);
+}
+/* On this page the brackets stay white: dim at rest, full on hover. */
+.project-row .bracket-link-l,
+.project-row .bracket-link-r {
+  color: rgba(255, 255, 255, 0.5);
+}
+.project-row .bracket-link:hover .bracket-link-l,
+.project-row .bracket-link:hover .bracket-link-r,
+.project-row .bracket-link:focus-visible .bracket-link-l,
+.project-row .bracket-link:focus-visible .bracket-link-r,
+.project-row .bracket-heading:hover .bracket-link-l,
+.project-row .bracket-heading:hover .bracket-link-r {
+  color: #fff;
+}
+.project-logo {
+  --mx: 50%;
+  --my: 50%;
+  transform: perspective(500px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.6s var(--ease-out-expo), background-color 0.4s ease;
+  will-change: transform;
+}
+.project-row:hover .project-logo {
+  background-color: #313131;
+}
+.project-tile-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    140px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.13),
+    rgba(255, 255, 255, 0.04) 45%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.project-row:hover .project-logo .project-tile-light {
+  opacity: 1;
+}
+.project-logo img {
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.project-logo:hover img {
+  transform: translateZ(14px) scale(1.06);
+}
+
+/* Features brighten one after another, left to right, while the row is
+   hovered; the one under the cursor goes full white. */
+.project-feature {
+  display: inline-block;
+  white-space: nowrap; /* a feature and its star wrap together */
+  transition: color 0.35s ease;
+  transition-delay: calc(var(--i, 0) * 40ms);
+}
+.project-row:hover .project-feature {
+  color: rgba(255, 255, 255, 0.92);
+}
+.project-feature:hover {
+  color: #fff !important;
+  transition-delay: 0ms;
+}
+
+/* ------------------------------------------------------------------ */
+/*  G-Talk                                                             */
+/* ------------------------------------------------------------------ */
+
+.gtalk-card {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 40px 80px -40px rgba(0, 0, 0, 0.9);
+}
+
+/* The lettering has a mood. Idle it floats; while the answer is being
+   fetched it sways, thinking; when the reply lands it does one small hop. */
+.gtalk-logo {
+  transform-origin: 50% 90%;
+  animation: float-y 6s ease-in-out infinite;
+  transition: transform 0.5s var(--ease-spring);
+}
+.gtalk-id:hover .gtalk-logo {
+  transform: scale(1.04) rotate(-2deg);
+}
+@keyframes gtalk-sway {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50%      { transform: rotate(3deg) translateY(-4px); }
+}
+.gtalk[data-mood="thinking"] .gtalk-logo {
+  animation: gtalk-sway 1.1s ease-in-out infinite;
+}
+@keyframes gtalk-hop {
+  0%   { transform: translateY(0) scale(1, 1); }
+  30%  { transform: translateY(-14px) scale(0.96, 1.06); }
+  55%  { transform: translateY(0) scale(1.04, 0.94); }
+  75%  { transform: translateY(-4px) scale(0.99, 1.01); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+.gtalk[data-mood="answered"] .gtalk-logo {
+  animation: gtalk-hop 0.8s var(--ease-out-expo) 1, float-y 6s ease-in-out 0.8s infinite;
+}
+
+/* ":)" turns upright into a face when the panel is hovered. */
+.gtalk-smile {
+  transition: transform 0.6s var(--ease-spring);
+}
+.gtalk-id:hover .gtalk-smile {
+  transform: rotate(90deg) translateX(0.05em);
+}
+
+/* Dark panel: a soft spotlight follows the cursor. */
+.gtalk-spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    360px circle at var(--rx, 70%) var(--ry, 40%),
+    rgba(255, 255, 255, 0.05),
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.gtalk-panel:hover .gtalk-spot {
+  opacity: 1;
+}
+
+/* Idle copy, prompts and each exchange rise in on --i. */
+.gtalk-rise {
+  animation: hero-rise 0.7s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Prompt chips: fill white and lift on hover; press down on click. */
+.gtalk-chip {
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    transform 0.4s var(--ease-out-expo);
+}
+.gtalk-chip:hover,
+.gtalk-chip:focus-visible {
+  background: #fff;
+  color: #000;
+  border-color: #fff;
+  transform: translateY(-2px);
+  outline: none;
+}
+.gtalk-chip:active {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 0.08s;
+}
+
+/* Input pill: a halo on focus; send arrow nudges, and flies off when busy. */
+.gtalk-input {
+  transition: box-shadow 0.35s ease, background-color 0.3s ease;
+}
+.gtalk-input:focus-within {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
+  background: #f1f1f1;
+}
+.gtalk-send-icon {
+  transition: transform 0.35s var(--ease-out-expo), opacity 0.3s ease;
+}
+.gtalk-send:hover .gtalk-send-icon {
+  transform: translateX(2px);
+}
+@keyframes gtalk-fly {
+  0%   { transform: translate(0, 0); opacity: 1; }
+  45%  { transform: translate(26px, -10px); opacity: 0; }
+  50%  { transform: translate(-22px, 6px); opacity: 0; }
+  100% { transform: translate(0, 0); opacity: 1; }
+}
+.gtalk-input[data-busy="true"] .gtalk-send-icon {
+  animation: gtalk-fly 0.9s var(--ease-out-expo) both;
+}
+
+/* Reply caret: blinks after the text while it is still typing out. */
+.gtalk-typing > :last-child::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 0.95em;
+  margin-left: 2px;
+  vertical-align: -0.12em;
+  background: #9DFF50;
+  animation: gtalk-blink 0.9s steps(2, start) infinite;
+}
+@keyframes gtalk-blink {
+  to { visibility: hidden; }
+}
+.gtalk-reply p + p {
+  margin-top: 0.6em;
+}
+.gtalk-reply a {
+  color: #9DFF50;
+  text-underline-offset: 3px;
+  text-decoration: underline;
+}
+
+/* ------------------------------------------------------------------ */
+/*  3D phone (Projects page)                                           */
+/* ------------------------------------------------------------------ */
+
+.phone3d {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  height: 560px;
+  touch-action: pan-y; /* vertical scroll still works on touch; sideways drag spins */
+  user-select: none;
+  -webkit-user-select: none;
+}
+@media (max-width: 767px) {
+  .phone3d {
+    max-width: 280px;
+    height: 460px;
+  }
+}
+.phone3d canvas {
+  position: relative;
+  opacity: 0;
+  transition: opacity 0.9s var(--ease-out-expo);
+}
+.phone3d[data-ready="true"] canvas {
+  opacity: 1;
+}
+/* Soft ground shadow, drawn by CSS instead of a per-canvas shadow pass. */
+.phone3d-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -2.5%;
+  width: 72%;
+  height: 8%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.35) 45%, transparent 72%);
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out-expo) 0.2s;
+  pointer-events: none;
+}
+.phone3d[data-ready="true"] .phone3d-shadow {
+  opacity: 1;
+}
+.project-row[data-inview="false"] .phone3d {
+  opacity: 0;
+  transform: translateY(30px);
+}
+.project-row[data-inview="true"] .phone3d {
+  opacity: 1;
+  transform: none;
+  transition: opacity 1s var(--ease-out-expo) 0.2s, transform 1.1s var(--ease-out-expo) 0.2s;
+}
+
+/* ------------------------------------------------------------------ */
+/*  About                                                              */
+/* ------------------------------------------------------------------ */
+
+/* Copy rises in line by line once the section is in view. */
+.about[data-inview="false"] .about-rise {
+  opacity: 0;
+}
+.about[data-inview="true"] .about-rise {
+  animation: hero-rise 0.8s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 80ms);
+}
+/* Fact rows: a hairline that brightens, the value slides a touch on hover. */
+.about-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.4s ease;
+}
+.about-row:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.about-value {
+  display: inline-block;
+  transition: transform 0.45s var(--ease-out-expo);
+}
+.about-row:hover .about-value {
+  transform: translateX(6px);
+}
+.about-note {
+  transition: color 0.35s ease;
+}
+.about-row:hover .about-note {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero dock and the 2px game                                         */
+/* ------------------------------------------------------------------ */
+
+.dock {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.dock-toggle,
+.dock-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: #fff;
+}
+.dock-toggle {
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.9);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.dock-toggle:hover,
+.dock-toggle:focus-visible {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.dock-toggle:active {
+  transform: scale(0.94);
+}
+.dock[data-open="true"] .dock-toggle {
+  border-color: rgba(255, 255, 255, 0.5);
+}
+/* The face blinks every few seconds; the eyes squash to a line. */
+.dock-face {
+  display: block;
+}
+.dock-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: dock-blink 5.2s ease-in-out infinite;
+}
+@keyframes dock-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  96%, 98%      { transform: scaleY(0.1); }
+}
+/* Open: the items unfold upward one by one, with a label to the left. */
+.dock-items {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+  pointer-events: none;
+}
+.dock[data-open="true"] .dock-items {
+  pointer-events: auto;
+}
+.dock-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+  transition: opacity 0.35s ease, transform 0.5s var(--ease-out-expo);
+  outline: none;
+  cursor: pointer;
+}
+.dock[data-open="true"] .dock-item {
+  opacity: 1;
+  transform: none;
+}
+.dock[data-open="true"] .dock-item:nth-child(3) { transition-delay: 0ms; }
+.dock[data-open="true"] .dock-item:nth-child(2) { transition-delay: 50ms; }
+.dock[data-open="true"] .dock-item:nth-child(1) { transition-delay: 100ms; }
+.dock-mark {
+  background: #1f1f1f;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.dock-item:hover .dock-mark,
+.dock-item:focus-visible .dock-mark {
+  background: #2a2a2a;
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: scale(1.06);
+}
+.dock-char {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+/* The arcade: cabinets rise in, the screen has faint scanlines, and the
+   avatar is drawn pixel-sharp. */
+.arcade[data-ready="false"] .arcade-rise {
+  opacity: 0;
+}
+.arcade[data-ready="true"] .arcade-rise {
+  animation: hero-rise 0.7s var(--ease-out-expo) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.arcade-avatar {
+  image-rendering: pixelated;
+}
+/* Level rows: the hairline brightens, the brackets ease outward, the number
+   turns white. Locked rows are dim and still. */
+.arcade-row {
+  transition: border-color 0.4s ease;
+  cursor: pointer;
+}
+.arcade-row:hover,
+.arcade-row:focus-visible {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+.arcade-row-no {
+  transition: color 0.3s ease, transform 0.5s var(--ease-out-expo);
+}
+.arcade-row:hover .arcade-row-no {
+  color: #fff;
+  transform: translateX(4px);
+}
+.arcade-row-l,
+.arcade-row-r {
+  display: inline-block;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.4s var(--ease-out-expo), color 0.3s ease;
+}
+.arcade-row:hover .arcade-row-l { transform: translateX(-4px); color: #fff; }
+.arcade-row:hover .arcade-row-r { transform: translateX(4px); color: #fff; }
+.arcade-row[data-locked="true"] {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+.arcade-row[data-locked="true"]:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.arcade-row[data-locked="true"]:hover .arcade-row-no,
+.arcade-row[data-locked="true"]:hover .arcade-row-l,
+.arcade-row[data-locked="true"]:hover .arcade-row-r {
+  transform: none;
+  color: inherit;
+}
+.arcade-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: background-color 0.4s ease, border-color 0.4s ease;
+}
+.arcade-dot[data-state="done"] {
+  background: #fff;
+  border-color: #fff;
+}
+.arcade-dot[data-state="locked"] {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+/* The console: the art, the mapped screen, and the drawn controls that
+   light on press. The screen only shows once a level is playing; idle, the
+   art's own screen (the avatar) stays. */
+/* The console leans toward the cursor (the tilt vars are set from JS) and
+   floats while idle; a level playing holds it still. */
+.console-tilt {
+  transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--ease-out-expo);
+  will-change: transform;
+}
+.console-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+.console-float[data-playing="true"] {
+  animation: none;
+}
+.console-art {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 40px 50px rgba(0, 0, 0, 0.7));
+  transition: filter 0.5s ease;
+}
+.console-tilt:hover .console-art {
+  filter: drop-shadow(0 46px 56px rgba(0, 0, 0, 0.8)) brightness(1.04);
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-float {
+    animation: none;
+  }
+}
+.console-screen {
+  background: #0b0b10;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+.console[data-playing="true"] .console-screen {
+  opacity: 1;
+  pointer-events: auto;
+}
+.console-screen canvas,
+.arcade-flat canvas {
+  image-rendering: pixelated;
+  touch-action: none;
+  cursor: crosshair;
+}
+.console-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 3px);
+  mix-blend-mode: screen;
+}
+.console-key {
+  border-radius: 18%;
+  background: transparent;
+  transition: background-color 0.12s ease;
+  outline: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.console-key[data-on="true"] {
+  background: rgba(255, 255, 255, 0.28);
+  mix-blend-mode: screen;
+}
+.console-a {
+  border-radius: 50%;
+}
+.console-tap {
+  background: transparent;
+  border: 0;
+  outline: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.arcade-sound {
+  transition: border-color 0.3s ease, color 0.3s ease, transform 0.35s var(--ease-out-expo);
+}
+.arcade-sound:hover,
+.arcade-sound:focus-visible {
+  border-color: rgba(255, 255, 255, 0.5);
+  color: #fff;
+}
+.arcade-sound:active {
+  transform: scale(0.94);
+}
+.arcade-over {
+  animation: fade-in 0.35s ease both;
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes arcade-blink {
+  0%, 60%  { opacity: 1; }
+  61%, 100% { opacity: 0.25; }
+}
+.arcade-blink {
+  animation: arcade-blink 1.1s steps(1) infinite;
+}
