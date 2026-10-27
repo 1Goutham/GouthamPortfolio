@@ -351,13 +351,15 @@ video {
   cursor: default;
   -webkit-tap-highlight-color: transparent;
 }
-/* It hangs a little in front of the face: it moves with the head, and its
-   shadow on the hair moves by less. */
+/* It hangs a little in front of the face and moves with the head. The
+   shadow is fixed and only the transform changes per frame, so following
+   the head costs nothing (an offset that changed every frame would make
+   the browser re-render the filtered text every frame). */
 .vk-float {
   display: inline-flex;
   align-items: center;
   transform: translate3d(var(--hx), var(--hy), 0);
-  filter: drop-shadow(calc(var(--hx) * -0.45) calc(0.05em + var(--hy) * -0.45) 0.06em rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 0.05em 0.06em rgba(0, 0, 0, 0.55));
 }
 /* One curve for every move here: a long, quiet ease-out with no bounce. */
 .vk {

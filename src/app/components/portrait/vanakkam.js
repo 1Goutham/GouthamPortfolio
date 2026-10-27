@@ -69,13 +69,30 @@ const Vanakkam = forwardRef(function Vanakkam({ start, onSettle }, ref) {
       setPhase("en");
       return;
     }
-    const a = setTimeout(() => setPhase("ta"), 120);
-    const b = setTimeout(() => setPhase("en"), 120 + 2600);
+    // The Tamil face is only fetched once Tamil text needs it, so make sure
+    // it is here before the word animates: otherwise the letters start in
+    // a fallback font and change shape (and width) mid-way.
+    let a = 0;
+    let b = 0;
+    let alive = true;
+    const go = () => {
+      if (!alive) return;
+      measure();
+      a = setTimeout(() => setPhase("ta"), 60);
+      b = setTimeout(() => setPhase("en"), 60 + 2600);
+    };
+    const fam = taRef.current ? getComputedStyle(taRef.current).fontFamily : "";
+    const loads = document.fonts?.load
+      ? Promise.all([document.fonts.load(`1em ${fam}`, TA), enRef.current ? document.fonts.load(`1em ${getComputedStyle(enRef.current).fontFamily}`, EN) : null])
+      : Promise.resolve();
+    // Never hold the greeting back for long on a slow network.
+    Promise.race([loads, new Promise((r) => setTimeout(r, 1200))]).then(go, go);
     return () => {
+      alive = false;
       clearTimeout(a);
       clearTimeout(b);
     };
-  }, [start]);
+  }, [start, measure]);
 
   // When the English has landed, let the portrait look at it (once).
   useEffect(() => {
