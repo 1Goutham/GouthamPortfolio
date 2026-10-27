@@ -25,9 +25,9 @@
   color: #fff;
   /* A lit top edge and a soft glass body, so the pill reads on black and on
      the white sections alike. */
-  background: linear-gradient(180deg, rgba(38, 37, 36, 0.92), rgba(12, 12, 12, 0.95));
-  backdrop-filter: blur(14px) saturate(1.2);
-  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  /* Opaque enough not to need a backdrop blur, which would be redone on
+     every scroll frame for an element fixed over moving content. */
+  background: linear-gradient(180deg, #262524, #0e0e0e);
   box-shadow:
     0 20px 44px -18px rgba(0, 0, 0, 0.75),
     0 2px 8px rgba(0, 0, 0, 0.25),
@@ -39,7 +39,7 @@
     border-radius 0.6s var(--ease-out-expo),
     transform 0.45s var(--ease-out-expo),
     bottom 0.5s var(--ease-out-expo);
-  animation: ag-in 0.9s var(--ease-out-expo) 1.2s both;
+  animation: ag-in 0.9s var(--ease-out-expo) 1.2s backwards;
 }
 @keyframes ag-in {
   from { opacity: 0; translate: 0 18px; }
@@ -293,7 +293,7 @@
   transform: rotate(-4deg) scale(1.05);
 }
 .ag[data-open="true"] .ag-logo img {
-  animation: ag-pop 0.8s var(--ease-spring) 0.25s both;
+  animation: ag-pop 0.8s var(--ease-spring) 0.25s backwards;
 }
 @keyframes ag-pop {
   from { opacity: 0; transform: scale(0.7) rotate(-8deg); }
@@ -325,7 +325,7 @@
   outline: none;
 }
 .ag[data-open="true"] .ag-chip {
-  animation: hero-rise 0.6s var(--ease-out-expo) both;
+  animation: hero-rise 0.6s var(--ease-out-expo) backwards;
   animation-delay: calc(0.35s + var(--i, 0) * 60ms);
 }
 
@@ -348,7 +348,7 @@
   max-width: 90%;
   font-size: 12.5px;
   line-height: 1.45;
-  animation: hero-rise 0.5s var(--ease-out-expo) both;
+  animation: hero-rise 0.5s var(--ease-out-expo) backwards;
 }
 .ag-msg-user {
   align-self: flex-end;

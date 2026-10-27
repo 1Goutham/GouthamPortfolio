@@ -55,7 +55,7 @@ function SplitHeading({
       {text.split(' ').map((word, wi) => (
         <span key={wi} className="inline-block overflow-hidden align-bottom pb-[0.08em]" aria-hidden="true">
           {word.split('').map((ch, ci) => (
-            <span key={ci} className="contact-char inline-block will-change-transform">
+            <span key={ci} className="contact-char inline-block">
               {ch}
             </span>
           ))}
