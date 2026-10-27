@@ -302,6 +302,11 @@ video {
   transform-origin: 50% 40%;
   transition: opacity 0.5s ease, transform 0.6s var(--ease-out-expo);
 }
+/* Positioned, so it paints above the (absolutely positioned) shadow before
+   it; unpositioned, the shadow would be drawn over the face. */
+.hero-portrait-photo {
+  position: relative;
+}
 .hero-portrait:hover .hero-portrait-shadow {
   opacity: 1;
   transform: translateY(1.2%) scale(1.04);
