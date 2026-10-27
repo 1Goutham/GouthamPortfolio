@@ -2590,6 +2590,13 @@ a:focus-visible .mt-pill-fill {
   aspect-ratio: 648 / 63;
   overflow: hidden;
 }
+.ws-row {
+  display: contents;
+}
+.ws-row-copy,
+.ws-star-end {
+  display: none;
+}
 .ws-item {
   position: absolute;
   top: 50%;
@@ -2725,32 +2732,54 @@ a:focus-visible .mt-pill-fill {
   to   { opacity: 1; transform: none; }
 }
 
+/* Phones: the desktop row, at full size, gliding past in a seamless loop
+   (two copies side by side, each sliding one copy-width). Touching it
+   holds it still. */
 @media (max-width: 767px) {
   .ws-stage {
     aspect-ratio: auto;
-    display: grid;
-    grid-template-columns: 1fr auto;
+    display: flex;
+    width: 100%;
+    padding: 18px 0;
+  }
+  .ws-row,
+  .ws-row-copy {
+    display: flex;
+    flex: none;
     align-items: center;
-    gap: 14px 12px;
-    padding: 22px 20px;
+    gap: 22px;
+    padding-right: 22px;
+    animation: ws-marquee 26s linear infinite;
+  }
+  .ws-stage:active .ws-row {
+    animation-play-state: paused;
   }
   .ws-item {
     position: static;
     translate: none;
+    flex: none;
   }
-  .ws-idea { font-size: 13px; }
-  .ws-star { display: none; }
-  .ws-mark { grid-column: 1; font-size: 20px; }
+  .ws-idea { font-size: 12.5px; white-space: nowrap; }
+  .ws-star,
+  .ws-star-end { display: block; width: 14px; height: 14px; }
+  .ws-mark { font-size: 21px; }
   .ws-stage:hover .ws-mark { translate: none; }
   .ws-pill {
-    grid-column: 2;
-    grid-row: 1 / span 2;
     width: auto;
     height: 40px;
-    padding: 4px 14px 4px 4px;
-    gap: 8px;
+    padding: 4px 16px 4px 4px;
+    gap: 9px;
   }
-  .ws-pill-text { font-size: 12px; }
+  .ws-pill-text { font-size: 12.5px; }
+}
+@keyframes ws-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .ws-row,
+  .ws-row-copy { animation: none; }
+  .ws-stage { overflow-x: auto; }
 }
 
 /* ------------------------------------------------------------------ */
@@ -3662,8 +3691,28 @@ a:focus-visible .mt-pill-fill {
     --u: 2.7vw;
   }
   .wk-center {
-    padding: 84px 22px 72px;
+    padding: 104px 22px 104px;
   }
+  /* The title moves under the logo row so it never meets Contact, and the
+     footer gets its own line under the progress hairline. */
+  .wk-logo { left: 20px; top: 22px; width: 28px; }
+  .wk-contact { right: 20px; top: 22px; height: 28px; font-size: 12px; }
+  .wk-title {
+    top: 62px;
+    font-size: 12.5px;
+    opacity: 0.85;
+  }
+  .wk-progress {
+    bottom: 44px;
+    width: 56px;
+  }
+  .wk-foot-l,
+  .wk-foot-r {
+    bottom: max(16px, env(safe-area-inset-bottom));
+    font-size: 10px;
+  }
+  .wk-foot-l { left: 20px; }
+  .wk-foot-r { right: 20px; }
   .wk-mark { font-size: 13vw; }
   .wk-intro { flex-direction: column; gap: 22px; }
   .wk-scroll { width: 104px; height: 38px; font-size: 14px; }
