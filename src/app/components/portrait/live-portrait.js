@@ -204,30 +204,65 @@ const rand = (a, b) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const ease = (dt, tau) => 1 - Math.exp(-dt / tau);
 
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.decoding = "async";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
+const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
+
+/**
+ * Fetch and decode an image off the main thread, ready to upload. `data`:
+ * its channels are separate fields, not colour and coverage, so alpha must
+ * not be multiplied into them and no colour conversion may touch them.
+ * (Decoding inside texImage2D from an <img> would block the page.)
+ */
+async function loadBitmap(src, data) {
+  const blob = await (await fetch(src)).blob();
+  if (typeof createImageBitmap === "function") {
+    try {
+      return await createImageBitmap(blob, {
+        premultiplyAlpha: data ? "none" : "premultiply",
+        colorSpaceConversion: data ? "none" : "default",
+      });
+    } catch {
+      /* fall through to an <img> */
+    }
+  }
+  const img = new Image();
+  img.src = URL.createObjectURL(blob);
+  await img.decode();
+  return img;
 }
 
-function compile(gl, type, src) {
-  const s = gl.createShader(type);
-  gl.shaderSource(s, src);
-  gl.compileShader(s);
-  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s) || "shader");
-  return s;
+/**
+ * Compile and link without stalling the page: with KHR_parallel_shader_compile
+ * the driver compiles in the background and we check back each frame.
+ */
+async function buildProgram(gl, vert, frag) {
+  const sh = (type, src) => {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  };
+  const prog = gl.createProgram();
+  const vs = sh(gl.VERTEX_SHADER, vert);
+  const fs = sh(gl.FRAGMENT_SHADER, frag);
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  const ext = gl.getExtension("KHR_parallel_shader_compile");
+  if (ext) {
+    while (!gl.getProgramParameter(prog, ext.COMPLETION_STATUS_KHR)) await nextFrame();
+  }
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(fs) || gl.getShaderInfoLog(vs) || gl.getProgramInfoLog(prog) || "link");
+  }
+  return prog;
 }
 
-// `data`: the channels are separate fields, not colour and coverage, so
-// alpha must not be multiplied into them.
 function texture(gl, unit, img, data = false) {
   const t = gl.createTexture();
   gl.activeTexture(gl.TEXTURE0 + unit);
   gl.bindTexture(gl.TEXTURE_2D, t);
+  // ImageBitmaps were already prepared by loadBitmap; these flags only
+  // apply to the <img> fallback.
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, !data);
   gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, data ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
@@ -243,14 +278,14 @@ function texture(gl, unit, img, data = false) {
   return t;
 }
 
-export default function LivePortrait({ onReady, onHead, api, className = "" }) {
+export default function LivePortrait({ enabled = true, onReady, onHead, api, className = "" }) {
   const ref = useRef(null);
   const onHeadRef = useRef(onHead);
   onHeadRef.current = onHead;
 
   useEffect(() => {
     const canvas = ref.current;
-    if (!canvas) return;
+    if (!canvas || !enabled) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const opts = { premultipliedAlpha: true, alpha: true, antialias: false };
     const gl = canvas.getContext("webgl2", opts) || canvas.getContext("webgl", opts);
@@ -262,25 +297,19 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
     const cleanups = [];
 
     const start = async () => {
+      const NAMES = ["uBase", "uAux", "uIris", "uLids", "uPhoto"];
       let imgs;
-      try {
-        imgs = await Promise.all([SRC.base, SRC.aux, SRC.iris, SRC.lids, SRC.photo].map(loadImage));
-      } catch {
-        return;
-      }
-      if (!alive) return;
-
       let prog;
       try {
-        prog = gl.createProgram();
-        gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER, VERT));
-        gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, FRAG));
-        gl.linkProgram(prog);
-        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) throw new Error("link");
+        // Decode in parallel off the main thread while the shader compiles.
+        const pending = [SRC.base, SRC.aux, SRC.iris, SRC.lids, SRC.photo].map((src, i) => loadBitmap(src, NAMES[i] === "uAux"));
+        prog = await buildProgram(gl, VERT, FRAG);
+        imgs = await Promise.all(pending);
       } catch (err) {
         console.warn("Live portrait unavailable:", err);
         return;
       }
+      if (!alive) return;
       gl.useProgram(prog);
 
       const buf = gl.createBuffer();
@@ -290,10 +319,14 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-      ["uBase", "uAux", "uIris", "uLids", "uPhoto"].forEach((name, i) => {
-        texture(gl, i, imgs[i], name === "uAux");
-        gl.uniform1i(gl.getUniformLocation(prog, name), i);
-      });
+      // One upload per frame, so no single frame carries all of them.
+      for (let i = 0; i < NAMES.length; i++) {
+        texture(gl, i, imgs[i], NAMES[i] === "uAux");
+        gl.uniform1i(gl.getUniformLocation(prog, NAMES[i]), i);
+        imgs[i].close?.();
+        await nextFrame();
+        if (!alive) return;
+      }
 
       const U = (n) => gl.getUniformLocation(prog, n);
       const [W, H] = DATA.size;
@@ -568,10 +601,10 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       raf = requestAnimationFrame(frame);
     };
 
-    // Let the page settle first; the photo is already showing.
+    // Still let the page breathe first; the photo is already showing.
     const idle = window.requestIdleCallback
-      ? window.requestIdleCallback(start, { timeout: 1500 })
-      : setTimeout(start, 600);
+      ? window.requestIdleCallback(start, { timeout: 800 })
+      : setTimeout(start, 200);
 
     return () => {
       alive = false;
@@ -580,7 +613,7 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       clearTimeout(idle);
       cleanups.forEach((f) => f());
     };
-  }, [onReady, api]);
+  }, [enabled, onReady, api]);
 
   return <canvas ref={ref} className={className} aria-hidden="true" />;
 }
