@@ -1227,19 +1227,32 @@ video {
   animation-delay: calc(var(--d) * 80ms);
 }
 
-/* Phones and tablets: the same pieces, in a column, with the window up at
-   the right of the plane so there is still a throw to make. */
+/* Phones and tablets: a column. The window sits under the lede, centred,
+   with the fields below it and the plane and pill under those, so the throw
+   is up and over the form. */
 @media (max-width: 1023px) {
   .cx-frame {
-    padding: 72px 20px 28px;
+    /* Clear of the agent button in the corner at the very bottom. */
+    padding: 46px 18px 84px;
+  }
+  .cx-title,
+  .cx-lede,
+  .cx-field,
+  .cx-plane,
+  .cx-pill,
+  .cx-window,
+  .cx-foot {
+    left: auto;
+    right: auto;
+    top: auto;
   }
   .cx-title {
-    font-size: 34px;
+    font-size: 31px;
   }
   .cx-lede {
     margin-top: 16px;
-    font-size: 17px;
-    line-height: 1.6;
+    font-size: 15.5px;
+    line-height: 1.55;
     white-space: normal;
     max-width: 30em;
   }
@@ -1247,75 +1260,75 @@ video {
     display: none;
   }
   .cx-form {
-    position: relative;
     display: grid;
-    gap: 28px;
-    margin-top: 40px;
-    /* Room below the fields for the window, the plane and the pill. */
-    padding-bottom: calc(min(46vw, 240px) * 0.7154 + 80px);
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    column-gap: 18px;
+    margin-top: 30px;
   }
   .cx-field {
+    grid-column: 1 / -1;
     width: auto;
+    margin-bottom: 26px;
+  }
+  .cx-msg {
+    margin-bottom: 34px;
   }
   .cx-label {
-    font-size: 11px;
-    line-height: 16px;
+    font-size: 10px;
+    line-height: 14px;
     padding-left: 2px;
   }
   .cx-field input {
-    height: 36px;
+    height: 30px;
     font-size: 16px; /* no zoom on focus in iOS */
   }
   .cx-field textarea {
-    height: 92px;
+    height: 76px;
     font-size: 16px;
   }
-  .cx-title,
-  .cx-lede,
-  .cx-field,
-  .cx-foot {
-    left: auto;
-    right: auto;
-    top: auto;
+  .cx-window {
+    position: relative;
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-self: center;
+    width: min(46vw, 230px);
+    margin-bottom: 26px;
+    perspective: 520px;
   }
   .cx-plane {
-    position: absolute;
-    left: 2px;
-    top: auto;
-    bottom: 74px;
-    width: 54px;
+    position: relative;
+    width: 46px;
+    margin-left: 2px;
   }
   .cx-pill {
-    position: absolute;
-    left: 0;
-    top: auto;
-    bottom: 0;
+    position: relative;
+    justify-self: start;
     width: auto;
-    height: 44px;
-    padding: 0 22px;
-    font-size: 15px;
+    height: 32px;
+    padding: 0 18px;
+    font-size: 13px;
   }
-  .cx-window {
-    position: absolute;
-    left: auto;
-    top: auto;
-    right: 0;
-    bottom: 70px;
-    width: min(46vw, 240px);
-    perspective: 560px;
-  }
+  /* The footer on one line: the tagline steps aside on phones. */
   .cx-foot {
     position: relative;
-    margin-top: 48px;
+    margin-top: 42px;
     padding-top: 18px;
-    flex-direction: column;
-    gap: 8px;
-    font-size: 13px;
+    align-items: center;
+    font-size: 12px;
+    white-space: nowrap;
   }
   .cx-foot-mid {
     position: static;
     transform: none;
-    white-space: normal;
+  }
+  .cx-top {
+    margin-right: 0;
+  }
+}
+@media (max-width: 639px) {
+  .cx-foot-mid {
+    display: none;
   }
 }
 
