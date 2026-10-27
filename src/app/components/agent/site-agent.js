@@ -127,8 +127,8 @@ function Spotlight({ spot, onDone }) {
 
 /**
  * The G-Talk agent, stuck to the bottom-left of every page. Closed it is a
- * pill ("Hey! What's on your mind?"); opened it grows into a small chat
- * card. Replies can carry actions (see src/data/site-map.ts): it takes the
+ * circle with the face; hover draws it out into a pill ("Hey! What's on
+ * your mind?"), and a click grows it into a small chat card. Replies can carry actions (see src/data/site-map.ts): it takes the
  * visitor to pages and sections, opens 1G-works panels, spotlights things,
  * and offers external links as buttons (a new tab can't be opened for them
  * after a network round trip without the browser blocking it).

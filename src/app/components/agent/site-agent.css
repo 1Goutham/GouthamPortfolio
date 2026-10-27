@@ -6,7 +6,9 @@
    It is anchored at the bottom-left, so it grows upward and the pill's
    row becomes the card's header. */
 .ag {
-  --ag-w: 268px;
+  /* Closed it is just the face; hover widens it to --ag-pill-w. */
+  --ag-w: 50px;
+  --ag-pill-w: 268px;
   --ag-h: 50px;
   --ag-open-w: 304px;
   --ag-open-h: 300px;
@@ -43,8 +45,32 @@
   from { opacity: 0; translate: 0 18px; }
   to   { opacity: 1; translate: 0 0; }
 }
-.ag[data-open="false"]:hover {
-  transform: translateY(-2px);
+/* Closed: a circle with the face. Pointing at it (or tabbing to it) draws
+   it out into the pill and the greeting slides in after the box; clicking
+   opens the chat. Touch screens skip the pill and open on tap. */
+.ag[data-open="false"] .ag-label {
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.2s ease, transform 0.4s var(--ease-out-expo);
+}
+.ag[data-open="false"]:has(.ag-head:focus-visible) {
+  --ag-w: var(--ag-pill-w);
+}
+.ag[data-open="false"]:has(.ag-head:focus-visible) .ag-label {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.35s ease 0.12s, transform 0.55s var(--ease-out-expo) 0.08s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .ag[data-open="false"]:hover {
+    --ag-w: var(--ag-pill-w);
+    transform: translateY(-2px);
+  }
+  .ag[data-open="false"]:hover .ag-label {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.35s ease 0.12s, transform 0.55s var(--ease-out-expo) 0.08s;
+  }
 }
 /* The card's warm light and grain sit on their own layer so they can fade
    in while the box grows. */
@@ -450,15 +476,9 @@
 }
 
 /* Where it sits on pages with something else in that corner: above the
-   1G-works footer, and as just the face beside the Margin tray. */
+   1G-works footer, and above the Margin tray on phones. */
 .ag[data-route="works"] {
   bottom: calc(min(1vw, 14.4px) * 2.2 + 38px);
-}
-.ag[data-route="margin"][data-open="false"] {
-  --ag-w: 50px;
-}
-.ag[data-route="margin"][data-open="false"] .ag-label {
-  opacity: 0;
 }
 
 /* Spotlight */

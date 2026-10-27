@@ -1675,13 +1675,21 @@ video {
   overflow: hidden;
   user-select: none;
   -webkit-user-select: none;
+  /* The stage paints its own white so the ink below has something to
+     invert against (it is its own stacking context). */
+  background: #fff;
 }
+/* The ink rides above the stickers, drawn in white and blended by
+   difference: black on the paper, the negative of a sticker where it
+   crosses one. The stickers themselves are left as they are. */
 .mt-ink {
   position: absolute;
   inset: 0;
+  z-index: 6;
   width: 100%;
   height: 100%;
   pointer-events: none;
+  mix-blend-mode: difference;
 }
 .mt-item {
   position: absolute;

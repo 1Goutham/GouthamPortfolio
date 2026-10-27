@@ -132,7 +132,8 @@ function Sticker({ s, index, dragged }) {
 
 /**
  * The homepage teaser for /margin: a white band of stickers. The pointer
- * leaves a short ink line behind it (a taste of the drawing page), the
+ * leaves a short ink line behind it (a taste of the drawing page) that
+ * turns into a negative of whatever sticker it crosses, the
  * stickers drift toward it at different depths, and any of them can be
  * peeled off and thrown. Anything else on the band is a link to /margin.
  */
@@ -193,7 +194,8 @@ export default function MarginTeaser() {
       const b = t.pts[i];
       if (b.t - a.t > 80) continue;
       const life = 1 - (now - b.t) / TRAIL_MS;
-      ctx.strokeStyle = `rgba(10, 10, 10, ${(life * 0.9).toFixed(3)})`;
+      // White here; the canvas's difference blend turns it to ink on paper.
+      ctx.strokeStyle = `rgba(255, 255, 255, ${(life * 0.95).toFixed(3)})`;
       ctx.lineWidth = 0.6 + life * 2.2;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
