@@ -8,7 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *  - A soft highlight glides to whichever item is under the cursor and fades
  *    out when the cursor leaves, staying where it was.
  *  - A thin underline slides between items to mark the active section, and
- *    follows you down the page via IntersectionObserver.
+ *    follows you down the page.
  *  - Labels do a subtle "roll": the text slides up and a copy slides in.
  *
  * `items` is [{ label, href }] where href is "#" (top) or "#section-id".
@@ -19,7 +19,7 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
   const [active, setActive] = useState(initialActiveIndex);
   const [hover, setHover] = useState(null);
   const [rects, setRects] = useState([]);
-  const lockUntil = useRef(0);
+  const gliding = useRef(false);
 
   // Measure each item so the highlight/underline can be positioned absolutely.
   const measure = useCallback(() => {
@@ -43,7 +43,11 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
     return () => ro.disconnect();
   }, [measure]);
 
-  // Scroll-spy: the underline follows the section currently in view.
+  // Scroll-spy: the underline sits on the last section whose top has passed
+  // 40% of the way down the screen (so sections between nav items, like the
+  // works strip after Projects, keep the one before them). While a glide is
+  // on its way it holds the destination instead of ticking through every
+  // section it passes.
   useEffect(() => {
     const targets = items
       .map((item, i) => {
@@ -52,46 +56,52 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
         return el ? { el, i } : null;
       })
       .filter(Boolean);
-
     const homeIndex = items.findIndex((it) => it.href === "#");
-    const visible = new Map();
+    if (!targets.length && homeIndex < 0) return;
 
+    let raf = 0;
     const pick = () => {
-      if (performance.now() < lockUntil.current) return;
-      if (window.scrollY < 80 && homeIndex >= 0) {
-        setActive(homeIndex);
-        return;
-      }
-      let best = null;
-      for (const [i, ratio] of visible) {
-        if (ratio > 0 && (best === null || ratio > visible.get(best))) best = i;
-      }
+      raf = 0;
+      if (gliding.current) return;
+      const line = window.innerHeight * 0.4;
+      let best = homeIndex >= 0 ? homeIndex : null;
+      for (const t of targets) if (t.el.getBoundingClientRect().top <= line) best = t.i;
+      if (window.scrollY < 80 && homeIndex >= 0) best = homeIndex;
       if (best !== null) setActive(best);
     };
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          const i = targets.find((t) => t.el === e.target)?.i;
-          if (i !== undefined) visible.set(i, e.isIntersecting ? e.intersectionRatio : 0);
-        }
-        pick();
-      },
-      { rootMargin: "-35% 0px -45% 0px", threshold: [0, 0.1, 0.25, 0.5, 0.75, 1] }
-    );
-    targets.forEach((t) => io.observe(t.el));
-    window.addEventListener("scroll", pick, { passive: true });
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(pick);
+    };
+    const onGlide = (e) => {
+      gliding.current = e.detail.state === "start";
+      if (!gliding.current) onScroll();
+    };
+    // Scrolling yourself mid-glide cancels it (and it never reports an end).
+    const takeOver = () => {
+      if (gliding.current) {
+        gliding.current = false;
+        onScroll();
+      }
+    };
+    pick();
+    window.addEventListener("wheel", takeOver, { passive: true });
+    window.addEventListener("touchstart", takeOver, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    window.addEventListener("glide", onGlide);
     return () => {
-      io.disconnect();
-      window.removeEventListener("scroll", pick);
+      cancelAnimationFrame(raf);
+      window.removeEventListener("wheel", takeOver);
+      window.removeEventListener("touchstart", takeOver);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("glide", onGlide);
     };
   }, [items]);
 
-  const onClick = (i) => {
-    setActive(i);
-    // Hold the choice while the page smooth-scrolls so the spy doesn't fight it.
-    lockUntil.current = performance.now() + 1200;
-  };
+  // The click itself is handled site-wide (SmoothScroll); here the underline
+  // just goes straight to where you're headed.
+  const onClick = (i) => setActive(i);
 
   const target = hover ?? active;
   const hoverRect = rects[target] || { left: 0, width: 0 };

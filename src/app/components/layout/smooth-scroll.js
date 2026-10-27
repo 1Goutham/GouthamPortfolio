@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { scrollToSection } from "./scroll-to";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -23,10 +24,63 @@ const SETTLE_IDLE_MS = 160;
  * anything script can do on a phone). With a wheel or trackpad, when the
  * page comes to rest just short of or just past the start of a section, it
  * eases the last few pixels so the section lines up; stopping anywhere else
- * is left alone. Anchor links glide with the same soft finish.
- * Respects `prefers-reduced-motion` (Lenis falls back to native scrolling).
+ * is left alone.
+ *
+ * Every on-page link ("#about", "#" for the top) goes through
+ * scrollToSection, and a page opened at a hash ("/#contact" from another
+ * page) is lined up with it once the page has settled; neither leaves the
+ * hash in the address bar.
+ * Respects `prefers-reduced-motion` (no Lenis: native, instant scrolling).
  */
 export default function SmoothScroll() {
+  // On-page links. Only plain "#..." hrefs: "/#contact" from another page is
+  // a navigation, and its link handles it.
+  useEffect(() => {
+    const onClick = (e) => {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const a = e.target.closest?.("a[href^='#']");
+      if (!a || a.target === "_blank") return;
+      const href = a.getAttribute("href");
+      if (href !== "#" && href !== "#top" && !document.getElementById(decodeURIComponent(href.slice(1)))) return;
+      e.preventDefault();
+      scrollToSection(href);
+    };
+    document.addEventListener("click", onClick);
+
+    // Arrived with a hash: the page goes on settling after load (images, the
+    // lazy sections, scroll-linked layout), so keep the section lined up for
+    // a few seconds, unless you start scrolling yourself, then tidy the
+    // address bar.
+    let hold = 0;
+    let stopHold = () => {};
+    if (location.hash.length > 1) {
+      const hash = location.hash;
+      const until = performance.now() + 3500;
+      const align = () => {
+        const el = document.getElementById(decodeURIComponent(hash.slice(1)));
+        if (el) {
+          const top = Math.min(el.getBoundingClientRect().top + window.scrollY, document.documentElement.scrollHeight - window.innerHeight);
+          // Natively, so Lenis picks the position up rather than deciding
+          // it is already there.
+          if (Math.abs(top - window.scrollY) > 2) window.scrollTo({ top, behavior: "instant" });
+        }
+        if (performance.now() < until) hold = window.setTimeout(align, 200);
+        else stopHold();
+      };
+      stopHold = () => {
+        clearTimeout(hold);
+        ["wheel", "touchstart", "keydown", "pointerdown"].forEach((t) => window.removeEventListener(t, stopHold));
+        if (location.hash === hash) history.replaceState(history.state, "", location.pathname + location.search);
+      };
+      ["wheel", "touchstart", "keydown", "pointerdown"].forEach((t) => window.addEventListener(t, stopHold, { passive: true }));
+      hold = window.setTimeout(align, 60);
+    }
+    return () => {
+      document.removeEventListener("click", onClick);
+      stopHold();
+    };
+  }, []);
+
   useEffect(() => {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) return;
@@ -36,7 +90,6 @@ export default function SmoothScroll() {
       wheelMultiplier: 1,
       touchMultiplier: 1.4,
       smoothWheel: true,
-      anchors: { offset: 0, duration: 1.3, easing: easeOutExpo },
     });
 
     // The site agent scrolls through it, so a programmatic scroll eases like a wheel one.
