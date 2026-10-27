@@ -6,10 +6,12 @@ import { ArrowUpRight } from "lucide-react";
 import MinimalNav from './layout/navbar';
 import HeroDock from './hero-dock';
 import LivePortrait from './portrait/live-portrait';
+import Vanakkam from './portrait/vanakkam';
 
-// Drop the profile artwork (face + "[ Vanakamm! ]" lettering) in at
-// /public/heropageprofile.png to swap the picture.
-const PROFILE_SRC = "/heropageprofile.png";
+// The portrait without its lettering ("[ Vanakamm! ]" is live text now).
+// Built from /public/heropageprofile.png by scripts/portrait, along with the
+// layers the live portrait animates.
+const PROFILE_SRC = "/portrait/photo.webp";
 
 // Thirukkural 611 (chapter 62, ஆள்வினையுடைமை / Perseverance).
 const KURAL = {
@@ -120,6 +122,14 @@ export default function Hero() {
     setLive(true);
     setTilt({ x: 0, y: 0 });
   }, []);
+  // The greeting floats in front of the face and moves with the head; when
+  // it lands, he glances up at it.
+  const portraitApi = useRef(null);
+  const vanakkamRef = useRef(null);
+  const onHead = useCallback((dx, dy) => vanakkamRef.current?.setHead(dx, dy), []);
+  const onSettle = useCallback((r) => {
+    portraitApi.current?.lookAt(r.left + r.width / 2, r.top + r.height / 2, 900);
+  }, []);
 
   // The portrait leans a few degrees toward the cursor and settles back on leave.
   const onPointerMove = useCallback((e) => {
@@ -165,7 +175,7 @@ export default function Hero() {
       </nav>
 
       <div className="relative mx-auto flex max-w-6xl flex-col items-center justify-center gap-8 px-6 pb-14 pt-4 md:min-h-[680px] md:flex-row md:gap-16 md:px-12 md:pb-24 md:pt-6">
-        {/* Portrait: the "[ Vanakamm! ]" lettering is baked into the artwork. */}
+        {/* Portrait: the photo comes alive once it can, with "[ Vanakamm! ]" as live text in front. */}
         <div
           ref={frameRef}
           onPointerMove={onPointerMove}
@@ -180,13 +190,19 @@ export default function Hero() {
               width={926}
               height={1120}
               sizes="(max-width: 640px) 200px, (max-width: 768px) 240px, (max-width: 1024px) 290px, 320px"
-              alt="Goutham smiling in green glasses, greeting you with Vanakamm!"
+              alt="Goutham smiling in green glasses"
               priority
               draggable={false}
               className="hero-portrait-photo select-none"
             />
             {/* The same photo, alive: eyes that follow you, blinks, a slight head turn. */}
-            <LivePortrait onReady={onLive} className="hero-portrait-live" />
+            <LivePortrait
+              onReady={onLive}
+              onHead={onHead}
+              api={portraitApi}
+              className="hero-portrait-live"
+            />
+            <Vanakkam ref={vanakkamRef} start={ready} onSettle={onSettle} />
           </div>
         </div>
 

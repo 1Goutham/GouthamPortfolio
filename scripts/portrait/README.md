@@ -8,14 +8,16 @@ together in WebGL. Run them again only if the photo changes.
 | --- | --- | --- |
 | 1 | `landmarks.py` | MediaPipe Face Landmarker: iris centres and radii, eyelid outlines |
 | 2 | `eyes.py` | lifts the irises out, rebuilds the whites behind them, makes full iris disks, the catchlights and the lid shadow |
-| 3 | `depth_text.py` | MiDaS depth map of the face; separates the "[Vanakamm!]" lettering and paints it out of the base |
+| 3 | `depth_text.py` | MiDaS depth map of the face; removes the baked "[Vanakamm!]" lettering (it is live text now), rebuilding the hair under it |
 | 4 | `make_assets.py` | packs `public/portrait/*` and `src/app/components/portrait/portrait-data.json` |
+| 5 | `lids.py` | builds a closed upper lid per eye (clean skin colour, closed-lid shading, skin grain, the real lash line) for blinks |
+| 6 | `make_assets.py` again | packs the lids too (step 5 reads the lid lines step 4 wrote) |
 
 ## Setup
 
 ```sh
 python3 -m venv .venv
-.venv/bin/pip install mediapipe opencv-python-headless onnxruntime numpy pillow scipy
+.venv/bin/pip install mediapipe opencv-contrib-python-headless onnxruntime numpy pillow scipy
 mkdir -p models out
 curl -L -o models/face_landmarker.task \
   https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task
@@ -33,7 +35,11 @@ P=public/heropageprofile.png
 .venv/bin/python scripts/portrait/eyes.py        $P out/lm.json out
 .venv/bin/python scripts/portrait/depth_text.py  $P out/base_noiris.png models/midas_small.onnx out
 .venv/bin/python scripts/portrait/make_assets.py out public/portrait src/app/components/portrait/portrait-data.json
+.venv/bin/python scripts/portrait/lids.py        out/base_clean.png src/app/components/portrait/portrait-data.json out
+.venv/bin/python scripts/portrait/make_assets.py out public/portrait src/app/components/portrait/portrait-data.json
 ```
+
+`opencv-contrib` is needed for the hair rebuild (`cv2.xphoto`, about 20 s).
 
 Each step also writes debug views into `out/` (`lm_eyes.png`, `depth_view.png`,
 `text_view.png`, `clean_view.png`) worth a look before shipping.

@@ -19,6 +19,14 @@ OUT, PUBLIC, DATA = sys.argv[1:4]
 base = Image.open(f"{OUT}/base_clean.png").convert("RGBA")
 W, H = base.size
 base.save(f"{PUBLIC}/base.webp", "WEBP", quality=92, method=6)
+# The photo without its lettering: what the page paints first.
+Image.open(f"{OUT}/photo_clean.png").convert("RGBA").save(f"{PUBLIC}/photo.webp", "WEBP", quality=92, method=6)
+
+# Closed lids (from lids.py), cropped to where they are.
+lids_full = Image.open(f"{OUT}/lids.png").convert("RGBA")
+lb = lids_full.getbbox()
+lids_full.crop(lb).save(f"{PUBLIC}/lids.png", optimize=True)
+lids_rect = [lb[0], lb[1], lb[2] - lb[0], lb[3] - lb[1]]
 
 eyes = json.load(open(f"{OUT}/eyes.json"))
 names = ["left_img", "right_img"]
@@ -81,7 +89,14 @@ def lid_lines(mask, x0, x1):
     return [round(v, 2) for v in up], [round(v, 2) for v in lo]
 
 
-data = {"size": [W, H], "text": [tx0, ty0, tx1 - tx0, ty1 - ty0], "atlas": [aw, ah], "lidN": LID_N, "eyes": []}
+data = {
+    "size": [W, H],
+    "text": [tx0, ty0, tx1 - tx0, ty1 - ty0],
+    "atlas": [aw, ah],
+    "lids": lids_rect,
+    "lidN": LID_N,
+    "eyes": [],
+}
 for n, rect, mask in zip(names, rects, masks):
     e = eyes[n]
     x0, x1 = e["xRange"]
