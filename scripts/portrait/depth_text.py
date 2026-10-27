@@ -60,11 +60,27 @@ for i in range(1, n):
 grown = cv2.dilate(keep.astype(np.uint8), np.ones((5, 5), np.uint8)) > 0
 print("text bbox", cv2.boundingRect(grown.astype(np.uint8)))
 
-# Paint the lettering out of the base: inpaint the hair under it.
+def inpaint_hair(img_u8, mask_u8):
+    """Rebuild hair under the lettering. Frequency-selective reconstruction
+    (opencv-contrib xphoto) continues the strands instead of smearing them;
+    it is slow, so it runs on the lettering's box only."""
+    x, y, w, h = cv2.boundingRect(mask_u8)
+    pad = 40
+    X0, Y0, X1, Y1 = max(0, x - pad), max(0, y - pad), min(W, x + w + pad), min(H, y + h + pad)
+    crop = img_u8[Y0:Y1, X0:X1].copy()
+    m = (mask_u8[Y0:Y1, X0:X1] > 0).astype(np.uint8)
+    dst = np.zeros_like(crop)
+    cv2.xphoto.inpaint(crop, (1 - m) * 255, dst, cv2.xphoto.INPAINT_FSR_BEST)
+    out = img_u8.copy()
+    out[Y0:Y1, X0:X1] = np.where(m[..., None] > 0, dst, crop)
+    return out.astype(np.float32)
+
+
+# Paint the lettering out of the base: rebuild the hair under it.
 paint = base.copy()
-mask = cv2.dilate(grown.astype(np.uint8), np.ones((3, 3), np.uint8)) * 255
+mask = cv2.dilate(grown.astype(np.uint8), np.ones((5, 5), np.uint8)) * 255
 rgb_u8 = np.clip(base[..., :3], 0, 255).astype(np.uint8)
-filled = cv2.inpaint(rgb_u8, mask, 6, cv2.INPAINT_TELEA).astype(np.float32)
+filled = inpaint_hair(rgb_u8, mask)
 paint[..., :3] = np.where(mask[..., None] > 0, filled, base[..., :3])
 # Where the lettering hangs off the head (over the transparent background),
 # the base becomes transparent there.
@@ -72,6 +88,14 @@ a_under = cv2.inpaint((alpha * 255).astype(np.uint8), mask, 6, cv2.INPAINT_TELEA
 a_bg = cv2.erode((alpha > 0.5).astype(np.uint8), np.ones((9, 9), np.uint8))
 paint[..., 3] = np.where(mask > 0, np.minimum(a_under, cv2.GaussianBlur(a_bg.astype(np.float32), (0, 0), 3) * 255), base[..., 3])
 Image.fromarray(np.clip(paint, 0, 255).astype(np.uint8), "RGBA").save(f"{OUT}/base_clean.png")
+
+# The untouched photo (eyes and all) with the lettering painted out the same
+# way: the first paint and the no-WebGL fallback, with the lettering as text.
+photo = orig.copy()
+orig_u8 = np.clip(orig[..., :3], 0, 255).astype(np.uint8)
+photo[..., :3] = np.where(mask[..., None] > 0, inpaint_hair(orig_u8, mask), orig[..., :3])
+photo[..., 3] = paint[..., 3]
+Image.fromarray(np.clip(photo, 0, 255).astype(np.uint8), "RGBA").save(f"{OUT}/photo_clean.png")
 
 # Lettering coverage: how far each pixel is from the hair under it towards
 # white, so the soft edges come out right on any background.
