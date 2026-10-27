@@ -50,6 +50,8 @@ uniform sampler2D uBase;
 uniform sampler2D uAux;
 uniform sampler2D uIris;
 uniform sampler2D uLids;
+uniform sampler2D uPhoto;
+uniform float uRest[2];
 uniform vec2 uSize;
 uniform vec2 uHead;
 uniform vec2 uLight;
@@ -165,6 +167,12 @@ void main() {
     }
   }
 
+  // At rest the eyes are the photo's own, real iris edge and catchlight
+  // and all; the rebuilt eye takes over as soon as they move.
+  vec4 aux0 = texture2D(uAux, q / uSize);
+  float rest = aux0.g * uRest[0] + aux0.b * uRest[1];
+  if (rest > 0.0) col = mix(col, texture2D(uPhoto, q / uSize), rest);
+
   // Light: the face's own shading shifts as it turns, using the depth
   // map's slope as the surface direction. At rest this is exactly 1.
   vec2 e = 3.0 / uSize;
@@ -179,11 +187,15 @@ void main() {
   gl_FragColor = col;
 }`;
 
+/** The first-paint photo; the <img> must load this exact file, unresized. */
+export const PHOTO_SRC = "/portrait/photo.webp";
+
 const SRC = {
   base: "/portrait/base.webp",
   aux: "/portrait/aux.png",
   iris: "/portrait/iris.png",
   lids: "/portrait/lids.png",
+  photo: PHOTO_SRC,
 };
 
 const HEAD_PX = [15, 9]; // how far the nearest point travels, image pixels
@@ -219,7 +231,12 @@ function texture(gl, unit, img, data = false) {
   gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, !data);
   gl.pixelStorei(gl.UNPACK_COLORSPACE_CONVERSION_WEBGL, data ? gl.NONE : gl.BROWSER_DEFAULT_WEBGL);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, img);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  // The portrait is drawn smaller than its texture; with mipmaps it is
+  // filtered the way the browser scales the <img> it replaces, so the swap
+  // does not change its sharpness. (WebGL 1 can't mipmap these sizes.)
+  const mip = !data && typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext;
+  if (mip) gl.generateMipmap(gl.TEXTURE_2D);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mip ? gl.LINEAR_MIPMAP_LINEAR : gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
@@ -235,7 +252,8 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
     const canvas = ref.current;
     if (!canvas) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const gl = canvas.getContext("webgl", { premultipliedAlpha: true, alpha: true, antialias: false });
+    const opts = { premultipliedAlpha: true, alpha: true, antialias: false };
+    const gl = canvas.getContext("webgl2", opts) || canvas.getContext("webgl", opts);
     if (!gl) return;
 
     let raf = 0;
@@ -246,7 +264,7 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
     const start = async () => {
       let imgs;
       try {
-        imgs = await Promise.all([loadImage(SRC.base), loadImage(SRC.aux), loadImage(SRC.iris), loadImage(SRC.lids)]);
+        imgs = await Promise.all([SRC.base, SRC.aux, SRC.iris, SRC.lids, SRC.photo].map(loadImage));
       } catch {
         return;
       }
@@ -272,7 +290,7 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       gl.enableVertexAttribArray(loc);
       gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-      ["uBase", "uAux", "uIris", "uLids"].forEach((name, i) => {
+      ["uBase", "uAux", "uIris", "uLids", "uPhoto"].forEach((name, i) => {
         texture(gl, i, imgs[i], name === "uAux");
         gl.uniform1i(gl.getUniformLocation(prog, name), i);
       });
@@ -296,6 +314,7 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       const uScale = U("uScale");
       const uLid = U("uLid");
       const uRise = U("uRise");
+      const uRest = U("uRest");
 
       gl.clearColor(0, 0, 0, 0);
 
@@ -492,6 +511,7 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
         const scales = [];
         const lids = [];
         const rises = [];
+        const rests = [];
         if (now > st.nextBlink) startBlink(now);
         const blink = blinkAt(now);
         E.forEach((e, i) => {
@@ -499,22 +519,28 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
           const gx = clamp(st.eye[i].x - st.head.x * 0.35 + (Math.random() - 0.5) * tremor, -1, 1);
           const gy = clamp(st.eye[i].y - st.head.y * 0.3 + (Math.random() - 0.5) * tremor, -1, 1);
           offs.push(gx * e.maxX * 0.8, gy < 0 ? gy * e.maxUp : gy * e.maxDown);
+          // How close the eye is to its pose in the photo (tremor aside).
+          const rx = (st.eye[i].x - st.head.x * 0.35) * e.maxX * 0.8;
+          const ry = (st.eye[i].y - st.head.y * 0.3) * e.maxDown;
           // The iris turns away from view as the eye rotates.
           scales.push(1 - 0.12 * Math.abs(gx), 1 - 0.07 * Math.abs(gy));
           // Looking down, the upper lid follows the eye down a little.
           lids.push(Math.max(blink, Math.max(0, gy) * 0.22));
           rises.push(blink * 0.14);
+          rests.push(Math.exp(-(rx * rx + ry * ry) / 0.8) * (1 - clamp(Math.max(blink, Math.max(0, gy) * 0.22) * 8, 0, 1)));
         });
         gl.uniform2fv(uOff, offs);
         gl.uniform2fv(uScale, scales);
         gl.uniform1fv(uLid, lids);
         gl.uniform1fv(uRise, rises);
+        gl.uniform1fv(uRest, rests);
 
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
         if (first) {
+          // Hand over on the next frame, once this one is on screen.
           first = false;
-          onReady?.();
+          requestAnimationFrame(() => alive && onReady?.());
         }
         raf = requestAnimationFrame(frame);
       };

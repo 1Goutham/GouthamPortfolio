@@ -25,9 +25,44 @@ base = rgb.copy()
 meta = {}
 shades = {}
 
+def refine_iris(cx, cy, r):
+    """The landmarker's iris circle runs small and a little off centre.
+    Find the real limbus (dark iris to bright white) along rays through the
+    visible sides of the eye and fit a circle to those points."""
+    pts = []
+    for ang in list(range(-35, 36, 5)) + list(range(145, 216, 5)):
+        a = np.radians(ang)
+        ts = np.arange(r * 0.6, r * 1.7, 0.25)
+        xs = cx + np.cos(a) * ts
+        ys = cy + np.sin(a) * ts
+        prof = cv2.remap(lum, xs.astype(np.float32)[None], ys.astype(np.float32)[None], cv2.INTER_LINEAR)[0]
+        inner = np.median(prof[ts < r * 0.85])
+        outer = np.percentile(prof, 90)
+        if outer - inner < 25:
+            continue  # this ray runs into lid or lashes, not white
+        mid = (inner + outer) / 2
+        hit = np.nonzero((prof > mid) & (ts > r * 0.85))[0]
+        if len(hit):
+            t = ts[hit[0]]
+            pts.append((cx + np.cos(a) * t, cy + np.sin(a) * t))
+    if len(pts) < 6:
+        return cx, cy, r
+    P = np.array(pts)
+    # Algebraic circle fit: x^2 + y^2 + Dx + Ey + F = 0.
+    A = np.c_[P[:, 0], P[:, 1], np.ones(len(P))]
+    b = -(P[:, 0] ** 2 + P[:, 1] ** 2)
+    D, E, F = np.linalg.lstsq(A, b, rcond=None)[0]
+    nx, ny = -D / 2, -E / 2
+    nr = np.sqrt(nx * nx + ny * ny - F)
+    # Trust it only if it is a modest correction.
+    if abs(nx - cx) > r * 0.3 or abs(ny - cy) > r * 0.3 or not (r * 0.9 < nr < r * 1.4):
+        return cx, cy, r
+    return float(nx), float(ny), float(nr)
+
+
 for name, e in lm["eyes"].items():
-    cx, cy = e["center"]
-    r = e["radius"]
+    cx, cy, r = refine_iris(*e["center"], e["radius"])
+    print(name, "iris", [round(v, 2) for v in e["center"]], round(e["radius"], 2), "->", round(cx, 2), round(cy, 2), round(r, 2))
     poly = np.array(e["contour"], np.float32)
 
     # Aperture: the landmark outline, grown a touch so the lid line itself

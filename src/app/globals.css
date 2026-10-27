@@ -295,14 +295,15 @@ video {
 .hero-portrait img,
 .hero-portrait-live {
   filter: drop-shadow(0 30px 40px rgba(0, 0, 0, 0.6));
-  transition: filter 0.5s ease, opacity 0.35s ease;
+  transition: filter 0.5s ease;
 }
 .hero-portrait:hover img,
 .hero-portrait:hover .hero-portrait-live {
   filter: drop-shadow(0 34px 48px rgba(0, 0, 0, 0.7)) brightness(1.04);
 }
-/* The live portrait sits exactly over the photo and takes over once its
-   first frame is drawn (at rest the two are identical). */
+/* The live portrait sits exactly over the photo and takes over, in one
+   frame with no fade, once its first frame is drawn: at rest the two are
+   the same pixels, so a crossfade would only blur them for a moment. */
 .hero-portrait-live {
   position: absolute;
   inset: 0;
