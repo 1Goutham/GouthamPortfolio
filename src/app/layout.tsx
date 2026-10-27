@@ -3,6 +3,7 @@ import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display, Nothing_You_C
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
+import SiteAgent from "./components/agent/site-agent";
 
 import "./globals.css";
 
@@ -79,6 +80,8 @@ export default function RootLayout({
         />
 
         {children}
+        {/* Sticky on every page; it lives here so it survives navigation. */}
+        <SiteAgent />
         <Analytics />
       </body>
     </html>

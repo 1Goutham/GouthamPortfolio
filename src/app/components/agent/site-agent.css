@@ -1,0 +1,498 @@
+/* ------------------------------------------------------------------ */
+/*  G-Talk agent (sticky, bottom-left on every page)                   */
+/* ------------------------------------------------------------------ */
+
+/* One box that morphs: a pill when closed, a small chat card when open.
+   It is anchored at the bottom-left, so it grows upward and the pill's
+   row becomes the card's header. */
+.ag {
+  --ag-w: 262px;
+  --ag-h: 44px;
+  --ag-open-w: 304px;
+  --ag-open-h: 300px;
+  position: fixed;
+  left: 28px;
+  bottom: 26px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  width: var(--ag-w);
+  height: var(--ag-h);
+  border-radius: 22px;
+  overflow: hidden;
+  color: #fff;
+  background-color: #0c0c0c;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  transition:
+    width 0.6s var(--ease-out-expo),
+    height 0.6s var(--ease-out-expo),
+    border-radius 0.6s var(--ease-out-expo),
+    transform 0.45s var(--ease-out-expo),
+    bottom 0.5s var(--ease-out-expo);
+  animation: ag-in 0.9s var(--ease-out-expo) 1.2s both;
+}
+@keyframes ag-in {
+  from { opacity: 0; translate: 0 18px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+.ag[data-open="false"]:hover {
+  transform: translateY(-2px);
+}
+/* The card's warm light and grain sit on their own layer so they can fade
+   in while the box grows. */
+.ag-sheen {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(122, 114, 106, 0.42), transparent 62%),
+    linear-gradient(160deg, #1a1918, #0c0c0c);
+  transition: opacity 0.5s ease;
+}
+.ag-noise {
+  position: absolute;
+  inset: -50%;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  transition: opacity 0.5s ease;
+}
+.ag[data-open="true"] {
+  width: var(--ag-open-w);
+  height: var(--ag-open-h);
+  border-radius: 16px;
+}
+.ag[data-open="true"] .ag-sheen {
+  opacity: 1;
+}
+.ag[data-open="true"] .ag-noise {
+  opacity: 0.12;
+}
+
+/* Header / pill row */
+.ag-head {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--ag-h);
+  padding: 3px;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: padding 0.5s var(--ease-out-expo), height 0.5s var(--ease-out-expo);
+}
+.ag-face {
+  position: relative;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #262626;
+  overflow: hidden;
+  transition: transform 0.6s var(--ease-spring), width 0.5s var(--ease-out-expo), height 0.5s var(--ease-out-expo);
+}
+/* The artwork is a wide head (114 x 88), fitted whole inside the disc. */
+.ag-face img {
+  width: 88%;
+  height: auto;
+  animation: ag-bob 4.5s ease-in-out infinite;
+}
+@keyframes ag-bob {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50%      { transform: translateY(-4%) rotate(-3deg); }
+}
+.ag-head:hover .ag-face {
+  transform: rotate(-10deg) scale(1.06);
+}
+/* A hop when it is about to act on the page. */
+.ag[data-acting="true"] .ag-face {
+  animation: ag-hop 0.8s var(--ease-spring);
+}
+@keyframes ag-hop {
+  0%, 100% { transform: none; }
+  35%      { transform: translateY(-22%) rotate(-12deg); }
+  60%      { transform: translateY(0) rotate(6deg); }
+}
+.ag-label {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 29px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12.5px;
+  white-space: nowrap;
+  transition: border-color 0.35s ease, background-color 0.35s ease, padding 0.5s var(--ease-out-expo), opacity 0.3s ease;
+}
+.ag-head:hover .ag-label,
+.ag-head:focus-visible .ag-label {
+  border-color: rgba(255, 255, 255, 0.32);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+.ag-arrow {
+  width: 11px;
+  height: 11px;
+  flex: none;
+  transition: transform 0.5s var(--ease-spring);
+}
+.ag-head:hover .ag-arrow {
+  transform: translate(2px, -2px);
+}
+.ag[data-open="true"] .ag-head {
+  padding: 8px 10px 0;
+  height: 50px;
+}
+.ag[data-open="true"] .ag-face {
+  width: 34px;
+  height: 34px;
+}
+.ag[data-open="true"] .ag-label {
+  border-color: transparent;
+  background-color: transparent;
+  padding: 0 4px;
+  font-weight: 500;
+}
+/* Open, the arrow turns to point back into the corner: tap to tuck it away. */
+.ag[data-open="true"] .ag-arrow,
+.ag[data-open="true"] .ag-head:hover .ag-arrow {
+  transform: rotate(180deg);
+}
+
+/* Body */
+.ag-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 10px 10px;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.4s var(--ease-out-expo);
+}
+.ag[data-open="true"] .ag-body {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  transition: opacity 0.45s ease 0.18s, transform 0.6s var(--ease-out-expo) 0.18s;
+}
+.ag-intro {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+}
+.ag-logo {
+  width: 132px;
+  margin: auto 0;
+  transition: transform 0.6s var(--ease-spring);
+}
+.ag-logo img {
+  width: 100%;
+  height: auto;
+}
+.ag-logo:hover {
+  transform: rotate(-4deg) scale(1.05);
+}
+.ag[data-open="true"] .ag-logo img {
+  animation: ag-pop 0.8s var(--ease-spring) 0.25s both;
+}
+@keyframes ag-pop {
+  from { opacity: 0; transform: scale(0.7) rotate(-8deg); }
+  to   { opacity: 1; transform: none; }
+}
+.ag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px;
+  margin: 10px 0 8px;
+}
+.ag-chip {
+  padding: 5px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 9.5px;
+  line-height: 1.1;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.4s var(--ease-out-expo);
+}
+.ag-chip:hover,
+.ag-chip:focus-visible {
+  background-color: #fff;
+  border-color: #fff;
+  color: #000;
+  transform: translateY(-2px);
+  outline: none;
+}
+.ag[data-open="true"] .ag-chip {
+  animation: hero-rise 0.6s var(--ease-out-expo) both;
+  animation-delay: calc(0.35s + var(--i, 0) * 60ms);
+}
+
+/* Conversation */
+.ag-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 2px 10px;
+  scrollbar-width: none;
+}
+.ag-list::-webkit-scrollbar {
+  display: none;
+}
+.ag-msg {
+  max-width: 90%;
+  font-size: 12.5px;
+  line-height: 1.45;
+  animation: hero-rise 0.5s var(--ease-out-expo) both;
+}
+.ag-msg-user {
+  align-self: flex-end;
+  padding: 6px 10px;
+  border-radius: 12px 12px 4px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.ag-msg-agent {
+  align-self: flex-start;
+  color: rgba(255, 255, 255, 0.92);
+}
+.ag-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ag-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+.ag-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background-color: #fff;
+  color: #000;
+  font-size: 10.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.4s var(--ease-out-expo), background-color 0.25s ease;
+}
+.ag-act svg {
+  width: 9px;
+  height: 9px;
+  transition: transform 0.4s var(--ease-out-expo);
+}
+.ag-act:hover,
+.ag-act:focus-visible {
+  transform: translateY(-1px);
+  background-color: #9dff50;
+  outline: none;
+}
+.ag-act:hover svg {
+  transform: translate(1px, -1px);
+}
+.ag-typing {
+  display: inline-flex;
+  gap: 4px;
+  padding: 6px 0;
+}
+.ag-typing span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  animation: ag-dot 1s ease-in-out infinite;
+}
+.ag-typing span:nth-child(2) { animation-delay: 0.15s; }
+.ag-typing span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes ag-dot {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  40%      { transform: translateY(-4px); opacity: 1; }
+}
+
+/* Input */
+.ag-input {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 4px 0 12px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  transition: box-shadow 0.3s ease, background-color 0.3s ease;
+}
+.ag-input:focus-within {
+  background-color: rgba(255, 255, 255, 0.09);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+.ag-input input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  font: inherit;
+  font-size: 12px;
+  color: #fff;
+}
+.ag-input input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+.ag-send {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #fff;
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.45s var(--ease-spring), opacity 0.25s ease;
+}
+.ag-send svg {
+  width: 12px;
+  height: 12px;
+  transition: transform 0.45s var(--ease-spring);
+}
+.ag-send:hover:not(:disabled) svg {
+  transform: translate(1px, -1px) rotate(-12deg);
+}
+.ag-send:active:not(:disabled) {
+  transform: scale(0.88);
+}
+.ag-send:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* Where it sits on pages with something else in that corner: above the
+   1G-works footer, and as just the face beside the Margin tray. */
+.ag[data-route="works"] {
+  bottom: calc(min(1vw, 14.4px) * 2.2 + 38px);
+}
+.ag[data-route="margin"][data-open="false"] {
+  --ag-w: 44px;
+}
+.ag[data-route="margin"][data-open="false"] .ag-label {
+  opacity: 0;
+}
+
+/* Spotlight */
+.ag-spot {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+}
+.ag-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 18px;
+  box-shadow:
+    0 0 0 200vmax rgba(0, 0, 0, 0.5),
+    0 0 0 1.5px #9dff50,
+    0 0 34px 6px rgba(157, 255, 80, 0.3);
+  animation: ag-ring-in 0.6s var(--ease-out-expo) both;
+}
+.ag-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1.5px solid #9dff50;
+  animation: ag-ring-pulse 1.6s ease-out 0.4s infinite;
+}
+@keyframes ag-ring-in {
+  from { opacity: 0; scale: 1.25; }
+  to   { opacity: 1; scale: 1; }
+}
+@keyframes ag-ring-pulse {
+  from { opacity: 0.8; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.18); }
+}
+.ag-note {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 999px;
+  background-color: #0c0c0c;
+  color: #fff;
+  font-size: 12.5px;
+  white-space: nowrap;
+  box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: ag-note-in 0.7s var(--ease-spring) 0.2s both;
+}
+@keyframes ag-note-in {
+  from { opacity: 0; scale: 0.6; }
+  to   { opacity: 1; scale: 1; }
+}
+.ag-note-face {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #262626;
+  overflow: hidden;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.ag-note-face img {
+  width: 88%;
+  height: auto;
+}
+
+@media (max-width: 767px) {
+  .ag {
+    left: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    --ag-open-w: calc(100vw - 28px);
+    --ag-open-h: min(440px, 64vh);
+  }
+  .ag[data-route="works"] {
+    bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  .ag[data-route="margin"] {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+  }
+  .ag-chip { font-size: 11px; padding: 6px 9px; }
+  .ag-input { height: 38px; }
+  .ag-input input { font-size: 16px; }
+  .ag-msg { font-size: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-face img,
+  .ag-ring::after {
+    animation: none;
+  }
+}

@@ -125,7 +125,7 @@ export default function Projects() {
 
             <ul className="projects-marks flex items-center gap-3 md:gap-4" onMouseLeave={() => setHot(-1)}>
               {PROJECTS.map((p, i) => (
-                <li key={p.id} className="relative">
+                <li key={p.id} className="relative" data-agent={`project-${p.id}`}>
                   <a
                     href={p.href}
                     target="_blank"
