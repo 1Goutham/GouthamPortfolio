@@ -819,89 +819,504 @@ video {
 /*  Contact section                                                    */
 /* ------------------------------------------------------------------ */
 
-/* Faint film grain over the dark ground. */
-.grain {
-  opacity: 0.07;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 160px 160px;
-  mix-blend-mode: screen;
+/* Desktop is the 1440 design frame, scaled with the section: --u is one
+   design pixel. Below 1024px the page flows instead. */
+.cx {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  color: #000;
+}
+.cx-frame {
+  --u: calc(100cqw / 1440);
+  position: relative;
+  max-width: 1600px;
+  margin: 0 auto;
+  container-type: inline-size;
+}
+@media (min-width: 1024px) {
+  .cx-frame {
+    aspect-ratio: 1440 / 737;
+  }
+  .cx-title,
+  .cx-lede,
+  .cx-field,
+  .cx-plane,
+  .cx-pill,
+  .cx-window,
+  .cx-foot {
+    position: absolute;
+  }
 }
 
-/* Underline-only fields: a hairline that brightens and a second line that
-   draws in from the left on focus. */
-.field {
-  position: relative;
+.cx-title {
+  left: calc(167 * var(--u));
+  top: calc(116.2 * var(--u));
+  margin: 0;
+  font-family: var(--font-anonymous-pro), monospace;
+  font-weight: 400;
+  font-size: calc(46.6 * var(--u));
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.cx-br {
+  display: inline-block;
+  transition: transform 0.7s var(--ease-out-expo);
+}
+.cx-title:hover .cx-br:first-child {
+  transform: translateX(calc(-5 * var(--u)));
+}
+.cx-title:hover .cx-br:last-child {
+  transform: translateX(calc(5 * var(--u)));
+}
+
+.cx-lede {
+  left: calc(173 * var(--u));
+  top: calc(186.6 * var(--u));
+  margin: 0;
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 500;
+  font-size: calc(24.83 * var(--u));
+  line-height: calc(36 * var(--u));
+  letter-spacing: 0.012em;
+  white-space: nowrap;
+}
+
+/* Underline fields: the hairline darkens, and a black line draws across
+   from the left while you type. */
+.cx-field {
   display: block;
 }
-.field input,
-.field textarea {
-  display: block; /* no baseline gap under the textarea, so the focus line sits on the border */
+.cx-name {
+  left: calc(172.4 * var(--u));
+  top: calc(300.2 * var(--u));
+  width: calc(261.8 * var(--u));
+}
+.cx-email {
+  left: calc(539.7 * var(--u));
+  top: calc(300.2 * var(--u));
+  width: calc(315.3 * var(--u));
+}
+.cx-msg {
+  left: calc(172.3 * var(--u));
+  top: calc(383 * var(--u));
+  width: calc(543.7 * var(--u));
+}
+.cx-label {
+  display: block;
+  padding: calc(0.7 * var(--u)) 0 0 calc(2.5 * var(--u));
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 500;
+  font-size: max(10px, calc(12.2 * var(--u)));
+  line-height: calc(15 * var(--u));
+  letter-spacing: 0.1em;
+}
+.cx-email .cx-label {
+  padding-left: 0;
+  margin-left: calc(-1.5 * var(--u));
+}
+.cx-label i {
+  font-style: normal;
+  color: #b4e82c;
+  margin-left: 1px;
+}
+.cx-field input,
+.cx-field textarea {
+  display: block;
   width: 100%;
-  background: transparent;
+  height: calc(30 * var(--u));
+  padding: 0 calc(2.5 * var(--u));
   border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 0.5rem 0;
-  color: #fff;
-  font-size: 1rem;
-  line-height: 1.5;
+  border-bottom: 1px solid #8a8a8a;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 500;
+  font-size: max(14px, calc(15 * var(--u)));
   outline: none;
   transition: border-color 0.3s ease;
 }
-.field input::placeholder,
-.field textarea::placeholder {
-  color: rgba(255, 255, 255, 0.35);
-  transition: color 0.3s ease, transform 0.4s var(--ease-out-expo);
+.cx-field textarea {
+  height: calc(81.3 * var(--u));
+  padding-top: calc(8 * var(--u));
+  resize: none;
+  line-height: 1.5;
 }
-.field input:focus::placeholder,
-.field textarea:focus::placeholder {
-  color: rgba(255, 255, 255, 0.55);
-  transform: translateX(4px);
+.cx-field:hover input,
+.cx-field:hover textarea {
+  border-bottom-color: #5a5a5a;
 }
-.field:focus-within input,
-.field:focus-within textarea {
-  border-bottom-color: rgba(255, 255, 255, 0.45);
-}
-.field:focus-within > span:first-child {
-  color: #fff;
-}
-.field-line {
+.cx-line {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
   height: 1px;
-  background: #fff;
+  background: #000;
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.55s var(--ease-out-expo);
+  transition: transform 0.7s var(--ease-out-expo);
   pointer-events: none;
 }
-.field:focus-within .field-line {
+.cx-field:focus-within .cx-line {
   transform: scaleX(1);
 }
-/* Autofill shouldn't paint the browser's yellow box. */
-.field input:-webkit-autofill {
-  -webkit-text-fill-color: #fff;
-  -webkit-box-shadow: 0 0 0 1000px #000 inset;
-  transition: background-color 9999s ease-out;
+.cx-field input:-webkit-autofill {
+  -webkit-text-fill-color: #000;
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+}
+/* Asked to send with a field missing: its asterisk flashes. */
+@keyframes cx-flash {
+  0%, 100% { opacity: 1; transform: none; }
+  30% { opacity: 0.2; transform: scale(1.6); }
+  60% { opacity: 1; transform: scale(1.2); }
+}
+.cx-form:has(.cx-pill[data-state="invalid"]) .cx-field:has(:invalid) .cx-label i {
+  display: inline-block;
+  animation: cx-flash 0.9s ease-out 2;
 }
 
-/* Contact rows nudge right; the icon brightens and tilts. */
-.contact-row {
-  transition: transform 0.45s var(--ease-out-expo), color 0.3s ease;
+/* The plane: hold it, drag toward the window, let go. Once the form is
+   filled in it starts to float, ready. */
+.cx-plane {
+  left: calc(165.9 * var(--u));
+  top: calc(528.8 * var(--u));
+  width: calc(67.2 * var(--u));
+  z-index: 6;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform 0.6s var(--ease-out-expo);
 }
-.contact-row:hover {
-  transform: translateX(6px);
+.cx-plane::before {
+  content: "";
+  position: absolute;
+  inset: -16px;
 }
-.contact-icon {
-  transition: color 0.3s ease, transform 0.45s var(--ease-out-expo);
+.cx-plane[data-state="aiming"] {
+  cursor: grabbing;
+  transition: none;
 }
-.contact-row:hover .contact-icon {
+.cx-plane[data-state="flying"] {
+  transition: none;
+  pointer-events: none;
+}
+.cx-plane[data-state="home"]:hover {
+  transform: translate3d(0, -2px, 0) rotate(-4deg) scale(1.06);
+}
+.cx-plane img {
+  display: block;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+}
+@keyframes cx-float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, calc(-4 * var(--u)), 0) rotate(-3deg); }
+}
+.cx-plane[data-ready="true"][data-state="home"] img {
+  animation: cx-float 2.8s ease-in-out infinite;
+}
+
+/* The pill sends it too (a throw worked out for you). A black fill sweeps
+   in on hover; each new line rolls up into place. */
+.cx-pill {
+  left: calc(257.8 * var(--u));
+  top: calc(528.7 * var(--u));
+  width: calc(306 * var(--u));
+  height: calc(44.5 * var(--u));
+  padding-left: calc(5.4 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid #808080;
+  border-radius: 999px;
+  background: transparent;
+  color: #000;
+  font-family: var(--font-poppins), sans-serif;
+  font-weight: 400;
+  font-size: max(12px, calc(17.8 * var(--u)));
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.45s ease, border-color 0.45s ease, transform 0.5s var(--ease-out-expo);
+}
+.cx-pill::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #000;
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.cx-pill:hover,
+.cx-pill:focus-visible,
+.cx-pill[data-state="sent"] {
   color: #fff;
-  transform: rotate(-8deg) scale(1.08);
+  border-color: #000;
+  outline: none;
+}
+.cx-pill:hover::before,
+.cx-pill:focus-visible::before,
+.cx-pill[data-state="sent"]::before {
+  transform: scaleX(1);
+}
+.cx-pill:active {
+  transform: scale(0.97);
+}
+.cx-pill[data-state="aimed"] {
+  border-color: #000;
+}
+@keyframes cx-roll {
+  from { opacity: 0; transform: translateY(70%); filter: blur(2px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.cx-pill-text {
+  display: inline-block;
+  animation: cx-roll 0.55s var(--ease-out-expo) backwards;
+}
+.cx-pill[data-state="sending"] .cx-pill-text::after {
+  content: "";
+  display: inline-block;
+  width: 1.2em;
+  text-align: left;
+  animation: cx-dots 1.2s steps(4) infinite;
+}
+@keyframes cx-dots {
+  0% { content: ""; }
+  25% { content: "."; }
+  50% { content: ".."; }
+  75% { content: "..."; }
 }
 
-/* Social buttons fill white and lift on hover. */
+/* The window. Him, the room behind him, and two shutters on real hinges. */
+.cx-window {
+  left: calc(1049.2 * var(--u));
+  top: calc(246.9 * var(--u));
+  width: calc(302.4 * var(--u));
+  aspect-ratio: 752 / 538;
+  perspective: calc(800 * var(--u));
+  transition: scale 0.6s var(--ease-out-expo);
+}
+/* On target: it leans in to meet the plane. */
+.cx-window[data-aimed="true"] {
+  scale: 1.03;
+}
+.cx-window > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+.cx-leaf {
+  position: absolute;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+.cx-face,
+.cx-back {
+  position: absolute;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.cx-face {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cx-back {
+  transform: rotateY(180deg);
+}
+.cx-back img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cx-window[data-shut="true"] .cx-leaf-l {
+  transform: rotateY(180deg);
+}
+.cx-window[data-shut="true"] .cx-leaf-r {
+  transform: rotateY(-180deg);
+}
+.cx-window[data-shut="true"] .cx-scene,
+.cx-window[data-shut="true"] .cx-hands {
+  opacity: 0;
+}
+
+/* The flight, dotted, while you aim. Red once it would go in. */
+.cx-dots {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 5;
+}
+.cx-dots circle {
+  fill: #1a1a1a;
+  transition: fill 0.25s ease;
+}
+.cx-dots[data-on="true"] circle {
+  fill: #e0322f;
+}
+
+.cx-foot {
+  left: calc(45.4 * var(--u));
+  right: calc(45.4 * var(--u));
+  top: calc(676 * var(--u));
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: calc(24.3 * var(--u));
+  border-top: 1px solid #c1c1c1;
+  color: #2f2f2f;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: max(12px, calc(15.3 * var(--u)));
+  line-height: 1.2;
+}
+.cx-foot p {
+  margin: 0;
+}
+.cx-foot-mid {
+  position: absolute;
+  left: calc(50% - 3.3 * var(--u));
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.cx-top {
+  margin-right: calc(-9.3 * var(--u));
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  transition: color 0.3s ease;
+}
+.cx-top:hover {
+  color: #000;
+}
+.cx-top-arrow {
+  width: 1.05em;
+  height: 1.05em;
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.cx-top:hover .cx-top-arrow {
+  transform: translate(2px, -2px);
+}
+
+/* Entrance: the copy rises in, one beat apart. */
+@keyframes cx-rise {
+  from { opacity: 0; translate: 0 16px; }
+}
+.cx[data-in="false"] .cx-rise {
+  opacity: 0;
+}
+.cx[data-in="true"] .cx-rise {
+  animation: cx-rise 1s var(--ease-out-expo) backwards;
+  animation-delay: calc(var(--d) * 80ms);
+}
+
+/* Phones and tablets: the same pieces, in a column, with the window up at
+   the right of the plane so there is still a throw to make. */
+@media (max-width: 1023px) {
+  .cx-frame {
+    padding: 72px 20px 28px;
+  }
+  .cx-title {
+    font-size: 34px;
+  }
+  .cx-lede {
+    margin-top: 16px;
+    font-size: 17px;
+    line-height: 1.6;
+    white-space: normal;
+    max-width: 30em;
+  }
+  .cx-br-d {
+    display: none;
+  }
+  .cx-form {
+    position: relative;
+    display: grid;
+    gap: 28px;
+    margin-top: 40px;
+    /* Room below the fields for the window, the plane and the pill. */
+    padding-bottom: calc(min(46vw, 240px) * 0.7154 + 80px);
+  }
+  .cx-field {
+    width: auto;
+  }
+  .cx-label {
+    font-size: 11px;
+    line-height: 16px;
+    padding-left: 2px;
+  }
+  .cx-field input {
+    height: 36px;
+    font-size: 16px; /* no zoom on focus in iOS */
+  }
+  .cx-field textarea {
+    height: 92px;
+    font-size: 16px;
+  }
+  .cx-title,
+  .cx-lede,
+  .cx-field,
+  .cx-foot {
+    left: auto;
+    right: auto;
+    top: auto;
+  }
+  .cx-plane {
+    position: absolute;
+    left: 2px;
+    top: auto;
+    bottom: 74px;
+    width: 54px;
+  }
+  .cx-pill {
+    position: absolute;
+    left: 0;
+    top: auto;
+    bottom: 0;
+    width: auto;
+    height: 44px;
+    padding: 0 22px;
+    font-size: 15px;
+  }
+  .cx-window {
+    position: absolute;
+    left: auto;
+    top: auto;
+    right: 0;
+    bottom: 70px;
+    width: min(46vw, 240px);
+    perspective: 560px;
+  }
+  .cx-foot {
+    position: relative;
+    margin-top: 48px;
+    padding-top: 18px;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .cx-foot-mid {
+    position: static;
+    transform: none;
+    white-space: normal;
+  }
+}
+
+/* Social buttons (the projects page) fill white and lift on hover. */
 .social-btn {
   transition:
     background-color 0.35s ease,
@@ -919,21 +1334,6 @@ video {
 }
 .social-btn:active {
   transform: translateY(0) scale(0.95);
-}
-
-/* Send button: magnetic drift is set inline; the sweep + press live here. */
-/* Send: the site's one solid button. The arrow nudges; while sending a dot
-   breathes; once sent the label and a check stay, and it stops reacting. */
-.send-btn[data-status="sent"],
-.send-btn[data-status="sending"] {
-  transform: none !important;
-}
-@keyframes send-dot {
-  0%, 100% { transform: scale(0.6); opacity: 0.4; }
-  50%      { transform: scale(1); opacity: 1; }
-}
-.send-dot {
-  animation: send-dot 0.9s ease-in-out infinite;
 }
 
 /* ------------------------------------------------------------------ */
@@ -1157,11 +1557,6 @@ video {
 .marquee:hover .marquee-star {
   transform: rotate(180deg) scale(1.15);
   color: #6dcf1e;
-}
-
-/* Contact heading letters: the wave is written inline; this is its ease. */
-.contact-heading .contact-char {
-  transition: transform 0.45s var(--ease-out-expo);
 }
 
 /* ------------------------------------------------------------------ */

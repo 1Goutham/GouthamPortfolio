@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display, Nothing_You_Could_Do } from "next/font/google";
+import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display, Nothing_You_Could_Do, Montserrat, Poppins } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
@@ -46,6 +46,23 @@ const hand = Nothing_You_Could_Do({
   display: "swap",
 });
 
+// The contact section's copy and its button. Far down the page, so not
+// preloaded.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["500"],
+  display: "swap",
+  preload: false,
+});
+const poppins = Poppins({
+  variable: "--font-poppins",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "swap",
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: "Goutham G",
   description: "Crafting sleek, modern web apps with style and skill.",
@@ -65,7 +82,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} ${playfair.variable} ${hand.variable} antialiased`}
+        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} ${playfair.variable} ${hand.variable} ${montserrat.variable} ${poppins.variable} antialiased`}
       >
         <SmoothScroll />
         <Toaster
