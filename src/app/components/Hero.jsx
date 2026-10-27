@@ -5,13 +5,9 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import MinimalNav from './layout/navbar';
 import HeroDock from './hero-dock';
-import LivePortrait from './portrait/live-portrait';
+import LivePortrait, { PHOTO_SRC } from './portrait/live-portrait';
 import Vanakkam from './portrait/vanakkam';
 
-// The portrait without its lettering ("[ Vanakamm! ]" is live text now).
-// Built from /public/heropageprofile.png by scripts/portrait, along with the
-// layers the live portrait animates.
-const PROFILE_SRC = "/portrait/photo.webp";
 
 // Thirukkural 611 (chapter 62, ஆள்வினையுடைமை / Perseverance).
 const KURAL = {
@@ -185,11 +181,14 @@ export default function Hero() {
           data-live={live}
         >
           <div className="hero-portrait-inner relative">
+            {/* The portrait without its lettering (built from heropageprofile.png
+                by scripts/portrait). Served as is, not re-encoded, so it is
+                pixel for pixel what the live portrait draws when it takes over. */}
             <Image
-              src={PROFILE_SRC}
+              src={PHOTO_SRC}
               width={926}
               height={1120}
-              sizes="(max-width: 640px) 200px, (max-width: 768px) 240px, (max-width: 1024px) 290px, 320px"
+              unoptimized
               alt="Goutham smiling in green glasses"
               priority
               draggable={false}
