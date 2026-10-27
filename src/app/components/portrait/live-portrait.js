@@ -206,6 +206,37 @@ const ease = (dt, tau) => 1 - Math.exp(-dt / tau);
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 
+// Downloads start the moment this module is evaluated in the browser (with
+// the page's first script), not when the portrait mounts, so the layers are
+// usually here by the time React hands over.
+const blobs = new Map();
+function fetchBlob(src) {
+  if (!blobs.has(src)) {
+    const pr = fetch(src).then((r) => {
+      if (!r.ok) throw new Error(`${src}: ${r.status}`);
+      return r.blob();
+    });
+    pr.catch(() => blobs.delete(src));
+    blobs.set(src, pr);
+  }
+  return blobs.get(src);
+}
+
+// The cursor is followed from the first move after the script runs, so the
+// eyes can look at it the instant they come alive.
+const early = { x: 0, y: 0, has: false, t: 0 };
+const noteEarly = (e) => {
+  early.x = e.clientX;
+  early.y = e.clientY;
+  early.has = true;
+  early.t = performance.now();
+};
+if (typeof window !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  window.addEventListener("pointermove", noteEarly, { passive: true });
+  window.addEventListener("pointerdown", noteEarly, { passive: true });
+  Object.values(SRC).forEach((src) => fetchBlob(src).catch(() => {}));
+}
+
 /**
  * Fetch and decode an image off the main thread, ready to upload. `data`:
  * its channels are separate fields, not colour and coverage, so alpha must
@@ -213,7 +244,7 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
  * (Decoding inside texImage2D from an <img> would block the page.)
  */
 async function loadBitmap(src, data) {
-  const blob = await (await fetch(src)).blob();
+  const blob = await fetchBlob(src);
   if (typeof createImageBitmap === "function") {
     try {
       return await createImageBitmap(blob, {
@@ -353,7 +384,7 @@ export default function LivePortrait({ enabled = true, onReady, onHead, api, cla
 
       // ---------------------------------------------------------- motion
       const t0 = performance.now();
-      const pointer = { x: 0, y: 0, has: false, t: 0 };
+      const pointer = { ...early };
       const st = {
         eye: E.map(() => ({ x: 0, y: 0 })), // where each eye looks, -1..1
         fix: E.map(() => ({ x: 0, y: 0 })), // the point it is jumping to
@@ -525,8 +556,9 @@ export default function LivePortrait({ enabled = true, onReady, onHead, api, cla
           const amp = Math.hypot(targets[0].x - st.eye[0].x, targets[0].y - st.eye[0].y);
           targets.forEach((t, i) => (st.fix[i] = { ...t }));
           st.lastSaccade = now;
-          // Big gaze shifts often come with a blink.
-          if (amp > 0.85 && Math.random() < 0.35) startBlink(now, 0);
+          // Big gaze shifts often come with a blink, though not the first
+          // look as he comes alive, where it would read as a glitch.
+          if (amp > 0.85 && now - t0 > 1000 && Math.random() < 0.35) startBlink(now, 0);
         }
         const kJump = ease(dt, 22);
         const kPursue = ease(dt, 260);
@@ -601,16 +633,13 @@ export default function LivePortrait({ enabled = true, onReady, onHead, api, cla
       raf = requestAnimationFrame(frame);
     };
 
-    // Still let the page breathe first; the photo is already showing.
-    const idle = window.requestIdleCallback
-      ? window.requestIdleCallback(start, { timeout: 800 })
-      : setTimeout(start, 200);
+    // Start straight away: decoding runs off the main thread and uploads are
+    // spread over frames, so there is nothing to wait for.
+    start();
 
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
-      if (window.cancelIdleCallback && typeof idle === "number") window.cancelIdleCallback(idle);
-      clearTimeout(idle);
       cleanups.forEach((f) => f());
     };
   }, [enabled, onReady, api]);

@@ -124,23 +124,20 @@ export default function Hero() {
   const vanakkamRef = useRef(null);
   const greetingRect = useRef(null);
   const onHead = useCallback((dx, dy) => vanakkamRef.current?.setHead(dx, dy), []);
-  // The live portrait starts only once the greeting has landed: its startup
-  // (decoding, uploads, shader compile) must not share frames with the
-  // hero's entrance. Until then the photo shows, which looks the same.
-  const [portraitOn, setPortraitOn] = useState(false);
+  // The live portrait starts at once (its startup runs off the main thread
+  // and across frames, so it doesn't disturb the entrance). When the
+  // greeting lands he glances up at it; if he isn't live yet, he does so as
+  // he comes alive.
+  const glanceAt = (r) => portraitApi.current?.lookAt(r.left + r.width / 2, r.top + r.height / 2, 900);
   const onSettle = useCallback((r) => {
-    greetingRect.current = r;
-    setPortraitOn(true);
-  }, []);
-  useEffect(() => {
-    const t = setTimeout(() => setPortraitOn(true), 6000); // in case the greeting never settles
-    return () => clearTimeout(t);
+    if (portraitApi.current) glanceAt(r);
+    else greetingRect.current = r;
   }, []);
   const onPortraitReady = useCallback(() => {
     onLive();
-    // Coming alive, he glances up at the word.
     const r = greetingRect.current;
-    if (r) setTimeout(() => portraitApi.current?.lookAt(r.left + r.width / 2, r.top + r.height / 2, 900), 120);
+    greetingRect.current = null;
+    if (r) setTimeout(() => glanceAt(r), 120);
   }, [onLive]);
 
   // The portrait leans a few degrees toward the cursor and settles back on leave.
@@ -214,7 +211,6 @@ export default function Hero() {
             />
             {/* The same photo, alive: eyes that follow you, blinks, a slight head turn. */}
             <LivePortrait
-              enabled={portraitOn}
               onReady={onPortraitReady}
               onHead={onHead}
               api={portraitApi}
