@@ -35,7 +35,7 @@ const SERVICES = [
   {
     n: "04",
     name: "Software & AI",
-    img: pub("software&AI.png"),
+    img: pub("software&Ai.png"),
     line: "We build custom software and AI that quietly does the heavy lifting.",
     tags: ["Custom software", "AI integration", "Automation", "Chatbots"],
   },
@@ -48,7 +48,6 @@ const SLIDES = [
   { id: "contact", title: "Contact to get started", tone: "light" },
 ];
 
-const TRANSITION_MS = 1050;
 
 const reduceMotion = () =>
   typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -88,7 +87,7 @@ function WhoFigure() {
   };
   return (
     <div ref={ref} className="wk-who-fig wk-rise" style={{ "--i": 1 }} onPointerMove={onMove} onPointerLeave={onLeave}>
-      <Image src="/whoweare.png" width={1000} height={1182} alt="Goutham as a 3D character in sunglasses" sizes="(max-width: 767px) 50vw, 20vw" priority draggable={false} />
+      <Image src="/whoweare.png" width={859} height={902} alt="Goutham as a 3D character in sunglasses" sizes="(max-width: 767px) 50vw, 20vw" priority draggable={false} />
     </div>
   );
 }
@@ -100,7 +99,7 @@ function Services() {
   return (
     <div className="wk-svc">
       <div className="wk-keys wk-rise" style={{ "--i": 1 }}>
-        <Image src="/1GKeys.png" width={600} height={267} alt="Three keyboard keys: 1, G and a heart" sizes="160px" draggable={false} />
+        <Image src="/1GCkeys.png" width={326} height={175} alt="Three keyboard keys: 1, G and a heart" sizes="160px" draggable={false} />
       </div>
       <h2 className="wk-svc-title wk-rise" style={{ "--i": 2 }}>Everything it takes to grow your business.</h2>
       <p className="wk-svc-copy wk-rise" style={{ "--i": 3 }}>
@@ -134,8 +133,8 @@ function Services() {
               <Image
                 key={x.n}
                 src={x.img}
-                width={400}
-                height={400}
+                width={206}
+                height={190}
                 alt={i === active ? x.name : ""}
                 sizes="120px"
                 draggable={false}
@@ -243,53 +242,173 @@ function Enquiry() {
   );
 }
 
+/* "1G-works": the letters are inked in one by one, a scribble underlines
+   them, and afterwards they lift toward the cursor like the contact title. */
+function Wordmark() {
+  const ref = useRef(null);
+  const raf = useRef(0);
+  const onMove = (e) => {
+    if (e.pointerType !== "mouse" || reduceMotion() || raf.current) return;
+    const h = ref.current;
+    const cx = e.clientX;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      h?.querySelectorAll(".wk-ch").forEach((ch) => {
+        const r = ch.getBoundingClientRect();
+        const d = (r.left + r.width / 2 - cx) / 70;
+        const k = Math.exp(-d * d);
+        ch.style.setProperty("--lift", `${(-k * 0.18).toFixed(3)}em`);
+        ch.style.setProperty("--tilt", `${(Math.sign(d) * k * -8).toFixed(2)}deg`);
+      });
+    });
+  };
+  const onLeave = () =>
+    ref.current?.querySelectorAll(".wk-ch").forEach((ch) => {
+      ch.style.removeProperty("--lift");
+      ch.style.removeProperty("--tilt");
+    });
+
+  return (
+    <h1 ref={ref} className="wk-mark font-hand" aria-label="1G-works" onPointerMove={onMove} onPointerLeave={onLeave}>
+      {"1G-works".split("").map((c, i) => (
+        <span key={i} className="wk-ch" style={{ "--i": i }} aria-hidden="true">
+          <span>{c}</span>
+        </span>
+      ))}
+      <svg className="wk-scribble" viewBox="0 0 200 16" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M3 10.5C38 6 83 4.2 120 5.4c24 .8 46 2.4 62 4.6 6 .8 10 1.6 14 2.4" pathLength="1" />
+      </svg>
+    </h1>
+  );
+}
+
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const INTERACTIVE = "a, button, input, label, textarea, [role='tab']";
+
 /**
- * 1G-works. The page does not scroll: a wheel flick, a swipe or the arrow
- * keys move between four full-screen slides. The next slide wipes up over
- * the current one, which sinks back as it goes; going up, the current
- * slide peels down to uncover the one before. The nav and footer sit above
- * everything in difference blend, so they flip between white and black
- * along the wipe line.
+ * 1G-works scrolls sideways. The four panels sit in a row and any vertical
+ * input (wheel, trackpad, swipe, a mouse drag, the arrow keys) moves the
+ * row; it eases after the input and settles on the nearest panel once you
+ * let go, one panel per gesture. While it moves, each panel's content
+ * trails a little behind its frame and leans with the speed.
  *
- * A slide whose content is taller than the screen (phones) scrolls on its
- * own first and only hands over at its top or bottom edge.
+ * The nav and footer sit above in difference blend, so they flip between
+ * white and black exactly where two panels meet. A panel taller than the
+ * screen (phones) scrolls up and down on its own first.
  */
 export default function WorksDeck() {
   const rootRef = useRef(null);
-  const slideRefs = useRef([]);
+  const trackRef = useRef(null);
+  const panelRefs = useRef([]);
+  const innerRefs = useRef([]);
+  const barRef = useRef(null);
   const [ready, setReady] = useState(false);
-  const [{ index, prev, dir }, setNav] = useState({ index: 0, prev: -1, dir: 1 });
-  const lock = useRef({ until: 0, quiet: 0, acc: 0, accT: 0, touchY: null });
-  const indexRef = useRef(0);
-  indexRef.current = index;
+  const [active, setActive] = useState(0);
+  const [dir, setDir] = useState(1);
+  const activeRef = useRef(0);
+  const m = useRef({ cur: 0, target: 0, vel: 0, raf: 0, idle: 0, dir: 0, from: null, drag: null, touch: null, vw: 1, vh: 1 });
+
+  const render = useCallback(() => {
+    const s = m.current;
+    const track = trackRef.current;
+    if (!track) return;
+    track.style.transform = `translate3d(${(-s.cur * s.vw).toFixed(2)}px, 0, 0)`;
+    const skew = clamp(-s.vel * 55, -3, 3);
+    innerRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const off = i - s.cur;
+      if (Math.abs(off) > 1.2) return;
+      el.style.transform = `translate3d(${(-off * 0.3 * s.vw).toFixed(1)}px, 0, 0) skewX(${skew.toFixed(2)}deg)`;
+      el.style.opacity = (1 - Math.min(Math.abs(off), 1) * 0.55).toFixed(3);
+    });
+    if (barRef.current) barRef.current.style.transform = `scaleX(${(s.cur / (SLIDES.length - 1)).toFixed(4)})`;
+  }, []);
+
+  const frame = useCallback(() => {
+    const s = m.current;
+    const prev = s.cur;
+    s.cur += (s.target - s.cur) * (reduceMotion() ? 1 : 0.085);
+    if (Math.abs(s.target - s.cur) < 0.0005) s.cur = s.target;
+    s.vel = s.cur - prev;
+    render();
+    // The panel being headed for counts as active, so its copy is already
+    // rising in as it slides into view.
+    const a = Math.round(s.target);
+    if (a !== activeRef.current) {
+      setDir(a > activeRef.current ? 1 : -1);
+      activeRef.current = a;
+      setActive(a);
+      window.history.replaceState(null, "", a === 0 ? window.location.pathname : `#${SLIDES[a].id}`);
+    }
+    s.raf = s.cur !== s.target ? requestAnimationFrame(frame) : 0;
+    if (!s.raf) {
+      s.vel = 0;
+      render();
+    }
+  }, [render]);
+
+  const setTarget = useCallback(
+    (t) => {
+      const s = m.current;
+      // One panel per gesture, however hard the flick.
+      const from = s.from ?? Math.round(s.cur);
+      s.target = clamp(t, Math.max(0, from - 1), Math.min(SLIDES.length - 1, from + 1));
+      if (!s.raf) s.raf = requestAnimationFrame(frame);
+    },
+    [frame]
+  );
+
+  const snap = useCallback(() => {
+    const s = m.current;
+    const base = Math.floor(s.target);
+    const f = s.target - base;
+    const t = s.dir > 0 ? (f > 0.14 ? base + 1 : base) : s.dir < 0 ? (f < 0.86 ? base : base + 1) : Math.round(s.target);
+    setTarget(t);
+    s.from = null;
+  }, [setTarget]);
+
+  const go = useCallback(
+    (i) => {
+      const s = m.current;
+      s.dir = 0;
+      s.from = i;
+      setTarget(i);
+      s.from = null;
+    },
+    [setTarget]
+  );
 
   useEffect(() => {
     let alive = true;
     document.fonts?.ready.then(() => alive && setReady(true));
     const t = setTimeout(() => alive && setReady(true), 600);
-    const fromHash = SLIDES.findIndex((s) => `#${s.id}` === window.location.hash);
-    if (fromHash > 0) setNav({ index: fromHash, prev: -1, dir: 1 });
+    const s = m.current;
+    const fit = () => {
+      s.vw = window.innerWidth;
+      s.vh = window.innerHeight;
+      render();
+    };
+    fit();
+    const fromHash = SLIDES.findIndex((x) => `#${x.id}` === window.location.hash);
+    if (fromHash > 0) {
+      s.cur = s.target = fromHash;
+      activeRef.current = fromHash;
+      setActive(fromHash);
+      render();
+    }
+    window.addEventListener("resize", fit);
     return () => {
       alive = false;
       clearTimeout(t);
+      window.removeEventListener("resize", fit);
+      cancelAnimationFrame(s.raf);
+      clearTimeout(s.idle);
     };
-  }, []);
+  }, [render]);
 
-  const go = useCallback((to) => {
-    const from = indexRef.current;
-    if (to < 0 || to >= SLIDES.length || to === from) return;
-    const now = performance.now();
-    if (now < lock.current.until) return;
-    lock.current.until = now + (reduceMotion() ? 150 : TRANSITION_MS);
-    setNav({ index: to, prev: from, dir: to > from ? 1 : -1 });
-    const el = slideRefs.current[to];
-    if (el) el.scrollTop = to > from ? 0 : el.scrollHeight;
-    window.history.replaceState(null, "", to === 0 ? window.location.pathname : `#${SLIDES[to].id}`);
-  }, []);
-
-  // Can this slide still scroll itself in this direction?
+  // Can the current panel still scroll itself in this direction?
   const innerScroll = (d) => {
-    const el = slideRefs.current[indexRef.current];
+    const el = panelRefs.current[activeRef.current];
     if (!el || el.scrollHeight <= el.clientHeight + 2) return false;
     return d > 0 ? el.scrollTop + el.clientHeight < el.scrollHeight - 2 : el.scrollTop > 2;
   };
@@ -297,54 +416,95 @@ export default function WorksDeck() {
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
+    const s = m.current;
+    const begin = () => {
+      if (s.from == null) s.from = Math.round(s.cur);
+    };
+    const later = () => {
+      clearTimeout(s.idle);
+      s.idle = setTimeout(snap, 150);
+    };
 
     const onWheel = (e) => {
-      if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
-      const d = Math.sign(e.deltaY);
-      if (innerScroll(d)) return;
+      const vertical = Math.abs(e.deltaY) >= Math.abs(e.deltaX);
+      let d = vertical ? e.deltaY : e.deltaX;
+      if (e.deltaMode === 1) d *= 16;
+      if (vertical && innerScroll(Math.sign(d))) return;
       e.preventDefault();
-      const l = lock.current;
-      const now = performance.now();
-      // Trackpad momentum keeps firing after a change; wait for it to die
-      // down before a new gesture can move again.
-      if (now < l.until || now < l.quiet) {
-        l.quiet = now + 160;
-        l.acc = 0;
-        return;
-      }
-      if (now - l.accT > 220) l.acc = 0;
-      l.accT = now;
-      l.acc += e.deltaY;
-      if (Math.abs(l.acc) > 28) {
-        l.acc = 0;
-        l.quiet = now + 160;
-        go(indexRef.current + d);
-      }
+      if (!d) return;
+      begin();
+      s.dir = Math.sign(d);
+      setTarget(s.target + d / (s.vw * 0.75));
+      later();
     };
 
     const onTouchStart = (e) => {
-      lock.current.touchY = e.touches[0].clientY;
+      const t = e.touches[0];
+      clearTimeout(s.idle);
+      s.touch = { x: t.clientX, y: t.clientY, t0: s.target, axis: null, lx: t.clientX, ly: t.clientY };
     };
-    const onTouchEnd = (e) => {
-      const y0 = lock.current.touchY;
-      lock.current.touchY = null;
-      if (y0 == null) return;
-      const dy = y0 - e.changedTouches[0].clientY;
-      if (Math.abs(dy) < 50) return;
-      const d = Math.sign(dy);
-      if (innerScroll(d)) return;
-      go(indexRef.current + d);
+    const onTouchMove = (e) => {
+      const tc = s.touch;
+      if (!tc) return;
+      const t = e.touches[0];
+      const dx = t.clientX - tc.x;
+      const dy = t.clientY - tc.y;
+      if (!tc.axis) {
+        if (Math.hypot(dx, dy) < 8) return;
+        tc.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+        if (tc.axis === "y" && innerScroll(-Math.sign(dy))) tc.axis = "native";
+      }
+      if (tc.axis === "native") return;
+      e.preventDefault();
+      begin();
+      const step = tc.axis === "x" ? (tc.lx - t.clientX) : (tc.ly - t.clientY);
+      if (step) s.dir = Math.sign(step);
+      tc.lx = t.clientX;
+      tc.ly = t.clientY;
+      const d = tc.axis === "x" ? -dx / s.vw : -dy / (s.vh * 0.8);
+      setTarget(tc.t0 + d);
+    };
+    const onTouchEnd = () => {
+      if (s.touch && s.touch.axis && s.touch.axis !== "native") snap();
+      s.touch = null;
+    };
+
+    const onPointerDown = (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0 || e.target.closest(INTERACTIVE)) return;
+      clearTimeout(s.idle);
+      s.drag = { x: e.clientX, t0: s.target, lx: e.clientX, moved: false };
+    };
+    const onPointerMove = (e) => {
+      const dg = s.drag;
+      if (!dg) return;
+      const dx = e.clientX - dg.x;
+      if (!dg.moved && Math.abs(dx) < 4) return;
+      if (!dg.moved) {
+        dg.moved = true;
+        root.dataset.dragging = "true";
+        root.setPointerCapture(e.pointerId);
+      }
+      begin();
+      if (e.clientX !== dg.lx) s.dir = Math.sign(dg.lx - e.clientX);
+      dg.lx = e.clientX;
+      setTarget(dg.t0 - (dx * 1.15) / s.vw);
+    };
+    const onPointerUp = () => {
+      if (s.drag?.moved) snap();
+      s.drag = null;
+      delete root.dataset.dragging;
     };
 
     const onKey = (e) => {
       const t = e.target;
       if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement) return;
-      if (["ArrowDown", "PageDown"].includes(e.key) || (e.key === " " && !(t instanceof HTMLButtonElement))) {
+      const i = Math.round(s.target);
+      if (["ArrowDown", "ArrowRight", "PageDown"].includes(e.key) || (e.key === " " && !(t instanceof HTMLButtonElement))) {
         e.preventDefault();
-        go(indexRef.current + 1);
-      } else if (["ArrowUp", "PageUp"].includes(e.key)) {
+        go(i + 1);
+      } else if (["ArrowUp", "ArrowLeft", "PageUp"].includes(e.key)) {
         e.preventDefault();
-        go(indexRef.current - 1);
+        go(i - 1);
       } else if (e.key === "Home") {
         go(0);
       } else if (e.key === "End") {
@@ -354,42 +514,56 @@ export default function WorksDeck() {
 
     root.addEventListener("wheel", onWheel, { passive: false });
     root.addEventListener("touchstart", onTouchStart, { passive: true });
+    root.addEventListener("touchmove", onTouchMove, { passive: false });
     root.addEventListener("touchend", onTouchEnd, { passive: true });
+    root.addEventListener("pointerdown", onPointerDown);
+    root.addEventListener("pointermove", onPointerMove);
+    root.addEventListener("pointerup", onPointerUp);
+    root.addEventListener("pointercancel", onPointerUp);
     window.addEventListener("keydown", onKey);
     return () => {
       root.removeEventListener("wheel", onWheel);
       root.removeEventListener("touchstart", onTouchStart);
+      root.removeEventListener("touchmove", onTouchMove);
       root.removeEventListener("touchend", onTouchEnd);
+      root.removeEventListener("pointerdown", onPointerDown);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerup", onPointerUp);
+      root.removeEventListener("pointercancel", onPointerUp);
       window.removeEventListener("keydown", onKey);
     };
-  }, [go]);
+  }, [go, setTarget, snap]);
 
-  const stateOf = (i) => (i === index ? "active" : i === prev ? "leaving" : "idle");
-  const next = () => go(index + 1);
+  const next = () => go(active + 1);
+  const panel = (i, tone, children) => (
+    <section
+      ref={(el) => (panelRefs.current[i] = el)}
+      className={`wk-panel ${tone === "dark" ? "wk-dark" : "wk-light"}`}
+      data-state={active === i ? "active" : "idle"}
+      aria-hidden={active !== i}
+      aria-label={SLIDES[i].title}
+    >
+      <div ref={(el) => (innerRefs.current[i] = el)} className="wk-inner wk-center">
+        {children}
+      </div>
+    </section>
+  );
 
   return (
-    <main
-      ref={rootRef}
-      className="works-page font-outfit"
-      data-ready={ready}
-      data-dir={dir > 0 ? "down" : "up"}
-      data-lenis-prevent
-    >
-      {/* Slide 1 */}
-      <section ref={(el) => (slideRefs.current[0] = el)} className="wk-slide wk-dark" data-state={stateOf(0)} aria-hidden={index !== 0}>
-        <div className="wk-inner wk-center">
+    <main ref={rootRef} className="works-page font-outfit" data-ready={ready} data-lenis-prevent>
+      <div ref={trackRef} className="wk-track">
+        {panel(
+          0,
+          "dark",
           <div className="wk-intro">
-            <h1 className="wk-mark font-hand wk-rise" style={{ "--i": 1 }}>
-              <span className="wk-write">1G-works</span>
-            </h1>
+            <Wordmark />
             <ScrollPill onClick={next} />
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Slide 2 */}
-      <section ref={(el) => (slideRefs.current[1] = el)} className="wk-slide wk-light" data-state={stateOf(1)} aria-hidden={index !== 1}>
-        <div className="wk-inner wk-center">
+        {panel(
+          1,
+          "light",
           <div className="wk-who">
             <WhoFigure />
             <div className="wk-who-copy">
@@ -406,38 +580,31 @@ export default function WorksDeck() {
               <ScrollPill onClick={next} />
             </div>
           </div>
-        </div>
-      </section>
+        )}
 
-      {/* Slide 3 */}
-      <section ref={(el) => (slideRefs.current[2] = el)} className="wk-slide wk-dark" data-state={stateOf(2)} aria-hidden={index !== 2}>
-        <div className="wk-inner wk-center">
-          <Services />
-        </div>
-      </section>
+        {panel(2, "dark", <Services />)}
+        {panel(3, "light", <Enquiry />)}
+      </div>
 
-      {/* Slide 4 */}
-      <section ref={(el) => (slideRefs.current[3] = el)} className="wk-slide wk-light" data-state={stateOf(3)} aria-hidden={index !== 3}>
-        <div className="wk-inner wk-center">
-          <Enquiry />
-        </div>
-      </section>
-
-      {/* Chrome: drawn in white and blended by difference over the slides. */}
-      <div className="wk-chrome" aria-label="Site">
+      {/* Chrome: drawn in white and blended by difference over the panels. */}
+      <div className="wk-chrome">
         <TransitionLink href="/" aria-label="Home" className="wk-logo">
           <Image src="/logo.png" width={368} height={214} alt="Goutham logo" priority />
         </TransitionLink>
 
         <p className="wk-title" aria-live="polite">
-          <span key={index} className="wk-title-text" data-dir={dir > 0 ? "down" : "up"}>
-            {SLIDES[index].title}
+          <span key={active} className="wk-title-text" data-dir={dir > 0 ? "down" : "up"}>
+            {SLIDES[active].title}
           </span>
         </p>
 
         <button type="button" className="wk-contact btn-tactile" onClick={() => go(SLIDES.length - 1)}>
           Contact <Arrow className="wk-arrow" />
         </button>
+
+        <span className="wk-progress" aria-hidden="true">
+          <span ref={barRef} />
+        </span>
 
         <p className="wk-foot-l">&copy; 2026 1GWorks. No rights reserved.</p>
         <TransitionLink href="/" className="wk-foot-r">

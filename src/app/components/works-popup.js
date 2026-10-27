@@ -63,7 +63,7 @@ export default function WorksPopup() {
   if (state === "hidden") return null;
 
   return (
-    <div className="wp-wrap" data-state={state}>
+    <div className="wp-wrap" data-state={state} onPointerDown={(e) => e.target === e.currentTarget && close()}>
       <div
         ref={cardRef}
         className="wp-card font-outfit text-white"
