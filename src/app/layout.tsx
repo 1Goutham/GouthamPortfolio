@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anonymous_Pro, Outfit, Noto_Sans_Tamil } from "next/font/google";
+import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
@@ -28,6 +28,14 @@ const notoSansTamil = Noto_Sans_Tamil({
   display: "swap",
 });
 
+// The "'til death, we do art." line on the Margin teaser.
+const playfair = Playfair_Display({
+  variable: "--font-serif-display",
+  subsets: ["latin"],
+  weight: ["900"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Goutham G",
   description: "Crafting sleek, modern web apps with style and skill.",
@@ -47,7 +55,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} antialiased`}
+        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} ${playfair.variable} antialiased`}
       >
         <SmoothScroll />
         <Toaster
