@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
 import MinimalNav from './layout/navbar';
 import HeroDock from './hero-dock';
+import LivePortrait from './portrait/live-portrait';
 
 // Drop the profile artwork (face + "[ Vanakamm! ]" lettering) in at
 // /public/heropageprofile.png to swap the picture.
@@ -113,16 +114,22 @@ function Kural() {
 export default function Hero() {
   const frameRef = useRef(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
+  // Once the live portrait is drawing, it turns the head itself.
+  const [live, setLive] = useState(false);
+  const onLive = useCallback(() => {
+    setLive(true);
+    setTilt({ x: 0, y: 0 });
+  }, []);
 
   // The portrait leans a few degrees toward the cursor and settles back on leave.
   const onPointerMove = useCallback((e) => {
     const el = frameRef.current;
-    if (!el || e.pointerType !== "mouse") return;
+    if (!el || e.pointerType !== "mouse" || live) return;
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
     setTilt({ x: -py * 8, y: px * 10 });
-  }, []);
+  }, [live]);
   const resetTilt = useCallback(() => setTilt({ x: 0, y: 0 }), []);
 
   // Stagger the copy in once fonts are ready so nothing pops mid-swap.
@@ -165,18 +172,21 @@ export default function Hero() {
           onPointerLeave={resetTilt}
           className="hero-portrait relative w-[200px] shrink-0 sm:w-[240px] md:w-[290px] lg:w-[320px]"
           style={{ "--tilt-x": `${tilt.x}deg`, "--tilt-y": `${tilt.y}deg` }}
+          data-live={live}
         >
-          <div className="hero-portrait-inner">
+          <div className="hero-portrait-inner relative">
             <Image
               src={PROFILE_SRC}
-              width={940}
-              height={1100}
+              width={926}
+              height={1120}
               sizes="(max-width: 640px) 200px, (max-width: 768px) 240px, (max-width: 1024px) 290px, 320px"
               alt="Goutham smiling in green glasses, greeting you with Vanakamm!"
               priority
               draggable={false}
-              className="select-none"
+              className="hero-portrait-photo select-none"
             />
+            {/* The same photo, alive: eyes that follow you, blinks, a slight head turn. */}
+            <LivePortrait onReady={onLive} className="hero-portrait-live" />
           </div>
         </div>
 
