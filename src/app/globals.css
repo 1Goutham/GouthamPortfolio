@@ -2757,6 +2757,7 @@ a:focus-visible .mt-pill-fill {
 /*  1G-works popup (homepage)                                          */
 /* ------------------------------------------------------------------ */
 
+/* The page behind the card goes soft and grainy, like frosted film. */
 .wp-wrap {
   position: fixed;
   inset: 0;
@@ -2764,8 +2765,29 @@ a:focus-visible .mt-pill-fill {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+.wp-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -50%;
+  opacity: 0.11;
   pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.2 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: wp-grain 0.9s steps(4) infinite;
+}
+.wp-wrap[data-state="open"] {
+  animation: fade-in 0.6s ease both;
+}
+.wp-wrap[data-state="closing"] {
+  animation: wp-fade-out 0.5s ease both;
+}
+@keyframes wp-fade-out {
+  to { opacity: 0; }
 }
 /* Measured off the card: 385 x 220; everything inside is in cqw of it. */
 .wp-card {
@@ -2773,14 +2795,14 @@ a:focus-visible .mt-pill-fill {
   --gy: 62%;
   position: relative;
   container-type: inline-size;
-  width: min(860px, 100%);
+  width: min(1080px, 100%);
   aspect-ratio: 385 / 220;
   border-radius: 1.6cqw;
   overflow: hidden;
   pointer-events: auto;
-  background: rgba(17, 15, 15, 0.78);
-  backdrop-filter: blur(26px) saturate(1.2);
-  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+  background: rgba(17, 15, 15, 0.7);
+  backdrop-filter: blur(30px) saturate(1.25);
+  -webkit-backdrop-filter: blur(30px) saturate(1.25);
   box-shadow:
     0 40px 90px -30px rgba(0, 0, 0, 0.85),
     inset 0 1px 0 rgba(255, 255, 255, 0.07),
@@ -2792,12 +2814,13 @@ a:focus-visible .mt-pill-fill {
 .wp-wrap[data-state="closing"] .wp-card {
   animation: wp-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) both;
 }
+/* No filter here: it would switch off the card's own backdrop blur. */
 @keyframes wp-in {
-  from { opacity: 0; transform: translateY(28px) scale(0.96); filter: blur(10px); }
-  to   { opacity: 1; transform: none; filter: blur(0); }
+  from { opacity: 0; transform: translateY(36px) scale(0.94); }
+  to   { opacity: 1; transform: none; }
 }
 @keyframes wp-out {
-  to { opacity: 0; transform: translateY(16px) scale(0.97); filter: blur(8px); }
+  to { opacity: 0; transform: translateY(18px) scale(0.97); }
 }
 /* A soft light that drifts after the pointer, and film grain over it. */
 .wp-glow {
@@ -2948,6 +2971,9 @@ a:focus-visible .mt-pill-fill {
     padding: 12px;
   }
   .wp-card {
+    width: 100%;
+  }
+  .wp-card {
     aspect-ratio: 385 / 300;
   }
   .wp-mark { font-size: 7cqw; }
@@ -2975,46 +3001,33 @@ a:focus-visible .mt-pill-fill {
   overscroll-behavior: none;
 }
 
-.wk-slide {
+/* The row of panels. Its offset and each panel's parallax are set from JS. */
+.wk-track {
   position: absolute;
   inset: 0;
+  display: flex;
+  width: calc(100vw * 4);
+  will-change: transform;
+}
+.wk-panel {
+  position: relative;
+  flex: 0 0 100vw;
+  height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  visibility: hidden;
   scrollbar-width: none;
 }
-.wk-slide::-webkit-scrollbar {
+.wk-panel::-webkit-scrollbar {
   display: none;
 }
 .wk-dark  { --ink: #fff; --paper: #000; background: #000; color: #fff; }
 .wk-light { --ink: #000; --paper: #fff; background: #fff; color: #000; }
 
-.wk-slide[data-state="active"],
-.wk-slide[data-state="leaving"] {
-  visibility: visible;
-}
-/* The slide on top of the stack is whichever is wiping. */
-.works-page[data-dir="down"] .wk-slide[data-state="active"],
-.works-page[data-dir="up"] .wk-slide[data-state="leaving"] {
-  z-index: 2;
-}
-.works-page[data-dir="down"] .wk-slide[data-state="leaving"],
-.works-page[data-dir="up"] .wk-slide[data-state="active"] {
-  z-index: 1;
-}
-/* The covered slide dims as it sinks. */
-.wk-slide::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background: #000;
-  opacity: 0;
-  pointer-events: none;
-}
-
 .wk-inner {
   min-height: 100%;
+  will-change: transform, opacity;
+  transform-origin: 50% 60%;
 }
 .wk-center {
   display: flex;
@@ -3022,75 +3035,20 @@ a:focus-visible .mt-pill-fill {
   justify-content: center;
   padding: calc(var(--u) * 7) calc(var(--u) * 4) calc(var(--u) * 5);
 }
-
-/* Down: the next slide wipes up from the bottom edge, its content rising a
-   beat behind; the old one sinks back and darkens. */
-.works-page[data-dir="down"] .wk-slide[data-state="active"] {
-  animation: wk-wipe-up 1s var(--wipe) both;
-}
-.works-page[data-dir="down"] .wk-slide[data-state="active"] .wk-inner {
-  animation: wk-rise-in 1.05s var(--wipe) both;
-}
-.works-page[data-dir="down"] .wk-slide[data-state="leaving"] .wk-inner {
-  animation: wk-sink-up 1s var(--wipe) both;
-}
-.works-page[data-dir="down"] .wk-slide[data-state="leaving"]::after {
-  animation: wk-dim 1s var(--wipe) both;
-}
-/* Up: the current slide peels down to uncover the one before it. */
-.works-page[data-dir="up"] .wk-slide[data-state="leaving"] {
-  animation: wk-wipe-down 1s var(--wipe) both;
-}
-.works-page[data-dir="up"] .wk-slide[data-state="leaving"] .wk-inner {
-  animation: wk-drop-out 1s var(--wipe) both;
-}
-.works-page[data-dir="up"] .wk-slide[data-state="active"] .wk-inner {
-  animation: wk-lift-in 1.05s var(--wipe) both;
-}
-.works-page[data-dir="up"] .wk-slide[data-state="active"]::after {
-  animation: wk-undim 1s var(--wipe) both;
-}
-@keyframes wk-wipe-up {
-  from { clip-path: inset(100% 0 0 0); }
-  to   { clip-path: inset(0 0 0 0); }
-}
-@keyframes wk-wipe-down {
-  from { clip-path: inset(0 0 0 0); }
-  to   { clip-path: inset(100% 0 0 0); }
-}
-@keyframes wk-rise-in {
-  from { transform: translateY(18vh); }
-  to   { transform: none; }
-}
-@keyframes wk-sink-up {
-  from { transform: none; }
-  to   { transform: translateY(-9vh) scale(0.94); }
-}
-@keyframes wk-drop-out {
-  from { transform: none; }
-  to   { transform: translateY(18vh); }
-}
-@keyframes wk-lift-in {
-  from { transform: translateY(-9vh) scale(0.94); }
-  to   { transform: none; }
-}
-@keyframes wk-dim {
-  from { opacity: 0; }
-  to   { opacity: 0.55; }
-}
-@keyframes wk-undim {
-  from { opacity: 0.55; }
-  to   { opacity: 0; }
+@media (hover: hover) and (pointer: fine) {
+  .works-page { cursor: grab; }
+  .works-page[data-dragging="true"],
+  .works-page[data-dragging="true"] * { cursor: grabbing !important; user-select: none; }
 }
 
-/* The copy of whichever slide arrives rises in, one piece at a time. */
-.wk-slide:not([data-state="active"]) .wk-rise,
+/* The copy of whichever panel arrives rises in, one piece at a time. */
+.wk-panel:not([data-state="active"]) .wk-rise,
 .works-page[data-ready="false"] .wk-rise {
   opacity: 0;
 }
-.works-page[data-ready="true"] .wk-slide[data-state="active"] .wk-rise {
+.works-page[data-ready="true"] .wk-panel[data-state="active"] .wk-rise {
   animation: hero-rise 0.9s var(--ease-out-expo) both;
-  animation-delay: calc(380ms + var(--i, 0) * 90ms);
+  animation-delay: calc(60ms + var(--i, 0) * 80ms);
 }
 
 /* ---- Chrome ------------------------------------------------------ */
@@ -3144,11 +3102,11 @@ a:focus-visible .mt-pill-fill {
   animation-name: wk-title-in-up;
 }
 @keyframes wk-title-in {
-  from { opacity: 0; transform: translateY(90%); filter: blur(3px); }
+  from { opacity: 0; transform: translateX(28%); filter: blur(3px); }
   to   { opacity: 1; transform: none; filter: blur(0); }
 }
 @keyframes wk-title-in-up {
-  from { opacity: 0; transform: translateY(-90%); filter: blur(3px); }
+  from { opacity: 0; transform: translateX(-28%); filter: blur(3px); }
   to   { opacity: 1; transform: none; filter: blur(0); }
 }
 .wk-contact {
@@ -3176,6 +3134,24 @@ a:focus-visible .mt-pill-fill {
 .wk-scroll:hover .wk-arrow,
 .wk-send:hover .wk-arrow {
   transform: translate(15%, -15%);
+}
+/* Where you are in the row: a hairline that fills as you go. */
+.wk-progress {
+  left: 50%;
+  bottom: calc(var(--u) * 2.6);
+  width: max(64px, calc(var(--u) * 6));
+  height: 1px;
+  translate: -50% 0;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+  pointer-events: none;
+}
+.wk-progress > span {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left center;
 }
 .wk-foot-l,
 .wk-foot-r {
@@ -3267,22 +3243,67 @@ a:focus-visible .mt-pill-fill {
   font-size: calc(var(--u) * 3.6);
   line-height: 1;
   font-weight: 400;
+}
+/* Each letter is inked in with a little spring, then a scribble underlines
+   the word. Once settled, letters lift toward the cursor (--lift/--tilt). */
+.wk-mark {
+  position: relative;
+  display: inline-flex;
+  padding-bottom: 0.12em;
+}
+.wk-ch {
+  display: inline-block;
+}
+.wk-ch > span {
+  display: inline-block;
+  transform: translateY(var(--lift, 0)) rotate(var(--tilt, 0deg));
   transition: transform 0.6s var(--ease-spring);
 }
-.wk-mark:hover {
-  transform: rotate(-3deg) scale(1.04);
+.wk-panel:not([data-state="active"]) .wk-ch,
+.works-page[data-ready="false"] .wk-ch {
+  opacity: 0;
 }
-/* Written on: the word is revealed left to right like a pen stroke. */
-.wk-write {
-  display: inline-block;
-  padding: 0 0.08em;
+.works-page[data-ready="true"] .wk-panel[data-state="active"] .wk-ch {
+  animation: wk-ink 0.95s var(--ease-spring) both;
+  animation-delay: calc(260ms + var(--i, 0) * 60ms);
 }
-.works-page[data-ready="true"] .wk-slide[data-state="active"] .wk-write {
-  animation: wk-write 1.3s cubic-bezier(0.65, 0, 0.35, 1) 0.45s both;
+@keyframes wk-ink {
+  0%   { opacity: 0; transform: translateY(0.55em) rotate(-16deg) scale(0.55); filter: blur(7px); }
+  55%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: none; filter: blur(0); }
 }
-@keyframes wk-write {
-  from { clip-path: inset(-20% 100% -20% 0); }
-  to   { clip-path: inset(-20% 0 -20% 0); }
+.wk-scribble {
+  position: absolute;
+  left: 2%;
+  right: 2%;
+  bottom: -0.06em;
+  width: 96%;
+  height: 0.2em;
+  overflow: visible;
+}
+.wk-scribble path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.works-page[data-ready="true"] .wk-panel[data-state="active"] .wk-scribble path {
+  animation: wk-scribble 0.9s cubic-bezier(0.65, 0, 0.35, 1) 0.95s both;
+}
+@keyframes wk-scribble {
+  to { stroke-dashoffset: 0; }
+}
+.wk-mark:hover .wk-scribble path {
+  animation: wk-scribble-again 0.8s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes wk-scribble-again {
+  0%   { stroke-dashoffset: 0; }
+  45%  { stroke-dashoffset: -1; }
+  46%  { stroke-dashoffset: 1; }
+  100% { stroke-dashoffset: 0; }
 }
 
 /* ---- Slide 2 ------------------------------------------------------ */
@@ -3296,7 +3317,8 @@ a:focus-visible .mt-pill-fill {
 .wk-who-fig {
   --rx: 0deg;
   --ry: 0deg;
-  width: calc(var(--u) * 18.8);
+  width: calc(var(--u) * 22.7);
+  margin-right: calc(var(--u) * -1.9);
   flex: none;
   perspective: 900px;
 }
@@ -3362,7 +3384,8 @@ a:focus-visible .mt-pill-fill {
   padding-left: calc(var(--u) * 24.4);
 }
 .wk-keys {
-  width: calc(var(--u) * 8.1);
+  width: calc(var(--u) * 8.8);
+  margin-left: calc(var(--u) * -0.1);
   transition: transform 0.6s var(--ease-spring);
 }
 .wk-keys img {
@@ -3645,7 +3668,7 @@ a:focus-visible .mt-pill-fill {
   .wk-intro { flex-direction: column; gap: 22px; }
   .wk-scroll { width: 104px; height: 38px; font-size: 14px; }
   .wk-who { flex-direction: column; margin: 0; gap: 22px; }
-  .wk-who-fig { width: 52vw; }
+  .wk-who-fig { width: 60vw; margin-right: 0; }
   .wk-who-copy { width: 100%; }
   .wk-who-title { font-size: 21px; white-space: normal; }
   .wk-who-text { max-width: none; font-size: 14px; }
