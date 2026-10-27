@@ -6,8 +6,8 @@
    It is anchored at the bottom-left, so it grows upward and the pill's
    row becomes the card's header. */
 .ag {
-  --ag-w: 262px;
-  --ag-h: 44px;
+  --ag-w: 268px;
+  --ag-h: 50px;
   --ag-open-w: 304px;
   --ag-open-h: 300px;
   position: fixed;
@@ -18,11 +18,19 @@
   flex-direction: column;
   width: var(--ag-w);
   height: var(--ag-h);
-  border-radius: 22px;
+  border-radius: 25px;
   overflow: hidden;
   color: #fff;
-  background-color: #0c0c0c;
-  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.85), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+  /* A lit top edge and a soft glass body, so the pill reads on black and on
+     the white sections alike. */
+  background: linear-gradient(180deg, rgba(38, 37, 36, 0.92), rgba(12, 12, 12, 0.95));
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    0 20px 44px -18px rgba(0, 0, 0, 0.75),
+    0 2px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
   transition:
     width 0.6s var(--ease-out-expo),
     height 0.6s var(--ease-out-expo),
@@ -78,9 +86,9 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   height: var(--ag-h);
-  padding: 3px;
+  padding: 5px;
   text-align: left;
   cursor: pointer;
   outline: none;
@@ -89,21 +97,46 @@
 .ag-face {
   position: relative;
   flex: none;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #262626;
-  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, #3a3938 0%, #1b1b1b 68%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   transition: transform 0.6s var(--ease-spring), width 0.5s var(--ease-out-expo), height 0.5s var(--ease-out-expo);
 }
-/* The artwork is a wide head (114 x 88), fitted whole inside the disc. */
+/* The artwork is a wide head (114 x 88); at this width it sits whole
+   inside the disc, a little proud of centre. */
 .ag-face img {
-  width: 88%;
+  width: 98%;
   height: auto;
+  margin-top: 6%;
   animation: ag-bob 4.5s ease-in-out infinite;
+}
+/* "Online": a small green light that breathes. */
+.ag-online {
+  position: absolute;
+  right: -1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9dff50;
+  box-shadow: 0 0 0 2px #141414;
+}
+.ag-online::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: #9dff50;
+  animation: ag-online 2.4s ease-out infinite;
+}
+@keyframes ag-online {
+  0%   { opacity: 0.6; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(2.4); }
 }
 @keyframes ag-bob {
   0%, 100% { transform: translateY(0) rotate(0); }
@@ -123,21 +156,45 @@
 }
 .ag-label {
   flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 7px;
-  height: 29px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  font-size: 12.5px;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   white-space: nowrap;
-  transition: border-color 0.35s ease, background-color 0.35s ease, padding 0.5s var(--ease-out-expo), opacity 0.3s ease;
+  transition: opacity 0.3s ease;
 }
-.ag-head:hover .ag-label,
-.ag-head:focus-visible .ag-label {
-  border-color: rgba(255, 255, 255, 0.32);
-  background-color: rgba(255, 255, 255, 0.04);
+.ag-label-text {
+  color: rgba(255, 255, 255, 0.94);
+  transition: color 0.3s ease;
+}
+.ag-head:hover .ag-label-text {
+  color: #fff;
+}
+/* The call to action: a white disc with the arrow, which lights up green
+   and nudges the arrow on hover. */
+.ag-go {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  color: #000;
+  transition: background-color 0.3s ease, transform 0.5s var(--ease-spring), color 0.3s ease;
+}
+.ag-head:hover .ag-go,
+.ag-head:focus-visible .ag-go {
+  background: #9dff50;
+  transform: rotate(-8deg) scale(1.06);
+}
+.ag-head:focus-visible .ag-go {
+  box-shadow: 0 0 0 3px rgba(157, 255, 80, 0.35);
 }
 .ag-arrow {
   width: 11px;
@@ -146,23 +203,26 @@
   transition: transform 0.5s var(--ease-spring);
 }
 .ag-head:hover .ag-arrow {
-  transform: translate(2px, -2px);
+  transform: translate(1px, -1px);
 }
 .ag[data-open="true"] .ag-head {
   padding: 8px 10px 0;
-  height: 50px;
+  height: 54px;
 }
 .ag[data-open="true"] .ag-face {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
 }
-.ag[data-open="true"] .ag-label {
-  border-color: transparent;
-  background-color: transparent;
-  padding: 0 4px;
-  font-weight: 500;
+/* Open, the disc goes quiet and the arrow turns back into the corner:
+   tap it to tuck the agent away. */
+.ag[data-open="true"] .ag-go {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
 }
-/* Open, the arrow turns to point back into the corner: tap to tuck it away. */
+.ag[data-open="true"] .ag-head:hover .ag-go {
+  background: rgba(255, 255, 255, 0.16);
+  transform: none;
+}
 .ag[data-open="true"] .ag-arrow,
 .ag[data-open="true"] .ag-head:hover .ag-arrow {
   transform: rotate(180deg);
@@ -395,7 +455,7 @@
   bottom: calc(min(1vw, 14.4px) * 2.2 + 38px);
 }
 .ag[data-route="margin"][data-open="false"] {
-  --ag-w: 44px;
+  --ag-w: 50px;
 }
 .ag[data-route="margin"][data-open="false"] .ag-label {
   opacity: 0;
@@ -492,6 +552,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ag-face img,
+  .ag-online::after,
   .ag-ring::after {
     animation: none;
   }

@@ -308,11 +308,14 @@ export default function SiteAgent() {
           aria-label={open ? "Minimise the G-Talk agent" : "Open the G-Talk agent"}
         >
           <span className="ag-face">
-            <Image src="/agenticon.png" width={114} height={88} alt="" sizes="40px" priority draggable={false} />
+            <Image src="/agenticon.png" width={114} height={88} alt="" sizes="48px" priority draggable={false} />
+            <span className="ag-online" aria-hidden="true" />
           </span>
           <span className="ag-label">
             <span className="ag-label-text">Hey! What&rsquo;s on your mind?</span>
-            <Arrow className="ag-arrow" />
+            <span className="ag-go" aria-hidden="true">
+              <Arrow className="ag-arrow" />
+            </span>
           </span>
         </button>
 

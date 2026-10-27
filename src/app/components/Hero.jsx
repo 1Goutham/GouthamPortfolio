@@ -19,8 +19,10 @@ const KURAL = {
 
 const NAV_ITEMS = [
   { label: "Home", href: "#" },
-  { label: "About me", href: "#about" },
+  { label: "About", href: "#about" },
+  { label: "Skills", href: "#skills" },
   { label: "Projects", href: "#projects" },
+  { label: "G-Talk", href: "#Gtalk" },
 ];
 
 /* Bracketed link: the brackets ease outward and the label brightens on hover. */
