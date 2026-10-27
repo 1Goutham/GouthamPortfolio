@@ -61,11 +61,14 @@ type Geo = {
   D: number;
   w: number;
   h: number;
+  /** Phones: anywhere on the window counts, and the plane is drawn to it. */
+  easy: { x0: number; y0: number; x1: number; y1: number } | null;
 };
 type Hit = 'in' | 'bonk' | 'out' | null;
 
 function hitTest(g: Geo, p: Vec): Hit {
-  const { open: o, frame: f } = g;
+  const { open: o, frame: f, easy: e } = g;
+  if (e && p.x > e.x0 && p.x < e.x1 && p.y > e.y0 && p.y < e.y1) return 'in';
   if (p.x > o.x0 && p.x < o.x1 && p.y > o.y0 && p.y < o.y1) return 'in';
   if (p.x > f.x0 && p.x < f.x1 && p.y > f.y0 && p.y < f.y1) return 'bonk';
   if (p.x < -80 || p.x > g.w + 80 || p.y > g.h + 80 || p.y < -g.h) return 'out';
@@ -77,6 +80,23 @@ function step(g: Geo, p: Vec, v: Vec) {
   const d = 1 - DRAG * STEP;
   v.x *= d;
   v.y = v.y * d + G * g.u * STEP;
+  if (g.easy) {
+    // On a phone the window is small and the throw is short: once a plane
+    // is headed its way and getting close, it is drawn in. Part of the
+    // flight, so the preview shows it too.
+    const tx = g.target.x - p.x;
+    const ty = g.target.y - p.y;
+    const dist = Math.hypot(tx, ty);
+    const speed = Math.hypot(v.x, v.y);
+    if (dist < g.D * 0.8 && speed > 0 && v.x * tx + v.y * ty > 0) {
+      const k = 0.05;
+      const nx = (v.x / speed) * (1 - k) + (tx / dist) * k;
+      const ny = (v.y / speed) * (1 - k) + (ty / dist) * k;
+      const n = Math.hypot(nx, ny) || 1;
+      v.x = (nx / n) * speed;
+      v.y = (ny / n) * speed;
+    }
+  }
   p.x += v.x * STEP;
   p.y += v.y * STEP;
 }
@@ -315,7 +335,11 @@ export default function Contact() {
     const frame = { x0: wr.left - sec.left + 213 * sx, y0: wr.top - sec.top + 24 * sy, x1: wr.left - sec.left + 545 * sx, y1: wr.top - sec.top + 498 * sy };
     const target = { x: (open.x0 + open.x1) / 2, y: (open.y0 + open.y1) / 2 };
     const D = Math.hypot(target.x - home.x, target.y - home.y);
-    return { home, open, frame, target, u: D / 1000, D, w: sec.width, h: sec.height };
+    const pad = 14;
+    const easy = window.matchMedia('(min-width: 1024px)').matches
+      ? null
+      : { x0: wr.left - sec.left - pad, y0: wr.top - sec.top - pad, x1: wr.right - sec.left + pad, y1: wr.bottom - sec.top + pad };
+    return { home, open, frame, target, u: D / 1000, D, w: sec.width, h: sec.height, easy };
   }, [win.root]);
 
   // ------------------------------------------------------------ the plane
@@ -441,7 +465,7 @@ export default function Contact() {
   // Aim: drag from the plane toward where it should go. It cocks back
   // against the pull, the dotted line shows the flight, and letting go
   // throws it.
-  const aim = useRef<{ g: Geo; id: number; start: Vec; v: Vec; from: Vec; maxPull: number } | null>(null);
+  const aim = useRef<{ g: Geo; id: number; start: Vec; v: Vec; from: Vec; maxPull: number; len: number } | null>(null);
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (busy.current || e.button !== 0) return;
     if (!formRef.current?.checkValidity()) {
@@ -450,7 +474,7 @@ export default function Contact() {
     }
     e.preventDefault();
     const g = measure();
-    aim.current = { g, id: e.pointerId, start: { x: e.clientX, y: e.clientY }, v: { x: 0, y: 0 }, from: { ...g.home }, maxPull: Math.min(Math.max(g.D * 0.3, 110), 260) };
+    aim.current = { g, id: e.pointerId, start: { x: e.clientX, y: e.clientY }, v: { x: 0, y: 0 }, len: 0, from: { ...g.home }, maxPull: Math.min(Math.max(g.D * 0.3, 110), 260) };
     e.currentTarget.setPointerCapture(e.pointerId);
     planeRef.current!.dataset.state = 'aiming';
     say('aim');
@@ -461,19 +485,25 @@ export default function Contact() {
     let dx = e.clientX - a.start.x;
     let dy = e.clientY - a.start.y;
     const len = Math.hypot(dx, dy);
+    a.len = len;
     if (len > a.maxPull) {
       dx *= a.maxPull / len;
       dy *= a.maxPull / len;
     }
-    const power = Math.min(len, a.maxPull) / a.maxPull;
-    a.v = { x: (dx / (len || 1)) * power * VMAX * a.g.u, y: (dy / (len || 1)) * power * VMAX * a.g.u };
+    const pull = Math.min(len, a.maxPull) / a.maxPull;
+    // On a phone every pull is a sensible throw: the range is narrowed to
+    // the speeds that reach the window.
+    const power = a.g.easy ? 0.42 + pull * 0.36 : pull;
+    // (dx, dy) is clamped to maxPull by now: its direction, at full length.
+    const l = Math.min(len, a.maxPull) || 1;
+    a.v = { x: (dx / l) * power * VMAX * a.g.u, y: (dy / l) * power * VMAX * a.g.u };
     const rot = len > 4 ? (Math.atan2(dy, dx) * 180) / Math.PI - NOSE : 0;
     // Cocked back against the throw, a little; it flies from there.
     setPlane(-dx * 0.14, -dy * 0.14, rot, 1 + power * 0.06);
     a.from = { x: a.g.home.x - dx * 0.14, y: a.g.home.y - dy * 0.14 };
     const { pts, hit } = simulate(a.g, a.v, a.from);
-    drawDots(dotsRef.current!, len > 8 ? pts : [], hit);
-    const aimed = len > 8 && hit === 'in';
+    drawDots(dotsRef.current!, len > 24 ? pts : [], hit);
+    const aimed = len > 24 && hit === 'in';
     win.root.current!.dataset.aimed = String(aimed);
     setPill(aimed ? 'aimed' : 'aim');
   };
@@ -484,7 +514,7 @@ export default function Contact() {
     clearDots(dotsRef.current);
     win.root.current!.dataset.aimed = 'false';
     const speed = Math.hypot(a.v.x, a.v.y) / a.g.u;
-    if (speed < VMAX * 0.12) {
+    if (a.len < 24 || speed < VMAX * 0.12) {
       // Barely pulled: it settles back.
       const plane = planeRef.current!;
       plane.animate([{ transform: plane.style.transform }, { transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.16,1,.3,1)' });
