@@ -1,10 +1,12 @@
 /**
  * G-Talk knowledge base.
  *
- * The whole list is handed to the model in G-Talk's system prompt, grouped by
- * `title`. Keep each entry short and on a single topic (roughly 40-120 words)
- * so the prompt stays small. Add, edit or remove entries freely; changes go
- * live with the next deploy.
+ * G-Talk and the site agent answer by retrieval (see src/lib/rag.ts): each
+ * question pulls the few entries closest to it, and only those go to the
+ * model. Keep each entry short and on a single topic (roughly 40-120 words)
+ * so it retrieves cleanly, and name the subject in the text itself ("1G-works
+ * offers...", not "It offers..."). Add, edit or remove entries freely;
+ * changes go live with the next deploy.
  */
 export type KnowledgeChunk = {
   id: string;
@@ -149,12 +151,60 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'project-portfolio',
     title: 'Projects',
-    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Montserrat, Anonymous Pro and Outfit. It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
+    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Outfit and Anonymous Pro, with GSAP, Lenis and Three.js for motion and 3D. It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
   },
   {
     id: 'project-gtalk',
     title: 'Projects',
-    text: `G-Talk is the assistant on this portfolio, built by Goutham himself. It answers from a curated knowledge base about Goutham, so visitors can learn about his skills, experience and projects in a conversation. It only speaks about Goutham and his work, and it keeps its answers short and grounded in that knowledge.`,
+    text: `G-Talk is the assistant on this portfolio, built by Goutham himself. It uses retrieval-augmented generation (RAG): each question is matched against a curated knowledge base about Goutham with embeddings and keyword search, and only the closest entries are given to the model, so answers stay grounded. It only speaks about Goutham and his work and keeps its answers short.`,
+  },
+  {
+    id: 'project-agent',
+    title: 'Projects',
+    text: `The site also has a G-Talk agent, the small "Hey! What's on your mind?" pill stuck to the bottom-left corner of every page. Beyond answering questions it acts on the site: it can take visitors to a page or section, open a 1G-works panel, spotlight something like a specific project, or open his GitHub or LinkedIn. Goutham built it as an agentic layer over the same RAG knowledge base, with every action checked against a fixed map of the site.`,
+  },
+
+  /* ---------------------------------------------------------------- */
+  /*  1G-works                                                         */
+  /* ---------------------------------------------------------------- */
+  {
+    id: 'works-overview',
+    title: '1G-works',
+    text: `1G-works (also written 1GWorks; the site jokes "1Goutham Space Works" because it lives at 1goutham.space/works) is Goutham's freelance studio for businesses. Its line is "Ideas into digital impact" and "Let's build your digital presence": 1G-works brings design, technology and AI together to help a business build a stronger online presence, reach the right audience and turn ideas into meaningful growth. It has its own page at /works.`,
+  },
+  {
+    id: 'works-services',
+    title: '1G-works',
+    text: `1G-works offers four services. Brand & Creative: how a business looks, feels and connects with people (branding, visual identity, graphic design, content creation). Web & Digital: fast, well-designed websites and digital products (websites, web apps, UI/UX design, e-commerce). Digital Growth: helping the right people find a business and come back (SEO, social media, performance marketing, analytics). Software & AI: custom software and AI that does the heavy lifting (custom software, AI integration, automation, chatbots).`,
+  },
+  {
+    id: 'works-enquiry',
+    title: '1G-works',
+    text: `To start a project with 1G-works, use the enquiry form on the last panel of /works ("Contact to get started"): your name, where to reach you, which services you need and anything else worth knowing. The homepage contact form and email (gouthamgopinath.tsi@gmail.com) work too. 1G-works publishes no fixed prices; cost depends on the scope, so never quote prices, timelines, team size or past clients.`,
+  },
+
+  /* ---------------------------------------------------------------- */
+  /*  Around the site                                                  */
+  /* ---------------------------------------------------------------- */
+  {
+    id: 'site-map',
+    title: 'Around the site',
+    text: `The site's pages: the homepage (intro, About, Skills, Projects, the 1G-works strip, "A Bit More About Me", the Margin teaser, the G-Talk chat and Contact); /projects with every project in detail; /beyond, his personal story; /arcade, five retro games; /margin, a drawing playground; and /works, the 1G-works studio. The hero also has a small dock in its corner linking to Beyond, Projects and the arcade.`,
+  },
+  {
+    id: 'site-beyond',
+    title: 'Around the site',
+    text: `The Beyond page (/beyond) is Goutham's personal story, "not the resume version". He is curious, notices small details (he will spend two hours on something 2px out of place) and loves retro gaming. He started freelancing as a designer in college; his first client asked for a set of game cards and paid a little extra, which pushed him into design. He moved from graphic design into web design and UX, then spent nearly a year learning full-stack development so he could build what he designed, and later brought AI into the products he builds.`,
+  },
+  {
+    id: 'site-margin',
+    title: 'Around the site',
+    text: `Margin (/margin) is an experimental drawing playground by 1Gartlab, Goutham's creative label ("'til death, we do art."). The whole page is paper: visitors pick a fountain pen, pencil, marker, fineliner, watercolour brush or eraser and a colour, draw anything, then save the drawing or send it to Goutham by email or Instagram. On the homepage it is teased by a band of stickers you can drag and throw.`,
+  },
+  {
+    id: 'site-arcade',
+    title: 'Around the site',
+    text: `The Arcade (/arcade) has five small retro games starring Goutham. Scores stay in the visitor's own browser. It is reached from the question mark in the hero's corner dock, or from the little console on the Beyond page.`,
   },
   {
     id: 'project-rag-experiment',

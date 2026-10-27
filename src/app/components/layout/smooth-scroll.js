@@ -24,6 +24,8 @@ export default function SmoothScroll() {
       anchors: { offset: 0 },
     });
 
+    // The site agent scrolls through it, so a programmatic scroll eases like a wheel one.
+    window.__lenis = lenis;
     lenis.on("scroll", ScrollTrigger.update);
     const tick = (time) => lenis.raf(time * 1000);
     gsap.ticker.add(tick);
@@ -36,6 +38,7 @@ export default function SmoothScroll() {
     return () => {
       window.removeEventListener("load", refresh);
       gsap.ticker.remove(tick);
+      if (window.__lenis === lenis) delete window.__lenis;
       lenis.destroy();
     };
   }, []);

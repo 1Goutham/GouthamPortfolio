@@ -512,6 +512,13 @@ export default function WorksDeck() {
       }
     };
 
+    // The site agent opens a panel by changing the hash.
+    const onHash = () => {
+      const i = SLIDES.findIndex((x) => `#${x.id}` === window.location.hash);
+      go(i < 0 ? 0 : i);
+    };
+    window.addEventListener("hashchange", onHash);
+
     root.addEventListener("wheel", onWheel, { passive: false });
     root.addEventListener("touchstart", onTouchStart, { passive: true });
     root.addEventListener("touchmove", onTouchMove, { passive: false });
@@ -531,6 +538,7 @@ export default function WorksDeck() {
       root.removeEventListener("pointerup", onPointerUp);
       root.removeEventListener("pointercancel", onPointerUp);
       window.removeEventListener("keydown", onKey);
+      window.removeEventListener("hashchange", onHash);
     };
   }, [go, setTarget, snap]);
 
