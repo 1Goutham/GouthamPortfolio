@@ -13,12 +13,14 @@ const reduceMotion = () => typeof window !== "undefined" && window.matchMedia("(
 /**
  * "[ Vanakamm! ]" over the portrait, as live text.
  *
- * It arrives in Tamil: the brackets open from a sliver and வணக்கம்! rises
- * glyph by glyph out of depth, coming into focus with a brief glow. A beat
- * later the Tamil falls back into depth as "Vanakamm!" flips up letter by
- * letter and the brackets spring to the new width. Hovering turns it back
- * to Tamil while the letters lift toward the cursor in a wave; leaving
- * turns it back. It floats just in front of the face: the portrait moves
+ * The brackets are an aperture. They start closed together, then glide
+ * apart; the space between them is a window, so வணக்கம்! is revealed from
+ * the centre out as its letters rise into place from below a hidden
+ * baseline. A beat later the Tamil rolls up out of the window as
+ * "Vanakamm!" rolls up into it, letter by letter from the middle, and the
+ * brackets glide to the new width. Hovering rolls it back to Tamil and
+ * eases the brackets outward, as every bracket link on the site does.
+ * It floats just in front of the face: the portrait moves
  * it with the head (`ref.current.setHead`), and its shadow on the hair
  * shifts by less, so it reads as a sign hung in front of him.
  *
@@ -33,7 +35,6 @@ const Vanakkam = forwardRef(function Vanakkam({ start, onSettle }, ref) {
   const [hover, setHover] = useState(false);
   const [widths, setWidths] = useState({ ta: 0, en: 0 });
   const settled = useRef(false);
-  const raf = useRef(0);
 
   useImperativeHandle(ref, () => ({
     setHead(dx, dy) {
@@ -69,7 +70,7 @@ const Vanakkam = forwardRef(function Vanakkam({ start, onSettle }, ref) {
       return;
     }
     const a = setTimeout(() => setPhase("ta"), 120);
-    const b = setTimeout(() => setPhase("en"), 120 + 1700);
+    const b = setTimeout(() => setPhase("en"), 120 + 2600);
     return () => {
       clearTimeout(a);
       clearTimeout(b);
@@ -93,41 +94,40 @@ const Vanakkam = forwardRef(function Vanakkam({ start, onSettle }, ref) {
   if (lang === "en") everEn.current = true;
   const was = { ta: phase !== "hidden", en: everEn.current };
 
-  // The wave: letters near the cursor lift, by a gaussian of the distance.
-  const onMove = (e) => {
-    if (e.pointerType !== "mouse" || reduceMotion()) return;
-    const x = e.clientX;
-    if (raf.current) return;
-    raf.current = requestAnimationFrame(() => {
-      raf.current = 0;
-      rootRef.current?.querySelectorAll(".vk-g").forEach((g) => {
-        const r = g.getBoundingClientRect();
-        const d = (r.left + r.width / 2 - x) / 60;
-        g.style.setProperty("--lift", (Math.exp(-d * d) * -0.16).toFixed(3));
-      });
-    });
-  };
-  const onLeave = () => {
-    setHover(false);
-    rootRef.current?.querySelectorAll(".vk-g").forEach((g) => g.style.removeProperty("--lift"));
-  };
+  // Once a word has rolled out of the top, park it back below the window
+  // (no transition) so its next entrance rises from below again.
+  const [parked, setParked] = useState({ ta: false, en: false });
+  useEffect(() => {
+    setParked({ ta: false, en: false });
+    const hidden = lang === "ta" ? "en" : lang === "en" ? "ta" : null;
+    if (!hidden) return;
+    const t = setTimeout(() => setParked((p) => ({ ...p, [hidden]: true })), 1000);
+    return () => clearTimeout(t);
+  }, [lang]);
 
-  const word = (text, which, refEl, langAttr) => (
-    <span
-      ref={refEl}
-      className={`vk-word vk-${which}`}
-      data-show={lang === which}
-      data-was={was[which]}
-      lang={langAttr}
-      aria-hidden="true"
-    >
-      {graphemes(text).map((g, i) => (
-        <span key={i} className="vk-g" style={{ "--i": i }}>
-          {g}
-        </span>
-      ))}
-    </span>
-  );
+
+  // Letters move from the middle of the word outward (--c is the distance
+  // from the centre), so they open with the brackets.
+  const word = (text, which, refEl, langAttr) => {
+    const gs = graphemes(text);
+    const mid = (gs.length - 1) / 2;
+    return (
+      <span
+        ref={refEl}
+        className={`vk-word vk-${which}${parked[which] && lang !== which ? " vk-reset" : ""}`}
+        data-show={lang === which}
+        data-was={was[which]}
+        lang={langAttr}
+        aria-hidden="true"
+      >
+        {gs.map((g, i) => (
+          <span key={i} className="vk-g" style={{ "--c": Math.abs(i - mid).toFixed(1) }}>
+            {g}
+          </span>
+        ))}
+      </span>
+    );
+  };
 
   // Closed, the brackets sit together; they spring apart to fit the word.
   const w = lang === "hidden" ? 0 : lang === "ta" ? widths.ta : widths.en;
@@ -140,9 +140,9 @@ const Vanakkam = forwardRef(function Vanakkam({ start, onSettle }, ref) {
       data-lang={lang}
       aria-label="Vanakamm! (வணக்கம், hello)"
       role="img"
+      data-hover={hover}
       onPointerEnter={(e) => e.pointerType === "mouse" && phase === "en" && setHover(true)}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
+      onPointerLeave={() => setHover(false)}
       onClick={() => setHover((h) => !h)}
     >
       <span className="vk-float">

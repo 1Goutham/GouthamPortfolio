@@ -348,26 +348,37 @@ video {
   transform: translate3d(var(--hx), var(--hy), 0);
   filter: drop-shadow(calc(var(--hx) * -0.45) calc(0.05em + var(--hy) * -0.45) 0.06em rgba(0, 0, 0, 0.55));
 }
+/* One curve for every move here: a long, quiet ease-out with no bounce. */
+.vk {
+  --vk-ease: cubic-bezier(0.19, 1, 0.22, 1);
+}
 .vk-br {
   display: inline-block;
-  transition: opacity 0.5s ease, transform 0.8s var(--ease-spring);
+  transition: opacity 0.6s ease, translate 0.9s var(--vk-ease);
 }
 .vk[data-phase="hidden"] .vk-br {
   opacity: 0;
-  transform: scaleY(0.15);
 }
-/* The words sit on top of each other; the box between the brackets
-   springs to the width of whichever is showing. */
+/* Pointing at it, the brackets ease outward like every bracket link. */
+.vk[data-hover="true"] .vk-br-l { translate: -0.07em 0; }
+.vk[data-hover="true"] .vk-br-r { translate: 0.07em 0; }
+
+/* The window between the brackets. Its width glides to the word showing;
+   it clips its content on every side, so the words are revealed from the
+   centre as it opens, and letters roll in and out past its edges. */
 .vk-stack {
   position: relative;
   display: inline-grid;
-  /* One column exactly as wide as the box, so the hidden word (whichever
-     is wider) can't widen it and push the visible one off centre. */
+  /* One column exactly as wide as the window, so the hidden word can't
+     widen it and push the visible one off centre. */
   grid-template-columns: 100%;
   justify-items: center;
   align-items: center;
-  perspective: 5em;
-  transition: width 0.85s var(--ease-spring);
+  clip-path: inset(-0.12em 0 -0.02em 0);
+  transition: width 1.15s var(--vk-ease);
+}
+.vk[data-phase="hidden"] .vk-stack {
+  width: 0 !important;
 }
 .vk-word {
   grid-area: 1 / 1;
@@ -379,54 +390,44 @@ video {
   font-size: 0.74em;
   letter-spacing: 0.02em;
 }
+/* Parked well clear of the window (in the parent's em, so the smaller
+   Tamil face is hidden as fully as the Latin). */
+.vk-word {
+  --park: 1.5em;
+}
+.vk-ta {
+  --park: 2em;
+}
 .vk-g {
   display: inline-block;
   opacity: 0;
-  transform-origin: 50% 100%;
-  translate: 0 calc(var(--lift, 0) * 1em);
-  transition: translate 0.55s var(--ease-spring);
+  translate: 0 var(--park);
 }
-/* In: each glyph flips up out of depth and comes into focus, lit for a
-   moment as it arrives. */
+/* In: each letter rises from below the window's edge, the middle first. */
 .vk-word[data-show="true"] .vk-g {
-  animation: vk-in 1s cubic-bezier(0.2, 0.85, 0.25, 1) both;
-  animation-delay: calc(var(--i) * 62ms);
+  opacity: 1;
+  translate: 0 0;
+  transition:
+    translate 1.05s var(--vk-ease) calc(var(--vk-in, 0.24s) + var(--c) * 0.05s),
+    opacity 0.45s ease calc(var(--vk-in, 0.24s) + var(--c) * 0.05s);
 }
-/* Out: it falls back into depth and blurs away. */
+/* The first arrival waits for the brackets to start opening. */
+.vk[data-phase="ta"] .vk-ta {
+  --vk-in: 0.32s;
+}
+/* Out: it lifts away past the top edge, fading as it goes, a beat ahead
+   of the word replacing it. */
 .vk-word[data-show="false"][data-was="true"] .vk-g {
-  animation: vk-out 0.6s cubic-bezier(0.55, 0, 0.75, 0.2) both;
-  animation-delay: calc(var(--i) * 34ms);
+  opacity: 0;
+  translate: 0 calc(var(--park) * -0.7);
+  transition:
+    translate 0.5s cubic-bezier(0.6, 0, 0.8, 0.3) calc(var(--c) * 0.025s),
+    opacity 0.32s ease calc(0.06s + var(--c) * 0.025s);
 }
-@keyframes vk-in {
-  0% {
-    opacity: 0;
-    transform: translateY(0.42em) rotateX(-82deg) scale(0.86);
-    filter: blur(0.09em);
-    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
-  }
-  45% {
-    opacity: 1;
-    filter: blur(0);
-    text-shadow: 0 0 0.32em rgba(255, 255, 255, 0.85);
-  }
-  100% {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-    text-shadow: 0 0 0 rgba(255, 255, 255, 0);
-  }
-}
-@keyframes vk-out {
-  0% {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateY(-0.3em) rotateX(70deg) scale(0.9);
-    filter: blur(0.08em);
-  }
+/* After it has left, it waits below again for its next entrance. */
+.vk-word[data-show="false"][data-was="true"].vk-reset .vk-g {
+  transition: none;
+  translate: 0 var(--park);
 }
 @media (prefers-reduced-motion: reduce) {
   .vk-word[data-show="true"] .vk-g {
