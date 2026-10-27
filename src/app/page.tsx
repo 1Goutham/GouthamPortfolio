@@ -6,6 +6,8 @@ import Skills from "./components/skills";
 import Projects from "./components/projects";
 import BeyondTeaser from "./components/beyond-teaser";
 import MarginTeaser from "./components/margin-teaser";
+import WorksStrip from "./components/works-strip";
+import WorksPopup from "./components/works-popup";
 
 // Below-the-fold, JS-heavy sections are code-split so the initial bundle stays lean.
 const Gtalk = dynamic(() => import("./components/Gtalk"), {
@@ -21,10 +23,12 @@ export default function Home() {
       <About />
       <Skills />
       <Projects />
+      <WorksStrip />
       <BeyondTeaser />
       <MarginTeaser />
       <Gtalk />
       <Contact />
+      <WorksPopup />
     </>
   );
 }
