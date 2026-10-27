@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Github, Instagram, Linkedin, Mail } from "lucide-react";
 import TransitionLink from "../components/layout/transition-link";
 import FadeContent from "../components/layout/fade-in";
 import Asterisk from "../components/layout/asterisk";
@@ -11,6 +11,14 @@ import Asterisk from "../components/layout/asterisk";
 // the tape in the artwork is the pivot the photo swings from, so
 // `--pivot-x` / `--pivot-y` in globals.css are where that tape sits.
 const PHOTO_SRC = "/beyondpic.png";
+
+// Where else to find me (they used to sit in the contact section).
+const SOCIALS = [
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/goutham-g-98a0ba253/", Icon: Linkedin },
+  { label: "GitHub", href: "https://github.com/1Goutham", Icon: Github },
+  { label: "Instagram", href: "https://www.instagram.com/tanger.ineee/", Icon: Instagram },
+  { label: "Email", href: "mailto:gouthamgopinath.tsi@gmail.com", Icon: Mail },
+];
 
 const PIPELINE = ["UX research", "design", "development", "AI integration", "deployment"];
 
@@ -324,6 +332,21 @@ export default function BeyondStory() {
               <span className="bracket-link-text">Let&rsquo;s talk</span>
               <span className="bracket-link-r" aria-hidden="true">]</span>
             </TransitionLink>
+            <ul className="flex items-center gap-3 sm:ml-auto" aria-label="Find me elsewhere">
+              {SOCIALS.map(({ label, href, Icon }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target={href.startsWith("mailto:") ? undefined : "_blank"}
+                    rel={href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+                    aria-label={href.startsWith("mailto:") ? `Email me at ${href.slice(7)}` : `${label}, opens in a new tab`}
+                    className="social-btn social-btn-dark flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/75"
+                  >
+                    <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </FadeContent>
       </article>
