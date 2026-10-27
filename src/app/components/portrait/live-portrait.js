@@ -374,8 +374,22 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
         });
       }
 
+      // Phones and tablets: draw at 1.5x and 30fps. It is eye movement on a
+      // small screen, so it looks the same, for well under half the GPU work.
+      const coarse = window.matchMedia("(pointer: coarse)").matches;
+      const FRAME_MS = coarse ? 1000 / 30 - 2 : 0;
+      let lastDraw = 0;
+      // While the page is scrolling, the frame budget goes to the scroll:
+      // the portrait holds its last frame and picks up when it settles.
+      let scrollingUntil = 0;
+      const onScroll = () => {
+        scrollingUntil = performance.now() + 140;
+      };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      cleanups.push(() => window.removeEventListener("scroll", onScroll));
+
       const fit = () => {
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const dpr = Math.min(window.devicePixelRatio || 1, coarse ? 1.5 : 2);
         const r = canvas.getBoundingClientRect();
         const w = Math.max(1, Math.round(r.width * dpr));
         const h = Math.max(1, Math.round(r.height * dpr));
@@ -444,6 +458,11 @@ export default function LivePortrait({ onReady, onHead, api, className = "" }) {
       const frame = (now) => {
         raf = 0;
         if (!alive || !visible || document.hidden) return;
+        if (now - lastDraw < FRAME_MS || now < scrollingUntil) {
+          raf = requestAnimationFrame(frame);
+          return;
+        }
+        lastDraw = now;
         const dt = Math.min(64, now - st.last);
         st.last = now;
         const rect = canvas.getBoundingClientRect();

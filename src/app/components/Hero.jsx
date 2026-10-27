@@ -181,6 +181,8 @@ export default function Hero() {
           data-live={live}
         >
           <div className="hero-portrait-inner relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/portrait/shadow.png" alt="" aria-hidden="true" draggable={false} className="hero-portrait-shadow" />
             {/* The portrait without its lettering (built from heropageprofile.png
                 by scripts/portrait). Served as is, not re-encoded, so it is
                 pixel for pixel what the live portrait draws when it takes over. */}
