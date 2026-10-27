@@ -2795,7 +2795,7 @@ a:focus-visible .mt-pill-fill {
   --gy: 62%;
   position: relative;
   container-type: inline-size;
-  width: min(1080px, 100%);
+  width: min(600px, 100%);
   aspect-ratio: 385 / 220;
   border-radius: 1.6cqw;
   overflow: hidden;
@@ -2971,7 +2971,7 @@ a:focus-visible .mt-pill-fill {
     padding: 12px;
   }
   .wp-card {
-    width: 100%;
+    width: min(420px, 100%);
   }
   .wp-card {
     aspect-ratio: 385 / 300;
