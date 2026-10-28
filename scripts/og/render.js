@@ -56,7 +56,7 @@ const CARDS = {
       <img class="logo" src="${asset("logo.png")}">
       <div class="head" style="top:190px"><div class="title"><b>[</b>Goutham G<b>]</b></div></div>
       <div class="lede" style="top:300px">I build digital products<br>with AI, code &amp; design.</div>
-      <div class="lede" style="top:420px; font-size:23px; font-weight:600; opacity:.9">AI Full Stack Developer &amp; Product Designer</div>
+      <div class="lede" style="top:420px; font-size:23px; font-weight:600; opacity:.9">AI Product Engineer &amp; Designer</div>
       <div class="portrait">
         <img class="shadow" src="${asset("portrait/shadow.png")}">
         <img class="photo" src="${asset("portrait/photo.webp")}">

@@ -67,15 +67,34 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   ...pageMeta({
-    title: "Goutham G | AI Full Stack Developer & Product Designer",
+    title: "Goutham G | AI Product Engineer & Designer",
     description:
-      "I build digital products with AI, code and design. Goutham G, AI full stack developer and product designer in Coimbatore, India: products, the 1G-works studio, and a few experiments.",
+      "Goutham G (Goutham Gopinath) is an AI product engineer and designer in Coimbatore, India, building digital products with AI, code and design: full-stack web apps, AI tools and the 1G-works studio.",
     path: "/",
     image: "home",
-    alt: "Goutham G: I build digital products with AI, code & design",
+    alt: "Goutham G, AI Product Engineer & Designer: I build digital products with AI, code & design",
   }),
+  applicationName: "Goutham G",
   authors: [{ name: "Goutham G", url: SITE_URL }],
   creator: "Goutham G",
+  publisher: "Goutham G",
+  keywords: [
+    "Goutham G",
+    "Goutham Gopinath",
+    "AI product engineer",
+    "AI engineer",
+    "full stack developer",
+    "product designer",
+    "UI/UX designer",
+    "Next.js developer",
+    "Coimbatore",
+    "India",
+    "portfolio",
+    "1G-works",
+  ],
+  category: "technology",
+  formatDetection: { email: false, telephone: false, address: false },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
 };
 
 export const viewport: Viewport = {

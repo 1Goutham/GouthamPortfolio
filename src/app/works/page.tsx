@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { pageMeta } from "@/lib/seo";
+import { ld, pageMeta, worksLd } from "@/lib/seo";
 import WorksDeck from "./works-deck";
 
 export const metadata: Metadata = pageMeta({
@@ -12,5 +12,10 @@ export const metadata: Metadata = pageMeta({
 });
 
 export default function WorksPage() {
-  return <WorksDeck />;
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ld(worksLd)} />
+      <WorksDeck />
+    </>
+  );
 }

@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { ld, personLd } from "@/lib/seo";
 import Hero from "./components/Hero";
 import Scrolltext from "./components/scroll";
 import About from "./components/about";
@@ -17,6 +18,7 @@ const Contact = dynamic(() => import("./components/contact"));
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ld(personLd)} />
       <Hero />
       <Scrolltext />
       <About />
