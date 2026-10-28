@@ -337,7 +337,16 @@ export default function IntroPlayer() {
     setWin("opening");
     play();
   };
+  // Minimising or closing a maximised window first gives the screen back:
+  // otherwise the browser stays fullscreen on an empty (black) element.
+  const leaveFullscreen = () => {
+    const el = v();
+    if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {});
+    else if (document.webkitFullscreenElement) document.webkitExitFullscreen?.();
+    if (el?.webkitDisplayingFullscreen) el.webkitExitFullscreen?.();
+  };
   const minimize = () => {
+    leaveFullscreen();
     pause();
     setMenu(null);
     setWin("minimized");
@@ -347,6 +356,7 @@ export default function IntroPlayer() {
     setWin("opening");
   };
   const close = () => {
+    leaveFullscreen();
     stop();
     setStatus("Ready");
     setStarted(false);
