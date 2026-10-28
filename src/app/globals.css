@@ -4230,24 +4230,27 @@ a:focus-visible .mt-pill-fill {
 /*  Got 20 seconds? (the intro film, in a media player)                */
 /* ------------------------------------------------------------------ */
 
-/* Desktop is the 1440 design frame, as in the contact section; --u is one
-   design pixel. Below 1024px it flows. */
+/* Desktop is the 1440 design frame; --u is one design pixel. It scales
+   down with the width, and also with the height so the whole section (931
+   design pixels tall) fits on one screen with the player in full, and it
+   never grows past the design size, so it sits at the scale of the
+   sections around it. Below 1024px it flows. */
 .mp-section {
   position: relative;
   background: #222;
   color: #fff;
   overflow: hidden;
+  container-type: inline-size;
 }
 .mp-frame {
-  --u: calc(100cqw / 1440);
+  --u: min(calc(100cqw / 1440), calc(100svh / 960), 1px);
   position: relative;
-  max-width: 1600px;
   margin: 0 auto;
-  container-type: inline-size;
 }
 @media (min-width: 1024px) {
   .mp-frame {
-    aspect-ratio: 1440 / 931;
+    width: calc(1440 * var(--u));
+    height: calc(931 * var(--u));
   }
   .mp-title,
   .mp-lede,
