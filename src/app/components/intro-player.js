@@ -1,15 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import { ArrowUpRight } from "lucide-react";
 
 /**
- * "[Got 20 seconds?]": the intro film, in a 1Goutham Media Player that
- * really works. The window is the designed PNG (scripts/mediaplayer/build.py
- * takes it apart); everything that moves sits on top of it at the same
- * place: the seek and volume thumbs, the play/pause dome, the status line.
+ * "[Got 20 seconds?]": a slim band on the homepage whose button opens the
+ * intro film in a 1Goutham Media Player that really works, floating over
+ * the page like a desktop window: drag it by its title bar, minimise it to
+ * the taskbar, maximise it, close it.
  *
- * Nothing of the film loads until you press play (preload="none"); the
- * window itself is ~95 KB.
+ * The window is the designed PNG (scripts/mediaplayer/build.py takes it
+ * apart); everything that moves sits on top of it at the same place: the
+ * seek and volume thumbs, the play/pause dome, the status line. Nothing of
+ * the film loads until it is opened (preload="none").
  */
 
 // Geometry, in the window image's own pixels (1697 x 1508).
@@ -39,6 +49,7 @@ const G = {
   volThumb: [902, 1379, 964, 1471],
   volTrack: [762, 1379, 964, 1471],
   volRange: [790, 933], // thumb centre, silent to full
+  titleBar: [0, 0, 1290, 160], // where the window is dragged from
   min: [1302, 37, 1408, 144],
   max: [1425, 37, 1532, 144],
   close: [1548, 37, 1655, 144],
@@ -73,9 +84,14 @@ export default function IntroPlayer() {
   const clockRef = useRef(null);
   const frameRef = useRef(null);
   const videoRef = useRef(null);
+  const openerRef = useRef(null);
   const [inView, setInView] = useState(false);
-  // window: open | minimized | closed | closing | opening
-  const [win, setWin] = useState("open");
+  const [mounted, setMounted] = useState(false);
+  // window: closed | opening | open | minimized | closing
+  const [win, setWin] = useState("closed");
+  // Where the window sits on screen (its top-left, in px), once moved.
+  const [pos, setPos] = useState(null);
+  const [from, setFrom] = useState(null); // where it opens out of
   const [status, setStatus] = useState("Ready");
   const [playing, setPlaying] = useState(false);
   const [started, setStarted] = useState(false);
@@ -86,7 +102,6 @@ export default function IntroPlayer() {
   const [rate, setRate] = useState(1);
   const [menu, setMenu] = useState(null);
   const [about, setAbout] = useState(false);
-  const [iconSelected, setIconSelected] = useState(false);
   const [peek, setPeek] = useState(false);
 
   useEffect(() => {
@@ -100,21 +115,9 @@ export default function IntroPlayer() {
     return () => io.disconnect();
   }, []);
 
-  // Pause when it scrolls away: a 20-second film shouldn't talk to an empty room.
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      ([e]) => {
-        const v = videoRef.current;
-        if (!e.isIntersecting && v && !v.paused && !document.fullscreenElement)
-          v.pause();
-      },
-      { threshold: 0 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  // The window lives on <body> (a fixed window inside an animated section
+  // would be pinned to the section instead).
+  useEffect(() => setMounted(true), []);
 
   // ---------------------------------------------------------- playback
   const v = () => videoRef.current;
@@ -196,9 +199,13 @@ export default function IntroPlayer() {
     // not through a re-render every frame.
     const tick = () => {
       const d = el.duration || 20;
-      const x = G.seekRange[0] + (el.currentTime / d) * (G.seekRange[1] - G.seekRange[0]);
-      if (thumbRef.current) thumbRef.current.style.left = pctX(x - (G.seek[2] - G.seek[0]) / 2);
-      if (clockRef.current) clockRef.current.textContent = `${fmt(el.currentTime)} / ${fmt(d)}`;
+      const x =
+        G.seekRange[0] +
+        (el.currentTime / d) * (G.seekRange[1] - G.seekRange[0]);
+      if (thumbRef.current)
+        thumbRef.current.style.left = pctX(x - (G.seek[2] - G.seek[0]) / 2);
+      if (clockRef.current)
+        clockRef.current.textContent = `${fmt(el.currentTime)} / ${fmt(d)}`;
       raf = el.paused ? 0 : requestAnimationFrame(tick);
     };
     const buffered = () => {
@@ -238,7 +245,7 @@ export default function IntroPlayer() {
       cancelAnimationFrame(raf);
       Object.entries(on).forEach(([k, f]) => el.removeEventListener(k, f));
     };
-  }, []);
+  }, [mounted]); // the video mounts with the portal
 
   // Keyboard, while the player has focus.
   const onKeyDown = (e) => {
@@ -296,12 +303,49 @@ export default function IntroPlayer() {
   const onVolDown = dragOn(G.volRange, (f) => setVolume(f));
 
   // ---------------------------------------------------------- the window
+  // Its size on screen: as on the design, smaller on a small screen.
+  const size = () => {
+    const w = Math.min(
+      560,
+      window.innerWidth - 24,
+      (window.innerHeight - 40) * (W / H),
+    );
+    return { w, h: (w * H) / W };
+  };
+  const place = (p) => {
+    const { w, h } = size();
+    // Keep the title bar on screen, so it can always be dragged back.
+    return {
+      x: Math.max(-w + 120, Math.min(window.innerWidth - 120, p.x)),
+      y: Math.max(0, Math.min(window.innerHeight - h * 0.12, p.y)),
+    };
+  };
+  const centred = () => {
+    const { w, h } = size();
+    return {
+      x: (window.innerWidth - w) / 2,
+      y: Math.max(16, (window.innerHeight - h) / 2),
+    };
+  };
+  // Open out of the button, and start the film (in the same click, so the
+  // browser lets it play with sound).
+  const open = () => {
+    if (win === "open" || win === "opening") return windowRef.current?.focus();
+    const r = openerRef.current?.getBoundingClientRect();
+    if (r) setFrom({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
+    setPos((p) => place(p || centred()));
+    setWin("opening");
+    play();
+  };
   const minimize = () => {
     pause();
     setMenu(null);
     setWin("minimized");
   };
-  const restore = () => setWin("opening");
+  const restore = () => {
+    setFrom(null);
+    setWin("opening");
+  };
   const close = () => {
     stop();
     setStatus("Ready");
@@ -310,9 +354,39 @@ export default function IntroPlayer() {
     setAbout(false);
     setWin("closing");
   };
-  const reopen = () => {
-    setIconSelected(false);
-    setWin("opening");
+  useEffect(() => {
+    if (win === "open") windowRef.current?.focus({ preventScroll: true });
+  }, [win]);
+  // Keep it on screen when the window resizes.
+  useEffect(() => {
+    const fit = () => setPos((p) => (p ? place(p) : p));
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Drag by the title bar; double-click it to maximise, as Windows did.
+  const onTitleDown = (e) => {
+    if (e.button !== 0) return;
+    const el = e.currentTarget;
+    const start = { x: e.clientX, y: e.clientY, p: pos || centred() };
+    el.setPointerCapture(e.pointerId);
+    windowRef.current?.setAttribute("data-dragging", "");
+    const move = (ev) =>
+      setPos(
+        place({
+          x: start.p.x + ev.clientX - start.x,
+          y: start.p.y + ev.clientY - start.y,
+        }),
+      );
+    const up = () => {
+      windowRef.current?.removeAttribute("data-dragging");
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
   };
   useEffect(() => {
     if (win === "closing") {
@@ -382,7 +456,8 @@ export default function IntroPlayer() {
 
   const shown = scrub ?? t;
   useLayoutEffect(() => {
-    if (clockRef.current) clockRef.current.textContent = `${fmt(shown)} / ${fmt(dur)}`;
+    if (clockRef.current)
+      clockRef.current.textContent = `${fmt(shown)} / ${fmt(dur)}`;
   }, [shown, dur]);
   const seekX =
     G.seekRange[0] + (shown / (dur || 20)) * (G.seekRange[1] - G.seekRange[0]);
@@ -399,396 +474,434 @@ export default function IntroPlayer() {
       className="mp-section"
       data-inview={inView}
     >
-      <div className="mp-frame">
-        <h2 className="mp-title bracket-link mp-rise" style={{ "--d": 0 }}>
-          <span className="bracket-link-l" aria-hidden="true">
-            [
+      <div className="mp-band">
+        <div className="mp-band-copy">
+          <h2 className="mp-title bracket-link mp-rise" style={{ "--d": 0 }}>
+            <span className="bracket-link-l" aria-hidden="true">
+              [
+            </span>
+            <span className="bracket-link-text !mx-0">Got 20 seconds?</span>
+            <span className="bracket-link-r" aria-hidden="true">
+              ]
+            </span>
+          </h2>
+          <p className="mp-lede mp-rise" style={{ "--d": 1 }}>
+            AI, code, design, and a little bit of everything that makes me, me.
+          </p>
+        </div>
+        <button
+          ref={openerRef}
+          type="button"
+          className="mp-open mp-rise"
+          style={{ "--d": 2 }}
+          onClick={win === "minimized" ? restore : open}
+          data-playing={playing && win !== "closed"}
+          aria-haspopup="dialog"
+        >
+          <span className="mp-open-eq" aria-hidden="true">
+            <i />
+            <i />
+            <i />
           </span>
-          <span className="bracket-link-text !mx-0">Got 20 seconds?</span>
-          <span className="bracket-link-r" aria-hidden="true">
-            ]
+          <span className="mp-open-text">
+            {win === "closed" || win === "closing"
+              ? "Open 1Goutham Media Player"
+              : playing
+                ? "Now playing"
+                : "Back to the player"}
           </span>
-        </h2>
-        <p className="mp-lede mp-rise" style={{ "--d": 1 }}>
-          AI, code, design, and a little bit of everything that makes me, me.
-        </p>
+          <ArrowUpRight
+            className="mp-open-arrow"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+        </button>
+      </div>
 
-        <div className="mp-stage">
-          {/* The window. */}
-          <div
-            ref={windowRef}
-            className="mp-window mp-rise"
-            style={{ "--d": 2 }}
-            data-win={win}
-            data-playing={playing}
-            data-started={started}
-            tabIndex={0}
-            role="region"
-            aria-label="1Goutham Media Player. Space plays and pauses, arrows seek and change volume, M mutes, F goes fullscreen."
-            onKeyDown={onKeyDown}
-          >
-            {/* The window keeps its proportions inside (in fullscreen too). */}
-            <div ref={frameRef} className="mp-body">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="mp-skin"
-                src="/intro/player.webp"
-                alt=""
-                width={1188}
-                height={1056}
-                draggable={false}
-              />
-
-              <div
-                className="mp-screen"
-                style={box(G.screen)}
-                onMouseEnter={() => setPeek(true)}
-                onMouseLeave={() => setPeek(false)}
-              >
-                <video
-                  ref={videoRef}
-                  src={SRC}
-                  preload="none"
-                  playsInline
-                  onClick={toggle}
-                  onDoubleClick={fullscreen}
-                  aria-label="Goutham's 20-second intro"
-                />
-                {!started && (
-                  <button
-                    type="button"
-                    className="mp-peek"
-                    data-on={peek}
-                    onClick={play}
-                    aria-label="Play the 20-second intro"
-                  >
-                    <span
-                      className="mp-peek-img"
-                      style={
-                        peek
-                          ? { backgroundImage: "url(/intro/poster.jpg)" }
-                          : undefined
-                      }
-                    />
-                    <span className="mp-peek-cta">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
-                      </svg>
-                      Click to play
-                    </span>
-                  </button>
-                )}
-                {about && (
-                  <div
-                    className="mp-about"
-                    role="dialog"
-                    aria-label="About 1Goutham Media Player"
-                  >
-                    <div className="mp-about-bar">
-                      About 1Goutham Media Player
-                    </div>
-                    <div className="mp-about-body">
-                      <strong>1Goutham Media Player</strong>
-                      <span>Version 20.0 (20 seconds long)</span>
-                      <span>
-                        © {new Date().getFullYear()} Goutham Gopinath.
-                      </span>
-                      <span>Made with AI, code and design.</span>
-                      <button
-                        type="button"
-                        onClick={() => setAbout(false)}
-                        autoFocus
-                      >
-                        OK
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Now playing, in the silver bar. */}
-              <div
-                className="mp-np"
-                style={box(G.nowPlaying)}
-                aria-hidden="true"
-              >
-                <span data-on={started}>
-                  {started ? `Now Playing: ${FILE}` : ""}
-                </span>
-              </div>
-
-              {/* Status line. */}
-              <div
-                className="mp-status"
-                style={box(G.status)}
-                aria-live="polite"
-              >
-                <span
-                  className="mp-status-text"
-                  style={{ left: `${((335 - 41) / (1657 - 41)) * 100}%` }}
-                >
-                  {status}
-                </span>
-                {/* Written directly (also every frame while playing). */}
-                <span ref={clockRef} className="mp-status-time" data-on={started} />
-              </div>
-
-              {/* Seek. */}
-              <div
-                className="mp-hit mp-seek"
-                style={box(G.seekTrack)}
-                onPointerDown={onSeekDown}
-                role="slider"
-                aria-label="Seek"
-                aria-valuemin={0}
-                aria-valuemax={Math.round(dur)}
-                aria-valuenow={Math.round(shown)}
-                aria-valuetext={`${fmt(shown)} of ${fmt(dur)}`}
-                tabIndex={-1}
-              >
-                {scrub !== null && (
-                  <span
-                    className="mp-tip"
-                    style={{
-                      left: `${((seekX - G.seekTrack[0]) / (G.seekTrack[2] - G.seekTrack[0])) * 100}%`,
-                    }}
-                  >
-                    {fmt(scrub)}
-                  </span>
-                )}
-              </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={thumbRef}
-                className="mp-sprite mp-seek-thumb"
-                src="/intro/seek.webp"
-                alt=""
-                draggable={false}
-                style={{ ...box(G.seek), left: pctX(seekX - (sx1 - sx0) / 2) }}
-              />
-
-              {/* Volume: the wedge fills up to the thumb. */}
-              <span
-                className="mp-sprite mp-wedge"
-                style={{
-                  ...box(G.volWedge),
-                  clipPath: `inset(0 ${Math.max(0, ((wx1 - volX) / (wx1 - wx0)) * 100)}% 0 0)`,
-                }}
-              >
+      {mounted &&
+        createPortal(
+          <>
+            {/* The window. */}
+            <div
+              ref={windowRef}
+              className="mp-window mp-float"
+              style={{
+                left: `${(pos || { x: 0 }).x}px`,
+                top: `${(pos || { y: 0 }).y}px`,
+                "--w": `${mounted ? size().w : 560}px`,
+                // The open grows out of the button that opened it.
+                "--from-x":
+                  from && pos ? `${from.x - pos.x - size().w / 2}px` : "0px",
+                "--from-y":
+                  from && pos ? `${from.y - pos.y - size().h / 2}px` : "40px",
+              }}
+              aria-hidden={
+                win === "closed" || win === "minimized" ? true : undefined
+              }
+              data-win={win}
+              data-playing={playing}
+              data-started={started}
+              tabIndex={0}
+              role="region"
+              aria-label="1Goutham Media Player. Space plays and pauses, arrows seek and change volume, M mutes, F goes fullscreen."
+              onKeyDown={onKeyDown}
+            >
+              {/* The window keeps its proportions inside (in fullscreen too). */}
+              <div ref={frameRef} className="mp-body">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/intro/vol-wedge.webp" alt="" draggable={false} />
-              </span>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="mp-sprite mp-vol-thumb"
-                src="/intro/vol-thumb.webp"
-                alt=""
-                draggable={false}
-                style={{
-                  ...box([vx0, vy0, vx1, vy1]),
-                  left: pctX(volX - (vx1 - vx0) / 2 + 3),
-                }}
-              />
-              <div
-                className="mp-hit mp-vol"
-                style={box(G.volTrack)}
-                onPointerDown={onVolDown}
-                role="slider"
-                aria-label="Volume"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(level * 100)}
-                tabIndex={-1}
-              />
+                <img
+                  className="mp-skin"
+                  src="/intro/player.webp"
+                  alt=""
+                  width={1188}
+                  height={1056}
+                  draggable={false}
+                />
 
-              {/* Buttons. */}
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-round"
-                style={box(G.play)}
-                onClick={toggle}
-                aria-label={playing ? "Pause" : "Play"}
-              >
-                {playing && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src="/intro/pause.webp" alt="" draggable={false} />
-                )}
-              </button>
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-round"
-                style={box(G.stop)}
-                onClick={stop}
-                aria-label="Stop"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-pill"
-                style={box(G.prev)}
-                onClick={() => seekTo(0)}
-                aria-label="Back to the start"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-pill"
-                style={box(G.next)}
-                onClick={() => seekTo(dur - 0.05)}
-                aria-label="Skip to the end"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-pill"
-                style={box(G.mute)}
-                onClick={toggleMute}
-                aria-label={muted ? "Unmute" : "Mute"}
-                aria-pressed={muted}
-                data-on={muted}
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-arrow"
-                style={box(G.rewind)}
-                onClick={() => nudge(-5)}
-                aria-label="Rewind 5 seconds"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-arrow"
-                style={box(G.ffwd)}
-                onClick={() => nudge(5)}
-                aria-label="Forward 5 seconds"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-tab"
-                style={box(G.tabs[0])}
-                onClick={toggle}
-                aria-label="Now Playing"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-tab"
-                style={box(G.tabs[1])}
-                onClick={minimize}
-                aria-label="Mini player"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-tab"
-                style={box(G.tabs[2])}
-                onClick={fullscreen}
-                aria-label="Full screen"
-              />
+                {/* The title bar: drag the window by it. */}
+                <div
+                  className="mp-drag"
+                  style={box(G.titleBar)}
+                  onPointerDown={onTitleDown}
+                  onDoubleClick={fullscreen}
+                  aria-hidden="true"
+                />
 
-              {/* Title bar. */}
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-cap"
-                style={box(G.min)}
-                onClick={minimize}
-                aria-label="Minimise"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-cap"
-                style={box(G.max)}
-                onClick={fullscreen}
-                aria-label="Maximise (full screen)"
-              />
-              <button
-                type="button"
-                className="mp-hit mp-btn mp-cap mp-close"
-                style={box(G.close)}
-                onClick={close}
-                aria-label="Close"
-              />
-
-              {/* Menu bar. */}
-              {G.menus.map(([name, b]) => (
-                <div key={name} className="mp-menuwrap" style={box(b)}>
-                  <button
-                    type="button"
-                    className="mp-hit mp-menubtn"
-                    aria-haspopup="menu"
-                    aria-expanded={menu === name}
-                    data-open={menu === name}
-                    onClick={() => setMenu((m) => (m === name ? null : name))}
-                    onMouseEnter={() => menu && setMenu(name)}
-                  >
-                    <span className="sr-only">{name}</span>
-                  </button>
-                  {menu === name && (
-                    <ul className="mp-menu" role="menu">
-                      {MENUS[name].map((it, i) =>
-                        it.sep ? (
-                          <li key={i} className="mp-sep" role="separator" />
-                        ) : (
-                          <li key={i} role="none">
-                            <button
-                              type="button"
-                              role="menuitem"
-                              autoFocus={i === 0}
-                              onClick={() => {
-                                setMenu(null);
-                                it.act();
-                              }}
-                            >
-                              <span className="mp-check">
-                                {it.checked ? "✓" : ""}
-                              </span>
-                              <span className="mp-mlabel">{it.label}</span>
-                              {it.keys && (
-                                <span className="mp-keys">{it.keys}</span>
-                              )}
-                            </button>
-                          </li>
-                        ),
-                      )}
-                    </ul>
+                <div
+                  className="mp-screen"
+                  style={box(G.screen)}
+                  onMouseEnter={() => setPeek(true)}
+                  onMouseLeave={() => setPeek(false)}
+                >
+                  <video
+                    ref={videoRef}
+                    src={SRC}
+                    preload="none"
+                    playsInline
+                    onClick={toggle}
+                    onDoubleClick={fullscreen}
+                    aria-label="Goutham's 20-second intro"
+                  />
+                  {!started && (
+                    <button
+                      type="button"
+                      className="mp-peek"
+                      data-on={peek}
+                      onClick={play}
+                      aria-label="Play the 20-second intro"
+                    >
+                      <span
+                        className="mp-peek-img"
+                        style={
+                          peek
+                            ? { backgroundImage: "url(/intro/poster.jpg)" }
+                            : undefined
+                        }
+                      />
+                      <span className="mp-peek-cta">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M8 5.5v13l10.5-6.5z" fill="currentColor" />
+                        </svg>
+                        Click to play
+                      </span>
+                    </button>
+                  )}
+                  {about && (
+                    <div
+                      className="mp-about"
+                      role="dialog"
+                      aria-label="About 1Goutham Media Player"
+                    >
+                      <div className="mp-about-bar">
+                        About 1Goutham Media Player
+                      </div>
+                      <div className="mp-about-body">
+                        <strong>1Goutham Media Player</strong>
+                        <span>Version 20.0 (20 seconds long)</span>
+                        <span>
+                          © {new Date().getFullYear()} Goutham Gopinath.
+                        </span>
+                        <span>Made with AI, code and design.</span>
+                        <button
+                          type="button"
+                          onClick={() => setAbout(false)}
+                          autoFocus
+                        >
+                          OK
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
-              ))}
+
+                {/* Now playing, in the silver bar. */}
+                <div
+                  className="mp-np"
+                  style={box(G.nowPlaying)}
+                  aria-hidden="true"
+                >
+                  <span data-on={started}>
+                    {started ? `Now Playing: ${FILE}` : ""}
+                  </span>
+                </div>
+
+                {/* Status line. */}
+                <div
+                  className="mp-status"
+                  style={box(G.status)}
+                  aria-live="polite"
+                >
+                  <span
+                    className="mp-status-text"
+                    style={{ left: `${((335 - 41) / (1657 - 41)) * 100}%` }}
+                  >
+                    {status}
+                  </span>
+                  {/* Written directly (also every frame while playing). */}
+                  <span
+                    ref={clockRef}
+                    className="mp-status-time"
+                    data-on={started}
+                  />
+                </div>
+
+                {/* Seek. */}
+                <div
+                  className="mp-hit mp-seek"
+                  style={box(G.seekTrack)}
+                  onPointerDown={onSeekDown}
+                  role="slider"
+                  aria-label="Seek"
+                  aria-valuemin={0}
+                  aria-valuemax={Math.round(dur)}
+                  aria-valuenow={Math.round(shown)}
+                  aria-valuetext={`${fmt(shown)} of ${fmt(dur)}`}
+                  tabIndex={-1}
+                >
+                  {scrub !== null && (
+                    <span
+                      className="mp-tip"
+                      style={{
+                        left: `${((seekX - G.seekTrack[0]) / (G.seekTrack[2] - G.seekTrack[0])) * 100}%`,
+                      }}
+                    >
+                      {fmt(scrub)}
+                    </span>
+                  )}
+                </div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={thumbRef}
+                  className="mp-sprite mp-seek-thumb"
+                  src="/intro/seek.webp"
+                  alt=""
+                  draggable={false}
+                  style={{
+                    ...box(G.seek),
+                    left: pctX(seekX - (sx1 - sx0) / 2),
+                  }}
+                />
+
+                {/* Volume: the wedge fills up to the thumb. */}
+                <span
+                  className="mp-sprite mp-wedge"
+                  style={{
+                    ...box(G.volWedge),
+                    clipPath: `inset(0 ${Math.max(0, ((wx1 - volX) / (wx1 - wx0)) * 100)}% 0 0)`,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/intro/vol-wedge.webp" alt="" draggable={false} />
+                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className="mp-sprite mp-vol-thumb"
+                  src="/intro/vol-thumb.webp"
+                  alt=""
+                  draggable={false}
+                  style={{
+                    ...box([vx0, vy0, vx1, vy1]),
+                    left: pctX(volX - (vx1 - vx0) / 2 + 3),
+                  }}
+                />
+                <div
+                  className="mp-hit mp-vol"
+                  style={box(G.volTrack)}
+                  onPointerDown={onVolDown}
+                  role="slider"
+                  aria-label="Volume"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={Math.round(level * 100)}
+                  tabIndex={-1}
+                />
+
+                {/* Buttons. */}
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-round"
+                  style={box(G.play)}
+                  onClick={toggle}
+                  aria-label={playing ? "Pause" : "Play"}
+                >
+                  {playing && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src="/intro/pause.webp" alt="" draggable={false} />
+                  )}
+                </button>
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-round"
+                  style={box(G.stop)}
+                  onClick={stop}
+                  aria-label="Stop"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-pill"
+                  style={box(G.prev)}
+                  onClick={() => seekTo(0)}
+                  aria-label="Back to the start"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-pill"
+                  style={box(G.next)}
+                  onClick={() => seekTo(dur - 0.05)}
+                  aria-label="Skip to the end"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-pill"
+                  style={box(G.mute)}
+                  onClick={toggleMute}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                  aria-pressed={muted}
+                  data-on={muted}
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-arrow"
+                  style={box(G.rewind)}
+                  onClick={() => nudge(-5)}
+                  aria-label="Rewind 5 seconds"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-arrow"
+                  style={box(G.ffwd)}
+                  onClick={() => nudge(5)}
+                  aria-label="Forward 5 seconds"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-tab"
+                  style={box(G.tabs[0])}
+                  onClick={toggle}
+                  aria-label="Now Playing"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-tab"
+                  style={box(G.tabs[1])}
+                  onClick={minimize}
+                  aria-label="Mini player"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-tab"
+                  style={box(G.tabs[2])}
+                  onClick={fullscreen}
+                  aria-label="Full screen"
+                />
+
+                {/* Title bar. */}
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-cap"
+                  style={box(G.min)}
+                  onClick={minimize}
+                  aria-label="Minimise"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-cap"
+                  style={box(G.max)}
+                  onClick={fullscreen}
+                  aria-label="Maximise (full screen)"
+                />
+                <button
+                  type="button"
+                  className="mp-hit mp-btn mp-cap mp-close"
+                  style={box(G.close)}
+                  onClick={close}
+                  aria-label="Close"
+                />
+
+                {/* Menu bar. */}
+                {G.menus.map(([name, b]) => (
+                  <div key={name} className="mp-menuwrap" style={box(b)}>
+                    <button
+                      type="button"
+                      className="mp-hit mp-menubtn"
+                      aria-haspopup="menu"
+                      aria-expanded={menu === name}
+                      data-open={menu === name}
+                      onClick={() => setMenu((m) => (m === name ? null : name))}
+                      onMouseEnter={() => menu && setMenu(name)}
+                    >
+                      <span className="sr-only">{name}</span>
+                    </button>
+                    {menu === name && (
+                      <ul className="mp-menu" role="menu">
+                        {MENUS[name].map((it, i) =>
+                          it.sep ? (
+                            <li key={i} className="mp-sep" role="separator" />
+                          ) : (
+                            <li key={i} role="none">
+                              <button
+                                type="button"
+                                role="menuitem"
+                                autoFocus={i === 0}
+                                onClick={() => {
+                                  setMenu(null);
+                                  it.act();
+                                }}
+                              >
+                                <span className="mp-check">
+                                  {it.checked ? "✓" : ""}
+                                </span>
+                                <span className="mp-mlabel">{it.label}</span>
+                                {it.keys && (
+                                  <span className="mp-keys">{it.keys}</span>
+                                )}
+                              </button>
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
 
-          {/* Minimised: down on the taskbar. */}
-          {win === "minimized" && (
-            <button
-              type="button"
-              className="mp-task"
-              onClick={restore}
-              aria-label="Restore 1Goutham Media Player"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/intro/icon.webp" alt="" />
-              <span>1Goutham Media Player</span>
-            </button>
-          )}
-
-          {/* Closed: a shortcut on the desktop. Double-click (or tap, or Enter) to open. */}
-          {win === "closed" && (
-            <button
-              type="button"
-              className="mp-desk"
-              data-selected={iconSelected}
-              onClick={(e) =>
-                e.detail === 0 ||
-                e.pointerType === "touch" ||
-                matchMedia("(pointer: coarse)").matches
-                  ? reopen()
-                  : setIconSelected(true)
-              }
-              onDoubleClick={reopen}
-              onBlur={() => setIconSelected(false)}
-              aria-label="Open 1Goutham Media Player"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/intro/icon.webp" alt="" />
-              <span>1Goutham Media Player</span>
-            </button>
-          )}
-        </div>
-      </div>
+            {/* Minimised: down on the taskbar. */}
+            {win === "minimized" && (
+              <button
+                type="button"
+                className="mp-task"
+                onClick={restore}
+                aria-label="Restore 1Goutham Media Player"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/intro/icon.webp" alt="" />
+                <span>1Goutham Media Player</span>
+              </button>
+            )}
+          </>,
+          document.body,
+        )}
     </section>
   );
 }

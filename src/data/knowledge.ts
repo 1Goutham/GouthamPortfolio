@@ -189,7 +189,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'site-map',
     title: 'Around the site',
-    text: `The site's pages: the homepage (intro, About, Skills, "Got 20 seconds?" (a 20-second intro film in a retro Windows XP style media player that really works: play, seek, volume, menus, minimise and close), Projects, the 1G-works strip, "A Bit More About Me", the Margin teaser, the G-Talk chat and Contact); /projects with every project in detail; /beyond, his personal story; /arcade, five retro games; /margin, a drawing playground; and /works, the 1G-works studio. The hero also has a small dock in its corner linking to Beyond, Projects and the arcade.`,
+    text: `The site's pages: the homepage (intro, About, Skills, "Got 20 seconds?" (a band whose button opens a 20-second intro film in a retro Windows XP style media player that floats over the page and really works: drag it by its title bar, play, seek, volume, menus, minimise, maximise and close), Projects, the 1G-works strip, "A Bit More About Me", the Margin teaser, the G-Talk chat and Contact); /projects with every project in detail; /beyond, his personal story; /arcade, five retro games; /margin, a drawing playground; and /works, the 1G-works studio. The hero also has a small dock in its corner linking to Beyond, Projects and the arcade.`,
   },
   {
     id: 'site-beyond',
