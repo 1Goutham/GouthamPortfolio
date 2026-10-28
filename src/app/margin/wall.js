@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
-import TransitionLink from "../components/layout/transition-link";
 
 /**
- * The Margin wall: what visitors drew and pinned up, newest first. One fetch
- * per page (shared by everything that shows the wall); a sketch you pin
- * yourself goes straight to the front without waiting for the list.
+ * The Margin wall: what visitors drew and pinned up, newest first, on
+ * /margin. One fetch per page; a sketch you pin yourself goes straight to
+ * the front without waiting for the list.
  */
 let loaded = null;
 const listeners = new Set();
@@ -178,62 +177,6 @@ export function WallSheet({ open, onClose }) {
             <X className="h-4 w-4" strokeWidth={2} />
           </button>
         </div>
-      )}
-    </div>
-  );
-}
-
-/**
- * On the homepage teaser: the latest sketches drift past under the stickers.
- * Only there once something has been pinned, so the band is exactly the
- * design until then. Loads when the teaser comes near.
- */
-export function WallStrip() {
-  const ref = useRef(null);
-  const [near, setNear] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setNear(true), io.disconnect()), { rootMargin: "600px 0px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  const { sketches } = useWall(near);
-  const list = sketches.slice(0, 16);
-
-  // Drift speed: the same pace however many there are.
-  const track = useCallback((node) => {
-    if (node) node.style.setProperty("--dur", `${Math.max(24, list.length * 5)}s`);
-  }, [list.length]);
-
-  return (
-    <div ref={ref} className="mw-strip" data-on={list.length > 0 || undefined} aria-hidden={list.length ? undefined : true}>
-      {list.length > 0 && (
-        <>
-          <TransitionLink href="/margin?wall=1" className="mw-strip-label font-outfit">
-            <span>FROM THE WALL</span>
-            <span className="mw-strip-count">
-              {sketches.length}
-              {sketches.length >= 40 ? "+" : ""} {sketches.length === 1 ? "sketch" : "sketches"} by visitors
-            </span>
-            <span className="mw-strip-go" aria-hidden="true">↗</span>
-          </TransitionLink>
-          <div className="mw-strip-window">
-            <ul ref={track} className="mw-strip-track" data-few={list.length < 6 || undefined}>
-              {/* Twice over, so the loop has no seam. */}
-              {[0, 1].map((copy) =>
-                list.map((s, i) => (
-                  <li key={`${copy}-${s.url}`} style={{ "--tilt": `${tilt(i)}deg` }} aria-hidden={copy ? true : undefined}>
-                    <TransitionLink href="/margin?wall=1" tabIndex={copy ? -1 : undefined} className="mw-strip-print" aria-label="See the wall">
-                      <span className="mg-tape" aria-hidden="true" />
-                      <Image src={s.url} alt="" width={200} height={200} sizes="(max-width: 767px) 96px, 140px" loading="lazy" />
-                    </TransitionLink>
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </>
       )}
     </div>
   );

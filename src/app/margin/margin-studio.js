@@ -209,7 +209,7 @@ export default function MarginStudio() {
   const [, setVersion] = useState(0);
   const [art, setArt] = useState(null);
   const [wallOpen, setWallOpen] = useState(false);
-  // /margin?wall=1 (from the homepage strip) opens straight onto the wall.
+  // /margin?wall=1 opens straight onto the wall (a link to share).
   useEffect(() => {
     if (new URLSearchParams(location.search).has("wall")) {
       setWallOpen(true);
@@ -217,6 +217,8 @@ export default function MarginStudio() {
     }
   }, []);
   const closeWall = useCallback(() => setWallOpen(false), []);
+  // The wall's button only once there is a wall (a Blob store) behind it.
+  const { configured: hasWall } = useWall();
   const bump = () => setVersion((v) => v + 1);
 
   const toolRef = useRef(tool);
@@ -572,9 +574,11 @@ export default function MarginStudio() {
             <button type="button" className="mg-hit mg-camera" onClick={snapshot} aria-label="Save your art as an image">
               <CameraIcon />
             </button>
-            <button type="button" className="mg-hit mg-camera mg-wall" onClick={() => setWallOpen(true)} aria-label="See the wall: what other people drew">
-              <WallIcon />
-            </button>
+            {hasWall && (
+              <button type="button" className="mg-hit mg-camera mg-wall" onClick={() => setWallOpen(true)} aria-label="See the wall: what other people drew">
+                <WallIcon />
+              </button>
+            )}
             <button type="button" className="mg-hit bracket-link bracket-link-dark" onClick={openShare}>
               <Brackets>Share your art</Brackets>
             </button>

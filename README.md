@@ -40,7 +40,7 @@ Append an entry to `KNOWLEDGE` in `src/data/knowledge.ts`. Keep each entry to on
 
 ## The Margin wall
 
-Visitors can pin what they draw on /margin to a public wall. The latest sketches show in the wall (the gallery icon by the camera on /margin) and drift past under the Margin teaser on the homepage. Pinned sketches appear straight away; remove any from **/margin/wall**.
+Visitors can pin what they draw on /margin to a public wall. The wall opens from the gallery icon by the camera on /margin (or /margin?wall=1). Pinned sketches appear straight away; remove any from **/margin/wall**.
 
 Sketches are stored in Vercel Blob. To switch it on:
 
@@ -48,7 +48,7 @@ Sketches are stored in Vercel Blob. To switch it on:
 2. In **Settings → Environment Variables**, add `MARGIN_ADMIN_KEY` set to a long random string. It is the password for /margin/wall.
 3. Redeploy.
 
-Until the store exists the wall stays out of sight: the button is hidden and the homepage strip is not shown. Locally, `vercel env pull .env.local` brings the token down. Each visitor can pin 3 sketches per 10 minutes; images are cropped to the drawing, at most 900px, as WebP (PNG as a fallback).
+Until the store exists the wall stays out of sight: the pin button and the gallery icon are hidden. Locally, `vercel env pull .env.local` brings the token down. Each visitor can pin 3 sketches per 10 minutes; images are cropped to the drawing, at most 900px, as WebP (PNG as a fallback).
 
 ## Link previews
 
