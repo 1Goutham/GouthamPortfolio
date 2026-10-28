@@ -673,7 +673,7 @@ export default function Contact() {
 
         <footer className="cx-foot">
           <p>© {new Date().getFullYear()} Goutham Gopinath</p>
-          <p className="cx-foot-mid">AI Full Stack Developer &amp; Product Designer</p>
+          <p className="cx-foot-mid">AI Product Engineer &amp; Designer</p>
           <a href="#" className="cx-top">
             Back to top
             <ArrowUpRight className="cx-top-arrow" strokeWidth={1.75} aria-hidden="true" />
