@@ -367,6 +367,21 @@ export default function IntroPlayer() {
   useEffect(() => {
     if (win === "open") windowRef.current?.focus({ preventScroll: true });
   }, [win]);
+  // The site agent's "Play the 20-second intro" (inside its click, so the
+  // film may play with sound).
+  const openRef = useRef(open);
+  openRef.current =
+    win === "minimized"
+      ? () => {
+          restore();
+          play();
+        }
+      : open;
+  useEffect(() => {
+    const on = () => openRef.current();
+    window.addEventListener("intro:open", on);
+    return () => window.removeEventListener("intro:open", on);
+  }, []);
   // Keep it on screen when the window resizes.
   useEffect(() => {
     const fit = () => setPos((p) => (p ? place(p) : p));
