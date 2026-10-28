@@ -199,7 +199,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'site-margin',
     title: 'Around the site',
-    text: `Margin (/margin) is an experimental drawing playground by 1Gartlab, Goutham's creative label ("'til death, we do art."). The whole page is paper: visitors pick a fountain pen, pencil, marker, fineliner, watercolour brush or eraser and a colour, draw anything, then save the drawing or send it to Goutham by email or Instagram. On the homepage it is teased by a band of stickers you can drag and throw.`,
+    text: `Margin (/margin) is an experimental drawing playground by 1Gartlab, Goutham's creative label ("'til death, we do art."). The whole page is paper: visitors pick a fountain pen, pencil, marker, fineliner, watercolour brush or eraser and a colour, draw anything, then save the drawing, send it to Goutham by email or Instagram, or pin it to the wall: a public gallery of what visitors have drawn (the gallery icon by the camera on /margin opens it). On the homepage it is teased by a band of stickers you can drag and throw.`,
   },
   {
     id: 'site-arcade',

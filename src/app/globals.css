@@ -4317,3 +4317,146 @@ a:focus-visible .mt-pill-fill {
     animation: none;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/*  Margin wall                                                        */
+/* ------------------------------------------------------------------ */
+
+/* The gallery button sits by the camera: the front print lifts off the
+   back one on hover. */
+.mg-wall .mg-wall-front {
+  transition: transform 0.5s var(--ease-spring);
+}
+.mg-wall:hover .mg-wall-front,
+.mg-wall:focus-visible .mg-wall-front {
+  transform: translate(-1px, 1.5px) rotate(-4deg);
+}
+
+.mg-action-pin {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+.mg-action-pin:hover,
+.mg-action-pin:focus-visible {
+  background: #222;
+}
+.mg-action-pin[data-state="done"] {
+  background: #fff;
+  color: #000;
+  border-color: rgba(0, 0, 0, 0.14);
+}
+.mg-action-pin[data-state="done"]:hover {
+  background: #000;
+  color: #fff;
+}
+.mg-action-pin[data-state="pinning"] svg {
+  animation: mw-pin 0.7s var(--ease-spring) infinite alternate;
+}
+@keyframes mw-pin {
+  to { transform: translateY(-3px) rotate(-14deg); }
+}
+
+/* The wall: prints pinned up in loose columns, each a touch crooked. */
+.mw-sheet {
+  width: min(760px, 100%);
+  max-height: min(86vh, 900px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.mw-grid {
+  margin: 22px 0 0;
+  padding: 10px 4px 6px;
+  list-style: none;
+  columns: 3 170px;
+  column-gap: 18px;
+}
+.mw-grid li {
+  break-inside: avoid;
+  margin-bottom: 22px;
+  animation: mw-drop 0.7s var(--ease-spring) backwards;
+  animation-delay: calc(var(--i) * 45ms);
+}
+@keyframes mw-drop {
+  from { opacity: 0; transform: translateY(-14px) rotate(calc(var(--tilt) * 3)); }
+}
+.mw-print {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 7px 7px 24px;
+  background: #fff;
+  box-shadow: 0 12px 26px -14px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: rotate(var(--tilt));
+  transition: transform 0.5s var(--ease-spring), box-shadow 0.4s ease;
+  cursor: zoom-in;
+}
+.mw-print:hover,
+.mw-print:focus-visible {
+  transform: rotate(0deg) translateY(-4px) scale(1.03);
+  box-shadow: 0 20px 34px -16px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  outline: none;
+}
+.mw-print img {
+  display: block;
+  width: 100%;
+  height: auto;
+  outline: 1px solid rgba(0, 0, 0, 0.05);
+}
+.mw-print .mg-tape {
+  top: -9px;
+  width: 52px;
+  height: 17px;
+  margin-left: -26px;
+}
+.mw-when {
+  position: absolute;
+  left: 9px;
+  bottom: 6px;
+  font-size: 11px;
+  color: rgba(0, 0, 0, 0.45);
+}
+.mw-grid li[data-mine] .mw-when {
+  color: #000;
+  font-weight: 600;
+}
+
+/* One sketch, large, on its own. */
+.mw-big {
+  position: fixed;
+  inset: 0;
+  z-index: 61;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.86);
+  animation: fade-in 0.25s ease backwards;
+}
+.mw-big-print {
+  position: relative;
+  margin: 0;
+  padding: 12px 12px 34px;
+  background: #fff;
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  animation: mg-sheet-in 0.55s var(--ease-out-expo) backwards;
+}
+.mw-big-print img {
+  display: block;
+  max-width: min(84vw, 900px);
+  max-height: 74vh;
+}
+.mw-big-print figcaption {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.5);
+}
+.mw-big-close {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  background: #fff;
+  box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.3);
+}

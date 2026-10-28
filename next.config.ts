@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
     // Cache optimized images for a long time (they are content-addressed).
     minimumCacheTTL: 60 * 60 * 24 * 30,
     deviceSizes: [360, 640, 768, 1024, 1280, 1536, 1920],
+    // Margin wall sketches live in Vercel Blob.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/margin/**" }],
   },
   async redirects() {
     return [{ source: "/fun", destination: "/arcade", permanent: true }];

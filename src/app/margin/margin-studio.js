@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowUpRight, Copy, Download, Instagram, Mail, Share2, X } from "lucide-react";
+import { ArrowUpRight, Check, Copy, Download, Instagram, Mail, Pin, Share2, X } from "lucide-react";
 import toast from "react-hot-toast";
 import TransitionLink from "../components/layout/transition-link";
 import Toolbar from "./toolbar";
 import { TOOLS, TOOL_ORDER, compositeLayer, pointWidth, renderStroke } from "./brushes";
+import { WallSheet, pinSketch, useWall, wallBlob } from "./wall";
 
 const EMAIL = "gouthamgopinath.tsi@gmail.com";
 const INSTAGRAM = "https://www.instagram.com/tanger.ineee/";
@@ -40,6 +41,18 @@ function CameraIcon(props) {
   );
 }
 
+/* Two prints, one pinned over the other: the wall. */
+function WallIcon(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path className="mg-wall-back" d="M7.2 5.6 16.9 4a1.2 1.2 0 0 1 1.38 1l1.32 8.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <rect className="mg-wall-front" x="3.6" y="8" width="12.8" height="11.4" rx="1.2" stroke="currentColor" strokeWidth="1.5" />
+      <path className="mg-wall-front" d="m5.6 17.2 3.3-3.6 2.4 2.4 1.6-1.5 2 2.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle className="mg-wall-front" cx="12.6" cy="11.4" r="1.05" fill="currentColor" />
+    </svg>
+  );
+}
+
 function download(blob) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -55,9 +68,12 @@ function download(blob) {
  * Where a finished drawing goes. The print drops in on a slight tilt; the
  * options are whichever this browser can actually do.
  */
-function ShareSheet({ art, onClose }) {
+function ShareSheet({ art, onClose, onPin, onSeeWall }) {
   const [canShare, setCanShare] = useState(false);
   const [canCopy, setCanCopy] = useState(false);
+  const { configured } = useWall(!!art);
+  const [pinned, setPinned] = useState("idle"); // idle | pinning | done
+  useEffect(() => setPinned("idle"), [art]);
 
   useEffect(() => {
     if (!art) return;
@@ -91,6 +107,18 @@ function ShareSheet({ art, onClose }) {
       /* dismissed */
     }
   };
+  const pin = async () => {
+    if (pinned !== "idle") return;
+    setPinned("pinning");
+    try {
+      await onPin();
+      setPinned("done");
+      toast.success("It's on the wall!");
+    } catch (err) {
+      setPinned("idle");
+      toast.error(err.message || "Couldn't pin it right now.");
+    }
+  };
   const copy = async () => {
     try {
       await navigator.clipboard.write([new window.ClipboardItem({ "image/png": art.blob })]);
@@ -113,9 +141,23 @@ function ShareSheet({ art, onClose }) {
         </div>
         <h2 id="mg-sheet-title" className="mt-6 text-lg font-bold text-black">Send it my way</h2>
         <p className="mt-1 text-sm leading-relaxed text-black/65">
-          Your art is saved as a PNG. Pick how it reaches me.
+          {configured
+            ? "Put it up on the wall for everyone to see, or send it my way."
+            : "Your art is saved as a PNG. Pick how it reaches me."}
         </p>
         <div className="mt-5 grid grid-cols-2 gap-2">
+          {configured && (
+            <button
+              type="button"
+              className="mg-action mg-action-pin col-span-2"
+              data-state={pinned}
+              onClick={pinned === "done" ? onSeeWall : pin}
+              aria-busy={pinned === "pinning"}
+            >
+              {pinned === "done" ? <Check aria-hidden="true" /> : <Pin aria-hidden="true" />}
+              {pinned === "done" ? "On the wall. See it" : pinned === "pinning" ? "Pinning…" : "Pin it to the wall"}
+            </button>
+          )}
           <button type="button" className="mg-action" onClick={email}>
             <Mail aria-hidden="true" /> Email
           </button>
@@ -166,6 +208,17 @@ export default function MarginStudio() {
   const [custom, setCustom] = useState(null);
   const [, setVersion] = useState(0);
   const [art, setArt] = useState(null);
+  const [wallOpen, setWallOpen] = useState(false);
+  // /margin?wall=1 opens straight onto the wall (a link to share).
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has("wall")) {
+      setWallOpen(true);
+      history.replaceState(history.state, "", location.pathname);
+    }
+  }, []);
+  const closeWall = useCallback(() => setWallOpen(false), []);
+  // The wall's button only once there is a wall (a Blob store) behind it.
+  const { configured: hasWall } = useWall();
   const bump = () => setVersion((v) => v + 1);
 
   const toolRef = useRef(tool);
@@ -416,6 +469,16 @@ export default function MarginStudio() {
     });
   }, []);
 
+  const pinArt = async () => {
+    const blob = await wallBlob(mainRef.current);
+    if (!blob) throw new Error("Draw something first :)");
+    return pinSketch(blob);
+  };
+  const seeWall = () => {
+    closeShare();
+    setWallOpen(true);
+  };
+
   const pickColor = (c, isCustom) => {
     setColor(c);
     setCustom(isCustom ? c : null);
@@ -511,6 +574,11 @@ export default function MarginStudio() {
             <button type="button" className="mg-hit mg-camera" onClick={snapshot} aria-label="Save your art as an image">
               <CameraIcon />
             </button>
+            {hasWall && (
+              <button type="button" className="mg-hit mg-camera mg-wall" onClick={() => setWallOpen(true)} aria-label="See the wall: what other people drew">
+                <WallIcon />
+              </button>
+            )}
             <button type="button" className="mg-hit bracket-link bracket-link-dark" onClick={openShare}>
               <Brackets>Share your art</Brackets>
             </button>
@@ -546,7 +614,8 @@ export default function MarginStudio() {
       </span>
       <span ref={flashRef} className="mg-flash" aria-hidden="true" />
 
-      <ShareSheet art={art} onClose={closeShare} />
+      <ShareSheet art={art} onClose={closeShare} onPin={pinArt} onSeeWall={seeWall} />
+      <WallSheet open={wallOpen} onClose={closeWall} />
     </main>
   );
 }
