@@ -12,7 +12,7 @@ const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
 
 // Homepage sections the scroll can settle on. Thin strips (the marquee, the
 // 1G-works label) are left out: settling on them would feel like a snag.
-const SECTIONS = "header.hero, #about, #skills, #projects, #beyond, #margin, #Gtalk, #contact";
+const SECTIONS = "header.hero, #about, #skills, #intro, #projects, #beyond, #margin, #Gtalk, #contact";
 const SETTLE_RANGE = 0.12; // of the viewport height
 const SETTLE_IDLE_MS = 160;
 
