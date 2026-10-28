@@ -27,7 +27,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'positioning',
     title: 'About',
-    text: `One line: "Full Stack Developer & UI/UX Designer building thoughtful digital experiences and exploring the next generation of AI-powered products." His strength is connecting interface quality with technical implementation and product thinking: he designs the experience, builds it, connects it to services and makes it useful. He is interested in the space where software engineering, design and AI product development meet.`,
+    text: `His title is "AI Product Engineer & Designer". One line: "building thoughtful digital products with AI, code and design, and exploring the next generation of AI-powered products." His strength is connecting interface quality with technical implementation and product thinking: he designs the experience, builds it, connects it to services and makes it useful. He is interested in the space where software engineering, design and AI product development meet.`,
   },
 
   /* ---------------------------------------------------------------- */
