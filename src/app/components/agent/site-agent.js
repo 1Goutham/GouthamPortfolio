@@ -4,9 +4,64 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { TARGETS_BY_ID } from "@/data/site-map";
+import { useWall } from "@/app/margin/wall";
 import "./site-agent.css";
 
-const CHIPS = ["Take me to his project page", "What’s in your kit?", "How can I reach you?"];
+/*
+ * Opening suggestions, for the page you're on, that show what the agent can
+ * do. A chip with `actions` or `event` acts at once, with its own reply (no
+ * round trip, so it works with no model at all, and a new tab or the
+ * film's sound is still allowed: it is the click itself). A chip with `ask`
+ * is a question for the model.
+ *   event   a window event a page listens for (the intro player, the wall)
+ *   needs   only shown when the page has it ("wall": a Margin wall is set up)
+ */
+const HIRE = { label: "Can I hire him?", ask: true };
+const REACH = { label: "How do I reach him?", reply: "Here's how to reach him.", actions: [{ type: "point", target: "contact", note: "Throw a plane into the window" }] };
+const CHIPS = {
+  home: [
+    { label: "▶ Play the 20-second intro", reply: "Rolling the 20-second intro. Drag the window anywhere.", event: "intro:open" },
+    { label: "Show me what he’s built", reply: "Four products, designed and built end to end.", actions: [{ type: "point", target: "projects", note: "Four products, built end to end" }] },
+    HIRE,
+    { label: "Let me draw something", reply: "Margin is all yours. Grab a pen!", actions: [{ type: "go", target: "margin-page" }] },
+  ],
+  projects: [
+    { label: "Try Ideako live", reply: "Opening Ideako in a new tab.", actions: [{ type: "open", target: "ideako-live" }] },
+    { label: "What’s the tech behind these?", ask: true },
+    { label: "Show me his code", reply: "Opening his GitHub in a new tab.", actions: [{ type: "open", target: "github" }] },
+    HIRE,
+  ],
+  beyond: [
+    { label: "What got him into design?", ask: true },
+    { label: "Play his arcade", reply: "Five retro games, starring Goutham.", actions: [{ type: "go", target: "arcade" }] },
+    REACH,
+  ],
+  works: [
+    { label: "Show me the services", reply: "These are the four 1G-works services.", actions: [{ type: "go", target: "works-services" }] },
+    { label: "Who’s behind 1G-works?", ask: true },
+    { label: "Start a project", reply: "Here's the enquiry form.", actions: [{ type: "go", target: "works-contact" }] },
+  ],
+  margin: [
+    { label: "Show me the wall", reply: "Here's what other people drew.", event: "margin:wall", needs: "wall" },
+    { label: "How do I share my drawing?", ask: true },
+    { label: "Back to his work", reply: "Here are his projects.", actions: [{ type: "go", target: "projects-page" }] },
+  ],
+  arcade: [
+    { label: "Who’s the guy in the games?", ask: true },
+    { label: "Back to his work", reply: "Here are his projects.", actions: [{ type: "go", target: "projects-page" }] },
+    REACH,
+  ],
+  other: [
+    { label: "Show me what he’s built", reply: "Here are his projects.", actions: [{ type: "go", target: "projects-page" }] },
+    { label: "Take me home", reply: "Back to the start.", actions: [{ type: "go", target: "home" }] },
+    REACH,
+  ],
+};
+const pageOf = (path) => {
+  if (path === "/") return "home";
+  const seg = path.split("/")[1];
+  return CHIPS[seg] ? seg : "other";
+};
 const STORE_KEY = "g-agent-chat";
 const VEIL_MS = 420;
 
@@ -244,6 +299,44 @@ export default function SiteAgent() {
     [navigate]
   );
 
+  /** Move the visitor: let the reply land first, then go. */
+  const perform = async (onSite) => {
+    if (!onSite.length) return;
+    // On a phone the open card would cover what it is about to show.
+    if (window.innerWidth < 768) setOpen(false);
+    setActing(true);
+    setTimeout(() => setActing(false), 900);
+    await new Promise((r) => setTimeout(r, 450));
+    for (const a of onSite) await run(a);
+  };
+
+  const { configured: hasWall } = useWall(pathname.startsWith("/margin"));
+  const page = pageOf(pathname);
+  const asked = new Set(msgs.filter((m) => m.role === "user").map((m) => m.text));
+  const chips = CHIPS[page].filter((c) => (c.needs !== "wall" || hasWall) && !asked.has(c.label));
+
+  const runChip = (c) => {
+    if (c.ask) return send(c.label);
+    if (busy) return;
+    const actions = c.actions || [];
+    // Things the browser only allows inside the click: a new tab, and
+    // sound (the intro player starts from its event).
+    for (const a of actions) {
+      const url = TARGETS_BY_ID.get(a.target)?.url;
+      if (url) window.open(url, url.startsWith("mailto:") ? "_self" : "_blank", "noopener,noreferrer");
+    }
+    if (c.event) {
+      window.dispatchEvent(new CustomEvent(c.event));
+      if (window.innerWidth < 768) setOpen(false);
+    }
+    setMsgs((m) => [
+      ...m,
+      { role: "user", text: c.label },
+      { role: "agent", text: c.reply, actions: actions.filter((a) => a.type === "open") },
+    ]);
+    perform(actions.filter((a) => a.type !== "open"));
+  };
+
   const send = async (text) => {
     const question = (text ?? input).trim();
     if (!question || busy) return;
@@ -265,16 +358,7 @@ export default function SiteAgent() {
       }
       const actions = Array.isArray(data.actions) ? data.actions : [];
       setMsgs((m) => [...m, { role: "agent", text: data.reply, actions }]);
-      const onSite = actions.filter((a) => a.type !== "open");
-      if (onSite.length) {
-        // On a phone the open card would cover what it is about to show.
-        if (window.innerWidth < 768) setOpen(false);
-        setActing(true);
-        setTimeout(() => setActing(false), 900);
-        // Let the reply land first, then move.
-        await new Promise((r) => setTimeout(r, 450));
-        for (const a of onSite) await run(a);
-      }
+      await perform(actions.filter((a) => a.type !== "open"));
     } catch {
       setMsgs((m) => [...m, { role: "agent", text: "Network hiccup. Try that again?", actions: [] }]);
     } finally {
@@ -326,9 +410,9 @@ export default function SiteAgent() {
                 <Image src="/G-talk-logo.png" width={880} height={620} alt="G-Talk" sizes="160px" draggable={false} />
               </div>
               <div className="ag-chips">
-                {CHIPS.map((c, i) => (
-                  <button key={c} type="button" className="ag-chip" style={{ "--i": i }} onClick={() => send(c)} tabIndex={open ? 0 : -1}>
-                    {c}
+                {chips.map((c, i) => (
+                  <button key={c.label} type="button" className="ag-chip" data-acts={!c.ask || undefined} style={{ "--i": i }} onClick={() => runChip(c)} tabIndex={open ? 0 : -1}>
+                    {c.label}
                   </button>
                 ))}
               </div>
@@ -372,6 +456,17 @@ export default function SiteAgent() {
                   <span />
                 </p>
               )}
+            </div>
+          )}
+
+          {/* Mid-conversation, the page's suggestions stay to hand, in a row. */}
+          {!empty && chips.length > 0 && (
+            <div className="ag-chips ag-chips-row" data-lenis-prevent>
+              {chips.map((c) => (
+                <button key={c.label} type="button" className="ag-chip" data-acts={!c.ask || undefined} onClick={() => runChip(c)} disabled={busy} tabIndex={open ? 0 : -1}>
+                  {c.label}
+                </button>
+              ))}
             </div>
           )}
 

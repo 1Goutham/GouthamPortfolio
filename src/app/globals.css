@@ -4827,22 +4827,90 @@ a:focus-visible .mt-pill-fill {
   animation-delay: calc(var(--d) * 80ms);
 }
 
+/* Phones: one line, gliding past like the 1G-works strip. */
+.mp-strip {
+  display: none;
+}
 @media (max-width: 767px) {
   .mp-band {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 40px 20px;
+    display: none;
   }
-  .mp-title {
-    font-size: 26px;
+  .mp-strip {
+    display: flex;
+    width: 100%;
+    padding: 18px 0;
+    overflow: hidden;
+    border: 0;
+    background: none;
+    color: #fff;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
-  .mp-lede {
-    font-size: 13px;
+  .mp-strip-row {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 18px;
+    padding-right: 18px;
+    animation: ws-marquee 30s linear infinite;
   }
-  .mp-open {
-    height: 42px;
-    padding: 0 20px;
-    font-size: 15px;
+  .mp-strip:active .mp-strip-row {
+    animation-play-state: paused;
+  }
+  .mp-strip-title {
+    font-family: var(--font-anonymous-pro), monospace;
+    font-size: 21px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .mp-strip-lede {
+    font-family: var(--font-montserrat), sans-serif;
+    font-weight: 500;
+    font-size: 12.5px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.9);
+  }
+  .mp-strip-star {
+    flex: none;
+    width: 14px;
+    height: 14px;
+  }
+  .mp-strip-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    border-radius: 999px;
+    font-family: var(--font-poppins), sans-serif;
+    font-size: 12.5px;
+    white-space: nowrap;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  .mp-strip:active .mp-strip-pill {
+    background: #fff;
+    color: #000;
+  }
+  .mp-strip[data-playing="true"] .mp-open-eq {
+    width: 14px;
+  }
+  .mp-strip[data-playing="false"] .mp-open-eq i {
+    animation-play-state: paused;
+  }
+  .mp-strip-arrow {
+    width: 14px;
+    height: 14px;
+  }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .mp-strip-row {
+    animation: none;
+  }
+  .mp-strip {
+    overflow-x: auto;
   }
 }
 @media (prefers-reduced-motion: reduce) {

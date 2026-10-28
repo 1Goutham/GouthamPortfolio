@@ -9,6 +9,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { ArrowUpRight } from "lucide-react";
+import Asterisk from "./layout/asterisk";
 
 /**
  * "[Got 20 seconds?]": a slim band on the homepage whose button opens the
@@ -367,6 +368,21 @@ export default function IntroPlayer() {
   useEffect(() => {
     if (win === "open") windowRef.current?.focus({ preventScroll: true });
   }, [win]);
+  // The site agent's "Play the 20-second intro" (inside its click, so the
+  // film may play with sound).
+  const openRef = useRef(open);
+  openRef.current =
+    win === "minimized"
+      ? () => {
+          restore();
+          play();
+        }
+      : open;
+  useEffect(() => {
+    const on = () => openRef.current();
+    window.addEventListener("intro:open", on);
+    return () => window.removeEventListener("intro:open", on);
+  }, []);
   // Keep it on screen when the window resizes.
   useEffect(() => {
     const fit = () => setPos((p) => (p ? place(p) : p));
@@ -527,6 +543,36 @@ export default function IntroPlayer() {
           />
         </button>
       </div>
+
+      {/* Phones: the band as one line, gliding past like the 1G-works
+          strip (two copies, each sliding one copy-width). Touch holds it;
+          a tap anywhere opens the player. */}
+      <button
+        type="button"
+        className="mp-strip"
+        onClick={win === "minimized" ? restore : open}
+        data-playing={playing && win !== "closed"}
+        aria-label="Got 20 seconds? Open 1Goutham Media Player"
+      >
+        {[0, 1].map((copy) => (
+          <span key={copy} className="mp-strip-row" aria-hidden="true">
+            <span className="mp-strip-title">[Got 20 seconds?]</span>
+            <Asterisk className="mp-strip-star" />
+            <span className="mp-strip-lede">AI, code, design, and a little bit of everything that makes me, me.</span>
+            <Asterisk className="mp-strip-star" />
+            <span className="mp-strip-pill">
+              <span className="mp-open-eq">
+                <i />
+                <i />
+                <i />
+              </span>
+              {win === "closed" || win === "closing" ? "Open 1Goutham Media Player" : playing ? "Now playing" : "Back to the player"}
+              <ArrowUpRight className="mp-strip-arrow" strokeWidth={2} />
+            </span>
+            <Asterisk className="mp-strip-star" />
+          </span>
+        ))}
+      </button>
 
       {mounted &&
         createPortal(

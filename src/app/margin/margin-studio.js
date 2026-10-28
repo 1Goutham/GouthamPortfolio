@@ -217,6 +217,12 @@ export default function MarginStudio() {
     }
   }, []);
   const closeWall = useCallback(() => setWallOpen(false), []);
+  // The site agent's "Show me the wall".
+  useEffect(() => {
+    const on = () => setWallOpen(true);
+    window.addEventListener("margin:wall", on);
+    return () => window.removeEventListener("margin:wall", on);
+  }, []);
   // The wall's button only once there is a wall (a Blob store) behind it.
   const { configured: hasWall } = useWall();
   const bump = () => setVersion((v) => v + 1);
