@@ -4,6 +4,7 @@ import Hero from "./components/Hero";
 import Scrolltext from "./components/scroll";
 import About from "./components/about";
 import Skills from "./components/skills";
+import IntroPlayer from "./components/intro-player";
 import Projects from "./components/projects";
 import BeyondTeaser from "./components/beyond-teaser";
 import MarginTeaser from "./components/margin-teaser";
@@ -23,6 +24,7 @@ export default function Home() {
       <Scrolltext />
       <About />
       <Skills />
+      <IntroPlayer />
       <Projects />
       <WorksStrip />
       <BeyondTeaser />

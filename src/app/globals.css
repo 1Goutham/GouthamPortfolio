@@ -4225,3 +4225,597 @@ a:focus-visible .mt-pill-fill {
   background: #fff;
   box-shadow: 0 4px 14px -6px rgba(0, 0, 0, 0.3);
 }
+
+/* ------------------------------------------------------------------ */
+/*  Got 20 seconds? (the intro film, in a media player)                */
+/* ------------------------------------------------------------------ */
+
+/* Desktop is the 1440 design frame, as in the contact section; --u is one
+   design pixel. Below 1024px it flows. */
+.mp-section {
+  position: relative;
+  background: #222;
+  color: #fff;
+  overflow: hidden;
+}
+.mp-frame {
+  --u: calc(100cqw / 1440);
+  position: relative;
+  max-width: 1600px;
+  margin: 0 auto;
+  container-type: inline-size;
+}
+@media (min-width: 1024px) {
+  .mp-frame {
+    aspect-ratio: 1440 / 931;
+  }
+  .mp-title,
+  .mp-lede,
+  .mp-stage {
+    position: absolute;
+  }
+}
+.mp-title {
+  left: calc(110.5 * var(--u));
+  top: calc(92 * var(--u));
+  margin: 0;
+  font-family: var(--font-anonymous-pro), monospace;
+  font-weight: 400;
+  font-size: calc(46.6 * var(--u));
+  line-height: 1;
+  letter-spacing: 0.0174em;
+  white-space: nowrap;
+  color: #fff;
+}
+.mp-lede {
+  left: calc(116 * var(--u));
+  top: calc(166 * var(--u));
+  margin: 0;
+  font-family: var(--font-montserrat), sans-serif;
+  font-weight: 500;
+  font-size: calc(24.2 * var(--u));
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: #fff;
+}
+.mp-stage {
+  left: calc(426.9 * var(--u));
+  top: calc(290 * var(--u));
+  width: calc(594.4 * var(--u));
+}
+
+/* The window. Every control is an invisible button over its own picture;
+   the picture answers with a glow (hover) and a press. */
+.mp-window {
+  position: relative;
+  outline: none;
+  transition: transform 0.45s var(--ease-out-expo), opacity 0.35s ease;
+  transform-origin: 50% 100%;
+}
+.mp-body {
+  position: relative;
+  aspect-ratio: 1697 / 1508;
+}
+/* A static shadow under the window (a filter would redraw with every
+   frame of the film). */
+.mp-body::before {
+  content: "";
+  position: absolute;
+  inset: 4% 3% 2%;
+  z-index: -1;
+  border-radius: 3%;
+  box-shadow: 0 calc(28 * var(--u)) calc(60 * var(--u)) rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+.mp-window:focus-visible .mp-body {
+  outline: 2px dashed rgba(255, 255, 255, 0.5);
+  outline-offset: 6px;
+}
+.mp-skin {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  pointer-events: none;
+}
+.mp-window[data-win="minimized"] {
+  transform: translateY(40%) scale(0.12);
+  opacity: 0;
+  pointer-events: none;
+}
+.mp-window[data-win="closing"] {
+  transform: scale(0.92);
+  opacity: 0;
+  transition-duration: 0.25s;
+  pointer-events: none;
+}
+.mp-window[data-win="closed"] {
+  visibility: hidden;
+  opacity: 0;
+}
+.mp-window[data-win="opening"] {
+  animation: mp-open 0.32s var(--ease-out-expo) both;
+}
+@keyframes mp-open {
+  from { transform: scale(0.9); opacity: 0; }
+}
+
+.mp-screen {
+  position: absolute;
+  overflow: hidden;
+  background: #000;
+}
+.mp-screen video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+  cursor: pointer;
+}
+
+/* Before the first play: black, as designed. Hover and the film's first
+   moment shows through, dimly, with a way in. */
+.mp-peek {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  cursor: pointer;
+}
+.mp-peek-img {
+  position: absolute;
+  inset: 0;
+  background: #000 center / contain no-repeat;
+  opacity: 0;
+  filter: saturate(0.6);
+  transform: scale(1.03);
+  transition: opacity 0.6s ease, transform 1.2s var(--ease-out-expo);
+}
+.mp-peek[data-on="true"] .mp-peek-img {
+  opacity: 0.38;
+  transform: none;
+}
+.mp-peek-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.45em 1em 0.45em 0.8em;
+  border-radius: 999px;
+  font: 400 max(11px, calc(15 * var(--u))) Tahoma, Verdana, "Segoe UI", sans-serif;
+  color: #fff;
+  background: linear-gradient(#3d8bff, #1550d8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 0 0 1px #0b2f8f, 0 6px 18px -6px rgba(40, 110, 255, 0.8);
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  transition: opacity 0.35s ease, transform 0.5s var(--ease-out-expo);
+}
+.mp-peek-cta svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+.mp-peek[data-on="true"] .mp-peek-cta,
+.mp-peek:focus-visible .mp-peek-cta {
+  opacity: 1;
+  transform: none;
+}
+@media (hover: none) {
+  /* No hover on a phone: the way in is always there. */
+  .mp-peek-cta {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.mp-np {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding-left: 1.6%;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mp-np span {
+  font: 700 max(8px, calc(12.5 * var(--u))) Tahoma, Verdana, sans-serif;
+  color: rgba(20, 40, 120, 0.4);
+  white-space: nowrap;
+  transition: color 0.4s ease;
+}
+.mp-np span[data-on="true"] {
+  color: #10287a;
+  animation: mp-ticker 9s linear infinite;
+}
+@keyframes mp-ticker {
+  0%, 12% { transform: translateX(0); }
+  55%, 62% { transform: translateX(calc(40 * var(--u))); }
+  100% { transform: translateX(0); }
+}
+
+.mp-status {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  font: 400 max(9px, calc(20 * var(--u))) / 1 Tahoma, Verdana, "Segoe UI", sans-serif;
+  color: #b3b3ff;
+  pointer-events: none;
+}
+.mp-status-text {
+  position: absolute;
+  white-space: nowrap;
+}
+.mp-status-time {
+  position: absolute;
+  right: 2.4%;
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.mp-status-time[data-on="true"] {
+  opacity: 1;
+}
+
+.mp-hit {
+  position: absolute;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mp-btn {
+  isolation: isolate;
+  transition: transform 0.25s var(--ease-out-expo);
+}
+/* The glow and the press, drawn over the button's own picture. */
+.mp-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at 50% 35%, rgba(255, 255, 255, 0.55), rgba(140, 200, 255, 0.18) 55%, transparent 72%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.mp-btn:hover::after,
+.mp-btn:focus-visible::after {
+  opacity: 1;
+}
+.mp-btn:focus-visible {
+  outline: none;
+}
+.mp-btn:active {
+  transform: scale(0.94);
+}
+.mp-btn:active::after {
+  background: rgba(0, 20, 80, 0.28);
+  mix-blend-mode: multiply;
+  opacity: 1;
+}
+.mp-round {
+  border-radius: 50%;
+}
+.mp-pill,
+.mp-arrow {
+  border-radius: 999px;
+}
+.mp-tab {
+  border-radius: 14%;
+}
+.mp-cap {
+  border-radius: 16%;
+}
+.mp-close:hover::after,
+.mp-close:focus-visible::after {
+  background: radial-gradient(circle at 50% 35%, rgba(255, 220, 200, 0.7), rgba(255, 120, 80, 0.25) 55%, transparent 75%);
+}
+.mp-btn[data-on="true"]::after {
+  /* Muted: the button stays lit, pressed in. */
+  background: rgba(0, 20, 80, 0.3);
+  mix-blend-mode: multiply;
+  opacity: 1;
+}
+.mp-btn > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mp-sprite {
+  position: absolute;
+  pointer-events: none;
+  user-select: none;
+}
+.mp-wedge img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mp-seek-thumb,
+.mp-vol-thumb {
+  transition: filter 0.25s ease;
+}
+.mp-window[data-playing="true"] .mp-seek-thumb {
+  filter: drop-shadow(0 0 calc(5 * var(--u)) rgba(120, 255, 150, 0.75));
+}
+.mp-seek:hover ~ .mp-seek-thumb,
+.mp-vol:hover ~ .mp-vol-thumb {
+  filter: brightness(1.12) drop-shadow(0 0 calc(6 * var(--u)) rgba(120, 255, 150, 0.9));
+}
+.mp-seek,
+.mp-vol {
+  touch-action: none;
+}
+.mp-tip {
+  position: absolute;
+  bottom: 100%;
+  transform: translate(-50%, -4px);
+  padding: 2px 6px;
+  border: 1px solid #000;
+  background: #ffffe1;
+  color: #000;
+  font: 11px Tahoma, Verdana, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* Menus, as XP drew them. */
+.mp-menuwrap {
+  position: absolute;
+}
+.mp-menubtn {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+}
+.mp-menubtn:hover,
+.mp-menubtn[data-open="true"] {
+  background: rgba(49, 106, 197, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(49, 106, 197, 0.55);
+}
+.mp-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 5;
+  min-width: max(170px, calc(250 * var(--u)));
+  margin: 2px 0 0;
+  padding: 2px;
+  list-style: none;
+  background: #fff;
+  border: 1px solid #aca899;
+  box-shadow: 2px 2px 3px rgba(0, 0, 0, 0.35);
+  font: 11px Tahoma, Verdana, "Segoe UI", sans-serif;
+  color: #000;
+  animation: mp-menu 0.14s ease-out;
+}
+@keyframes mp-menu {
+  from { opacity: 0; transform: translateY(-3px); }
+}
+.mp-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 3px 12px 3px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.mp-menu button:hover,
+.mp-menu button:focus-visible {
+  background: #316ac5;
+  color: #fff;
+  outline: none;
+}
+.mp-check {
+  width: 18px;
+  text-align: center;
+}
+.mp-mlabel {
+  flex: 1;
+}
+.mp-keys {
+  margin-left: 24px;
+  opacity: 0.85;
+}
+.mp-sep {
+  height: 1px;
+  margin: 3px 2px;
+  background: #aca899;
+}
+
+/* Help > About. */
+.mp-about {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(86%, 300px);
+  transform: translate(-50%, -50%);
+  border: 1px solid #0831d9;
+  border-radius: 7px 7px 0 0;
+  background: #ece9d8;
+  box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.5);
+  font: 11px Tahoma, Verdana, sans-serif;
+  color: #000;
+  animation: mp-open 0.25s var(--ease-out-expo);
+}
+.mp-about-bar {
+  padding: 5px 8px;
+  border-radius: 6px 6px 0 0;
+  background: linear-gradient(#0a5ff4, #0544d0 60%, #0835b3);
+  color: #fff;
+  font-weight: 700;
+}
+.mp-about-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 14px;
+}
+.mp-about-body strong {
+  font-size: 12px;
+}
+.mp-about-body button {
+  align-self: flex-end;
+  min-width: 72px;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  background: linear-gradient(#fff, #ece9d8);
+  font: inherit;
+  cursor: pointer;
+}
+.mp-about-body button:hover {
+  box-shadow: inset 0 0 0 2px #f8b33a;
+}
+
+/* Minimised: a taskbar button. Closed: a desktop shortcut. */
+.mp-task,
+.mp-desk {
+  position: absolute;
+  left: 50%;
+  border: 0;
+  cursor: pointer;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+}
+.mp-task {
+  bottom: 4%;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: max(30px, calc(40 * var(--u)));
+  padding: 0 16px 0 8px;
+  border-radius: 4px;
+  background: linear-gradient(#3c81f3, #1f5fd8 50%, #1a52c4);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px #0d3a9e, 0 10px 24px -10px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: max(12px, calc(15 * var(--u)));
+  transform: translateX(-50%);
+  animation: mp-task 0.45s var(--ease-out-expo);
+}
+.mp-task:hover {
+  background: linear-gradient(#5293ff, #2f6ee6 50%, #275fd1);
+}
+.mp-task img {
+  width: max(18px, calc(24 * var(--u)));
+  height: auto;
+}
+@keyframes mp-task {
+  from { opacity: 0; transform: translate(-50%, 14px); }
+}
+.mp-desk {
+  top: 34%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: max(96px, calc(130 * var(--u)));
+  padding: 6px 4px;
+  background: none;
+  color: #fff;
+  font-size: max(11px, calc(14 * var(--u)));
+  text-shadow: 1px 1px 2px #000;
+  transform: translateX(-50%);
+  animation: mp-desk 0.5s var(--ease-out-expo);
+}
+.mp-desk img {
+  width: max(40px, calc(56 * var(--u)));
+  height: auto;
+  transition: transform 0.4s var(--ease-spring);
+}
+.mp-desk:hover img {
+  transform: translateY(-3px) scale(1.06);
+}
+.mp-desk span {
+  padding: 1px 3px;
+  line-height: 1.25;
+}
+.mp-desk[data-selected="true"] img {
+  filter: brightness(0.75) sepia(1) hue-rotate(185deg) saturate(3);
+}
+.mp-desk[data-selected="true"] span {
+  background: #316ac5;
+  text-shadow: none;
+  outline: 1px dotted #fff;
+}
+@keyframes mp-desk {
+  from { opacity: 0; transform: translate(-50%, 8px) scale(0.92); }
+}
+
+/* Maximise: the whole window, fullscreen, kept in proportion. */
+.mp-window:fullscreen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+.mp-window:fullscreen .mp-body {
+  width: min(100vw, calc(100vh * 1697 / 1508));
+}
+
+/* Entrance. */
+@keyframes mp-rise {
+  from { opacity: 0; translate: 0 18px; }
+}
+.mp-section[data-inview="false"] .mp-rise {
+  opacity: 0;
+}
+.mp-section[data-inview="true"] .mp-rise {
+  animation: mp-rise 1s var(--ease-out-expo) backwards;
+  animation-delay: calc(var(--d) * 90ms);
+}
+
+/* Phones and tablets: a column, the player as wide as the screen allows. */
+@media (max-width: 1023px) {
+  .mp-frame {
+    padding: 64px 16px 72px;
+  }
+  .mp-title {
+    font-size: 30px;
+  }
+  .mp-lede {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    letter-spacing: 0.02em;
+    white-space: normal;
+  }
+  .mp-title,
+  .mp-lede,
+  .mp-stage {
+    left: auto;
+    top: auto;
+  }
+  .mp-stage {
+    position: relative;
+    width: min(100%, 600px);
+    margin: 36px auto 0;
+  }
+  .mp-peek-cta {
+    font-size: 10px;
+  }
+  .mp-desk {
+    top: 30%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mp-np span[data-on="true"] {
+    animation: none;
+  }
+}
