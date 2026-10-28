@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import TransitionLink from "./transition-link";
 
 /**
  * Minimal pill navigation.
@@ -11,7 +12,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *    follows you down the page.
  *  - Labels do a subtle "roll": the text slides up and a copy slides in.
  *
- * `items` is [{ label, href }] where href is "#" (top) or "#section-id".
+ * `items` is [{ label, href }] where href is "#" (top), "#section-id", or a
+ * page ("/works"), which gets the site's fade-through page transition.
  */
 export default function MinimalNav({ items, initialActiveIndex = 0, className = "" }) {
   const listRef = useRef(null);
@@ -135,31 +137,34 @@ export default function MinimalNav({ items, initialActiveIndex = 0, className = 
           }}
         />
 
-        {items.map((item, i) => (
-          <li key={item.label} className="relative z-10">
-            <a
-              ref={(el) => (itemRefs.current[i] = el)}
-              href={item.href}
-              onClick={() => onClick(i)}
-              onMouseEnter={() => setHover(i)}
-              onFocus={() => setHover(i)}
-              onBlur={() => setHover(null)}
-              aria-current={active === i ? "location" : undefined}
-              className={`mnav-link block px-4 py-1.5 text-sm font-outfit tracking-wide transition-colors duration-300 outline-none ${
-                active === i ? "text-white" : "text-white/55 hover:text-white focus-visible:text-white"
-              }`}
-            >
-              <span className="mnav-roll block h-[1.4em] overflow-hidden leading-[1.4]">
-                <span className="mnav-roll-inner block">
-                  <span className="block">{item.label}</span>
-                  <span className="block" aria-hidden="true">
-                    {item.label}
+        {items.map((item, i) => {
+          const Item = item.href.startsWith("/") ? TransitionLink : "a";
+          return (
+            <li key={item.label} className="relative z-10">
+              <Item
+                ref={(el) => (itemRefs.current[i] = el)}
+                href={item.href}
+                onClick={() => !item.href.startsWith("/") && onClick(i)}
+                onMouseEnter={() => setHover(i)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+                aria-current={active === i ? "location" : undefined}
+                className={`mnav-link block px-4 py-1.5 text-sm font-outfit tracking-wide transition-colors duration-300 outline-none ${
+                  active === i ? "text-white" : "text-white/55 hover:text-white focus-visible:text-white"
+                }`}
+              >
+                <span className="mnav-roll block h-[1.4em] overflow-hidden leading-[1.4]">
+                  <span className="mnav-roll-inner block">
+                    <span className="block">{item.label}</span>
+                    <span className="block" aria-hidden="true">
+                      {item.label}
+                    </span>
                   </span>
                 </span>
-              </span>
-            </a>
-          </li>
-        ))}
+              </Item>
+            </li>
+          );
+        })}
       </ul>
     </nav>
   );
