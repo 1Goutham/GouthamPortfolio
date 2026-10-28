@@ -4230,62 +4230,143 @@ a:focus-visible .mt-pill-fill {
 /*  Got 20 seconds? (the intro film, in a media player)                */
 /* ------------------------------------------------------------------ */
 
-/* Desktop is the 1440 design frame; --u is one design pixel. It scales
-   down with the width, and also with the height so the whole section (931
-   design pixels tall) fits on one screen with the player in full, and it
-   never grows past the design size, so it sits at the scale of the
-   sections around it. Below 1024px it flows. */
+/* A slim band; its button opens the player, which floats over the page. */
 .mp-section {
   position: relative;
   background: #222;
   color: #fff;
-  overflow: hidden;
-  container-type: inline-size;
 }
-.mp-frame {
-  --u: min(calc(100cqw / 1440), calc(100svh / 960), 1px);
-  position: relative;
+.mp-band {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px 40px;
+  max-width: 1440px;
   margin: 0 auto;
-}
-@media (min-width: 1024px) {
-  .mp-frame {
-    width: calc(1440 * var(--u));
-    height: calc(931 * var(--u));
-  }
-  .mp-title,
-  .mp-lede,
-  .mp-stage {
-    position: absolute;
-  }
+  padding: 46px clamp(24px, 5vw, 72px);
 }
 .mp-title {
-  left: calc(110.5 * var(--u));
-  top: calc(92 * var(--u));
   margin: 0;
   font-family: var(--font-anonymous-pro), monospace;
   font-weight: 400;
-  font-size: calc(46.6 * var(--u));
+  font-size: 30px;
   line-height: 1;
-  letter-spacing: 0.0174em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
   color: #fff;
 }
 .mp-lede {
-  left: calc(116 * var(--u));
-  top: calc(166 * var(--u));
-  margin: 0;
+  margin: 14px 0 0;
   font-family: var(--font-montserrat), sans-serif;
   font-weight: 500;
-  font-size: calc(24.2 * var(--u));
-  line-height: 1.4;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  color: #fff;
+  font-size: 13px;
+  line-height: 1.5;
+  letter-spacing: 0.03em;
+  color: rgba(255, 255, 255, 0.92);
 }
-.mp-stage {
-  left: calc(426.9 * var(--u));
-  top: calc(290 * var(--u));
-  width: calc(594.4 * var(--u));
+
+/* Open: a white fill sweeps in on hover; once the film is playing, a
+   little equaliser bounces in front of the label. */
+.mp-open {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 24px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 999px;
+  background: transparent;
+  color: #fff;
+  font-family: var(--font-poppins), sans-serif;
+  font-size: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.45s ease, border-color 0.45s ease, transform 0.5s var(--ease-out-expo);
+}
+.mp-open::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #fff;
+  border-radius: inherit;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.mp-open:hover,
+.mp-open:focus-visible {
+  color: #000;
+  border-color: #fff;
+  outline: none;
+}
+.mp-open:hover::before,
+.mp-open:focus-visible::before {
+  transform: scaleX(1);
+}
+.mp-open:active {
+  transform: scale(0.97);
+}
+.mp-open-arrow {
+  width: 17px;
+  height: 17px;
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.mp-open:hover .mp-open-arrow {
+  transform: translate(2px, -2px);
+}
+.mp-open-eq {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 0;
+  height: 13px;
+  overflow: hidden;
+  transition: width 0.4s var(--ease-out-expo);
+}
+.mp-open[data-playing="true"] .mp-open-eq {
+  width: 14px;
+}
+.mp-open-eq i {
+  width: 3px;
+  height: 100%;
+  border-radius: 1px;
+  background: #6fe36f;
+  transform-origin: bottom;
+  animation: mp-eq 0.9s ease-in-out infinite alternate;
+}
+.mp-open-eq i:nth-child(2) { animation-delay: -0.3s; }
+.mp-open-eq i:nth-child(3) { animation-delay: -0.6s; }
+@keyframes mp-eq {
+  0% { transform: scaleY(0.25); }
+  100% { transform: scaleY(1); }
+}
+.mp-open[data-playing="false"] .mp-open-eq i {
+  animation-play-state: paused;
+}
+
+/* The floating window: its own width sets the scale of everything in it
+   (--u is one pixel of the 594-pixel design). */
+.mp-window.mp-float {
+  --u: calc(var(--w) / 594.4);
+  position: fixed;
+  z-index: 80;
+  width: var(--w);
+}
+.mp-drag {
+  position: absolute;
+  cursor: grab;
+  touch-action: none;
+}
+.mp-float[data-dragging] .mp-drag {
+  cursor: grabbing;
+}
+.mp-float[data-dragging] {
+  transition: none;
 }
 
 /* The window. Every control is an invisible button over its own picture;
@@ -4311,10 +4392,6 @@ a:focus-visible .mt-pill-fill {
   box-shadow: 0 calc(28 * var(--u)) calc(60 * var(--u)) rgba(0, 0, 0, 0.55);
   pointer-events: none;
 }
-.mp-window:focus-visible .mp-body {
-  outline: 2px dashed rgba(255, 255, 255, 0.5);
-  outline-offset: 6px;
-}
 .mp-skin {
   display: block;
   width: 100%;
@@ -4323,25 +4400,29 @@ a:focus-visible .mt-pill-fill {
   pointer-events: none;
 }
 .mp-window[data-win="minimized"] {
-  transform: translateY(40%) scale(0.12);
+  transform: translateY(60vh) scale(0.1);
   opacity: 0;
   pointer-events: none;
+  transition-duration: 0.45s;
 }
 .mp-window[data-win="closing"] {
   transform: scale(0.92);
   opacity: 0;
-  transition-duration: 0.25s;
+  transition-duration: 0.22s;
   pointer-events: none;
 }
 .mp-window[data-win="closed"] {
   visibility: hidden;
   opacity: 0;
+  pointer-events: none;
 }
+/* Opening: it grows out of the button (or the taskbar) that opened it. */
 .mp-window[data-win="opening"] {
-  animation: mp-open 0.32s var(--ease-out-expo) both;
+  animation: mp-open 0.42s var(--ease-out-expo) both;
 }
 @keyframes mp-open {
-  from { transform: scale(0.9); opacity: 0; }
+  from { transform: translate(var(--from-x, 0), var(--from-y, 40px)) scale(0.08); opacity: 0; }
+  60% { opacity: 1; }
 }
 
 .mp-screen {
@@ -4686,81 +4767,43 @@ a:focus-visible .mt-pill-fill {
   box-shadow: inset 0 0 0 2px #f8b33a;
 }
 
-/* Minimised: a taskbar button. Closed: a desktop shortcut. */
-.mp-task,
-.mp-desk {
-  position: absolute;
-  left: 50%;
-  border: 0;
-  cursor: pointer;
-  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
-}
+/* Minimised: a button on the "taskbar" at the bottom of the screen. */
 .mp-task {
-  bottom: 4%;
+  position: fixed;
+  z-index: 80;
+  left: 50%;
+  bottom: 18px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: max(30px, calc(40 * var(--u)));
+  height: 38px;
   padding: 0 16px 0 8px;
+  border: 0;
   border-radius: 4px;
   background: linear-gradient(#3c81f3, #1f5fd8 50%, #1a52c4);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px #0d3a9e, 0 10px 24px -10px rgba(0, 0, 0, 0.6);
   color: #fff;
-  font-size: max(12px, calc(15 * var(--u)));
+  font: 13px Tahoma, Verdana, "Segoe UI", sans-serif;
   transform: translateX(-50%);
-  animation: mp-task 0.45s var(--ease-out-expo);
+  cursor: pointer;
+  animation: mp-task 0.45s var(--ease-out-expo) 0.2s backwards;
 }
 .mp-task:hover {
   background: linear-gradient(#5293ff, #2f6ee6 50%, #275fd1);
 }
 .mp-task img {
-  width: max(18px, calc(24 * var(--u)));
+  width: 22px;
   height: auto;
 }
 @keyframes mp-task {
   from { opacity: 0; transform: translate(-50%, 14px); }
 }
-.mp-desk {
-  top: 34%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  width: max(96px, calc(130 * var(--u)));
-  padding: 6px 4px;
-  background: none;
-  color: #fff;
-  font-size: max(11px, calc(14 * var(--u)));
-  text-shadow: 1px 1px 2px #000;
-  transform: translateX(-50%);
-  animation: mp-desk 0.5s var(--ease-out-expo);
-}
-.mp-desk img {
-  width: max(40px, calc(56 * var(--u)));
-  height: auto;
-  transition: transform 0.4s var(--ease-spring);
-}
-.mp-desk:hover img {
-  transform: translateY(-3px) scale(1.06);
-}
-.mp-desk span {
-  padding: 1px 3px;
-  line-height: 1.25;
-}
-.mp-desk[data-selected="true"] img {
-  filter: brightness(0.75) sepia(1) hue-rotate(185deg) saturate(3);
-}
-.mp-desk[data-selected="true"] span {
-  background: #316ac5;
-  text-shadow: none;
-  outline: 1px dotted #fff;
-}
-@keyframes mp-desk {
-  from { opacity: 0; transform: translate(-50%, 8px) scale(0.92); }
-}
 
 /* Maximise: the whole window, fullscreen, kept in proportion. */
 .mp-window:fullscreen {
+  left: 0 !important;
+  top: 0 !important;
+  --u: calc(min(100vw, 100vh * 1697 / 1508) / 594.4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4774,47 +4817,32 @@ a:focus-visible .mt-pill-fill {
 
 /* Entrance. */
 @keyframes mp-rise {
-  from { opacity: 0; translate: 0 18px; }
+  from { opacity: 0; translate: 0 14px; }
 }
 .mp-section[data-inview="false"] .mp-rise {
   opacity: 0;
 }
 .mp-section[data-inview="true"] .mp-rise {
-  animation: mp-rise 1s var(--ease-out-expo) backwards;
-  animation-delay: calc(var(--d) * 90ms);
+  animation: mp-rise 0.9s var(--ease-out-expo) backwards;
+  animation-delay: calc(var(--d) * 80ms);
 }
 
-/* Phones and tablets: a column, the player as wide as the screen allows. */
-@media (max-width: 1023px) {
-  .mp-frame {
-    padding: 64px 16px 72px;
+@media (max-width: 767px) {
+  .mp-band {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 40px 20px;
   }
   .mp-title {
-    font-size: 30px;
+    font-size: 26px;
   }
   .mp-lede {
-    margin-top: 12px;
-    font-size: 14px;
-    line-height: 1.55;
-    letter-spacing: 0.02em;
-    white-space: normal;
+    font-size: 13px;
   }
-  .mp-title,
-  .mp-lede,
-  .mp-stage {
-    left: auto;
-    top: auto;
-  }
-  .mp-stage {
-    position: relative;
-    width: min(100%, 600px);
-    margin: 36px auto 0;
-  }
-  .mp-peek-cta {
-    font-size: 10px;
-  }
-  .mp-desk {
-    top: 30%;
+  .mp-open {
+    height: 42px;
+    padding: 0 20px;
+    font-size: 15px;
   }
 }
 @media (prefers-reduced-motion: reduce) {
