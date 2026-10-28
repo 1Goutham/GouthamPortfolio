@@ -11,14 +11,14 @@ const WINDOW_MS = 60_000;
 const MAX_PER_WINDOW = 12;
 const buckets = new Map<string, Map<string, number[]>>();
 
-export function rateLimited(route: string, ip: string): boolean {
+export function rateLimited(route: string, ip: string, max = MAX_PER_WINDOW, windowMs = WINDOW_MS): boolean {
   const hits = buckets.get(route) ?? new Map<string, number[]>();
   buckets.set(route, hits);
   const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < WINDOW_MS);
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < windowMs);
   recent.push(now);
   hits.set(ip, recent);
-  return recent.length > MAX_PER_WINDOW;
+  return recent.length > max;
 }
 
 export function clientIp(headers: Headers): string {

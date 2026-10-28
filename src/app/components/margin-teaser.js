@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TransitionLink from "./layout/transition-link";
+import { WallStrip } from "../margin/wall";
 
 // The stickers on the band. Positions live in globals.css (`.mt-<id>`), in
 // container-width units, so the collage keeps its exact composition at any
@@ -277,6 +278,7 @@ export default function MarginTeaser() {
           </span>
         </div>
       </TransitionLink>
+      <WallStrip />
     </section>
   );
 }

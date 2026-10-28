@@ -38,6 +38,22 @@ Copy `.env.example` to `.env.local` and set `XAI_API_KEY` (from console.x.ai) an
 
 Append an entry to `KNOWLEDGE` in `src/data/knowledge.ts`. Keep each entry to one topic and roughly 40 to 120 words; the `title` is the section it is filed under in the prompt.
 
+## The Margin wall
+
+Visitors can pin what they draw on /margin to a public wall. The latest sketches show in the wall (the gallery icon by the camera on /margin) and drift past under the Margin teaser on the homepage. Pinned sketches appear straight away; remove any from **/margin/wall**.
+
+Sketches are stored in Vercel Blob. To switch it on:
+
+1. In the Vercel dashboard, open the project, go to **Storage**, create a **Blob** store and connect it to the project. Vercel adds `BLOB_READ_WRITE_TOKEN` to the project's environment variables.
+2. In **Settings → Environment Variables**, add `MARGIN_ADMIN_KEY` set to a long random string. It is the password for /margin/wall.
+3. Redeploy.
+
+Until the store exists the wall stays out of sight: the button is hidden and the homepage strip is not shown. Locally, `vercel env pull .env.local` brings the token down. Each visitor can pin 3 sketches per 10 minutes; images are cropped to the drawing, at most 900px, as WebP (PNG as a fallback).
+
+## Link previews
+
+Every page has its own title, description and 1200x630 preview image (`public/og/*.jpg`) for LinkedIn, WhatsApp, X and Slack. The images are rendered from HTML by `node scripts/og/render.js` (or `... render.js home margin` for some); set in `src/lib/seo.ts`. The site address comes from `NEXT_PUBLIC_SITE_URL`, defaulting to https://1goutham.space.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

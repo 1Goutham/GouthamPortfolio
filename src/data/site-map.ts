@@ -43,7 +43,7 @@ export const SITE_TARGETS: SiteTarget[] = [
   { id: 'projects-page', label: 'Projects page', path: '/projects', description: 'The full projects page with every product in detail.', words: ['project page', 'all projects', 'projects page'] },
   { id: 'beyond-page', label: 'Beyond', path: '/beyond', description: 'His personal story: from freelance design to code to AI.', words: ['story', 'beyond', 'journey', 'personal'] },
   { id: 'arcade', label: 'Arcade', path: '/arcade', description: 'Five small retro games starring Goutham.', words: ['game', 'arcade', 'play', 'retro'] },
-  { id: 'margin-page', label: 'Margin', path: '/margin', description: 'Margin by 1Gartlab: a drawing playground where you can sketch and send it to him.', words: ['draw', 'margin', 'sketch', 'art', 'paint', '1gartlab'] },
+  { id: 'margin-page', label: 'Margin', path: '/margin', description: 'Margin by 1Gartlab: a drawing playground where you can sketch, send it to him, or pin it to the wall of visitor sketches.', words: ['draw', 'margin', 'sketch', 'art', 'paint', '1gartlab', 'wall', 'gallery'] },
   { id: 'works', label: '1G-works', path: '/works', description: '1G-works, his freelance studio for businesses.', words: ['1g-works', '1gworks', 'works', 'freelance', 'studio', 'agency', 'business', 'service'] },
   { id: 'works-who', label: '1G-works: Who we are', path: '/works', hash: 'who', description: 'What 1G-works does for a business.', words: [] },
   { id: 'works-services', label: '1G-works: Our Services', path: '/works', hash: 'services', description: 'The four 1G-works services: Brand & Creative, Web & Digital, Digital Growth, Software & AI.', words: ['1g-works services', 'works services', 'services', 'branding', 'website for', 'seo', 'marketing'] },

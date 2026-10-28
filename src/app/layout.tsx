@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
 import SiteAgent from "./components/agent/site-agent";
 
+import { SITE_URL, pageMeta } from "@/lib/seo";
 import "./globals.css";
 
 // Only the fonts the UI actually uses are loaded.
@@ -64,8 +65,17 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Goutham G",
-  description: "Crafting sleek, modern web apps with style and skill.",
+  metadataBase: new URL(SITE_URL),
+  ...pageMeta({
+    title: "Goutham G | AI Full Stack Developer & Product Designer",
+    description:
+      "I build digital products with AI, code and design. Goutham G, AI full stack developer and product designer in Coimbatore, India: products, the 1G-works studio, and a few experiments.",
+    path: "/",
+    image: "home",
+    alt: "Goutham G: I build digital products with AI, code & design",
+  }),
+  authors: [{ name: "Goutham G", url: SITE_URL }],
+  creator: "Goutham G",
 };
 
 export const viewport: Viewport = {
