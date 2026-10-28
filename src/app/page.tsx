@@ -1,4 +1,5 @@
 import dynamic from "next/dynamic";
+import { ld, personLd } from "@/lib/seo";
 import Hero from "./components/Hero";
 import Scrolltext from "./components/scroll";
 import About from "./components/about";
@@ -7,7 +8,6 @@ import Projects from "./components/projects";
 import BeyondTeaser from "./components/beyond-teaser";
 import MarginTeaser from "./components/margin-teaser";
 import WorksStrip from "./components/works-strip";
-import WorksPopup from "./components/works-popup";
 
 // Below-the-fold, JS-heavy sections are code-split so the initial bundle stays lean.
 const Gtalk = dynamic(() => import("./components/Gtalk"), {
@@ -18,6 +18,7 @@ const Contact = dynamic(() => import("./components/contact"));
 export default function Home() {
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={ld(personLd)} />
       <Hero />
       <Scrolltext />
       <About />
@@ -28,7 +29,6 @@ export default function Home() {
       <MarginTeaser />
       <Gtalk />
       <Contact />
-      <WorksPopup />
     </>
   );
 }
