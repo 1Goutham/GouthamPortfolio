@@ -226,7 +226,7 @@ export default function Hero() {
             I build digital products with AI, code &amp; design.
           </h1>
           <p className="hero-line mt-2 font-outfit text-sm font-semibold text-white sm:text-base md:text-[17px]" style={{ "--i": 2 }}>
-            AI Fullstack Developer &amp; Product Designer
+            AI Product Engineer &amp; Designer
           </p>
 
           <div className="hero-line mt-6 flex justify-center md:mt-7 md:block" style={{ "--i": 3 }}>
