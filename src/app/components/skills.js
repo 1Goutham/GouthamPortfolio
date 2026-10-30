@@ -132,7 +132,7 @@ export default function Skills() {
 
       <div className="sk-text">
         <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
-          <BracketHeading as="h2" dark className="sk-h text-black font-anonymous-pro text-3xl">
+          <BracketHeading as="h2" dark className="text-black font-anonymous-pro text-3xl md:text-5xl">
             Skills
           </BracketHeading>
         </ScrollReveal>
@@ -140,7 +140,7 @@ export default function Skills() {
         <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
           <div>
             {/* Each word underlines in turn, left to right, on hover. */}
-            <h3 className="sk-tagline skills-tagline text-black font-outfit text-xl">
+            <h3 className="skills-tagline mt-6 text-black font-outfit text-xl md:mt-8 md:text-2xl">
               {TAGLINE.map((w, i) => (
                 <span key={w} className="skills-word" style={{ "--i": i }}>
                   {w}
@@ -148,7 +148,7 @@ export default function Skills() {
                 </span>
               ))}
             </h3>
-            <p className="sk-para font-outfit text-black/85">
+            <p className="mt-3 max-w-md font-outfit text-sm leading-relaxed text-black/70 md:text-base">
               I bring together full-stack engineering, AI, and product design to build digital experiences from the
               first sketch to deployment. I care about how things look, how systems work, and whether the final
               product genuinely solves a problem.
