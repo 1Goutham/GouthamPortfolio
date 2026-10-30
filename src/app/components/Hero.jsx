@@ -86,7 +86,8 @@ function Kural() {
     <button
       type="button"
       aria-pressed={pinned}
-      aria-label="Thirukkural 611, toggle English translation"
+      /* The name starts with the words on screen, so voice control can use them. */
+      aria-label={`${KURAL.tamil.join(" ")} (${KURAL.source}): show the English translation`}
       onMouseEnter={() => setHover(true)}
       onMouseLeave={() => setHover(false)}
       onFocus={() => setHover(true)}
@@ -144,6 +145,8 @@ export default function Hero() {
   const onPointerMove = useCallback((e) => {
     const el = frameRef.current;
     if (!el || e.pointerType !== "mouse" || live) return;
+    // Reduced motion: he stays put.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const r = el.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;

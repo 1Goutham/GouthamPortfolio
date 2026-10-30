@@ -79,7 +79,7 @@ export default function Projects() {
         <div>
           <TransitionLink
             href="/projects"
-            className="projects-rise group inline-flex items-center gap-1 text-sm text-white/70 outline-none transition-colors hover:text-white focus-visible:text-white md:text-base"
+            className="focus-ring projects-rise group inline-flex items-center gap-1 text-sm text-white/70 outline-none transition-colors hover:text-white focus-visible:text-white md:text-base"
             style={{ "--i": 0 }}
           >
             Products by <span className="font-semibold text-white">1Goutham</span>

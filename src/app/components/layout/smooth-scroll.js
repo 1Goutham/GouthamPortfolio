@@ -1,11 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import Lenis from "lenis";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { scrollToSection } from "./scroll-to";
-
-gsap.registerPlugin(ScrollTrigger);
 
 // A long, soft finish for every programmatic glide.
 const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
@@ -17,8 +13,9 @@ const SETTLE_RANGE = 0.12; // of the viewport height
 const SETTLE_IDLE_MS = 160;
 
 /**
- * Buttery smooth scrolling driven by Lenis, kept in lock-step with GSAP's
- * ScrollTrigger so every scroll-linked animation stays perfectly in sync.
+ * Buttery smooth scrolling driven by Lenis. Its frame loop only runs while
+ * something is moving: a wheel, a touch, a key or a glide wakes it, and it
+ * sleeps again once the page is still, so an idle page costs nothing.
  *
  * Touch screens keep the browser's own momentum scrolling (smoother than
  * anything script can do on a phone). With a wheel or trackpad, when the
@@ -92,12 +89,32 @@ export default function SmoothScroll() {
       smoothWheel: true,
     });
 
+    let raf = 0;
+    let still = 0;
+    const loop = (t) => {
+      lenis.raf(t);
+      still = lenis.isScrolling ? 0 : still + 1;
+      raf = still > 30 ? 0 : requestAnimationFrame(loop);
+    };
+    const wake = () => {
+      still = 0;
+      if (raf) return;
+      // Asleep, its clock stopped: start it from now, or the first step of
+      // a glide would be the whole nap long and finish it at once.
+      lenis.time = performance.now();
+      raf = requestAnimationFrame(loop);
+    };
+    const WAKE = ["wheel", "touchstart", "keydown", "pointerdown", "scroll"];
+    WAKE.forEach((t) => window.addEventListener(t, wake, { passive: true }));
+    const scrollTo = lenis.scrollTo.bind(lenis);
+    lenis.scrollTo = (...args) => {
+      wake();
+      return scrollTo(...args);
+    };
+    wake();
+
     // The site agent scrolls through it, so a programmatic scroll eases like a wheel one.
     window.__lenis = lenis;
-    lenis.on("scroll", ScrollTrigger.update);
-    const tick = (time) => lenis.raf(time * 1000);
-    gsap.ticker.add(tick);
-    gsap.ticker.lagSmoothing(0);
 
     // ---- settle onto a section ------------------------------------
     const fine = window.matchMedia("(pointer: fine)").matches;
@@ -140,15 +157,11 @@ export default function SmoothScroll() {
       lenis.on("scroll", onScroll);
     }
 
-    // Recalculate scroll positions once fonts/images settle.
-    const refresh = () => ScrollTrigger.refresh();
-    window.addEventListener("load", refresh, { once: true });
-
     return () => {
       clearTimeout(idle);
+      cancelAnimationFrame(raf);
+      WAKE.forEach((t) => window.removeEventListener(t, wake));
       window.removeEventListener("wheel", onWheel);
-      window.removeEventListener("load", refresh);
-      gsap.ticker.remove(tick);
       if (window.__lenis === lenis) delete window.__lenis;
       lenis.destroy();
     };

@@ -41,12 +41,14 @@ export default function BeyondTeaser() {
     return () => io.disconnect();
   }, []);
 
-  // The label eases after the pointer rather than snapping to it.
+  // The label eases after the pointer rather than snapping to it (with
+  // reduced motion it simply sits under the pointer).
   const tick = useCallback(() => {
     const c = cur.current;
     const el = labelRef.current;
-    c.x += (c.tx - c.x) * 0.16;
-    c.y += (c.ty - c.y) * 0.16;
+    const k = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 0.16;
+    c.x += (c.tx - c.x) * k;
+    c.y += (c.ty - c.y) * k;
     if (el) el.style.transform = `translate3d(${c.x.toFixed(1)}px, ${c.y.toFixed(1)}px, 0)`;
     const settled = Math.abs(c.tx - c.x) < 0.3 && Math.abs(c.ty - c.y) < 0.3;
     c.raf = c.on || !settled ? requestAnimationFrame(tick) : 0;
@@ -71,6 +73,7 @@ export default function BeyondTeaser() {
     }
     if (!c.raf) c.raf = requestAnimationFrame(tick);
     // Figure drift, a few px toward the pointer.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     stage.style.setProperty("--dx", `${((c.tx / r.width - 0.5) * 10).toFixed(1)}px`);
     stage.style.setProperty("--dy", `${((c.ty / r.height - 0.5) * 8).toFixed(1)}px`);
   };

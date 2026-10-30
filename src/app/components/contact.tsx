@@ -247,7 +247,7 @@ function Shutter({ side }: { side: 'l' | 'r' }) {
       }}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="cx-face" src={`/contact/leaf-${side}.webp`} alt="" draggable={false} />
+      <img loading="lazy" decoding="async" className="cx-face" src={`/contact/leaf-${side}.webp`} alt="" draggable={false} />
       <div
         className="cx-back"
         style={{
@@ -258,7 +258,7 @@ function Shutter({ side }: { side: 'l' | 'r' }) {
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={`/contact/back-${side}.webp`} alt="" draggable={false} />
+        <img loading="lazy" decoding="async" src={`/contact/back-${side}.webp`} alt="" draggable={false} />
       </div>
     </div>
   );
@@ -646,7 +646,7 @@ export default function Contact() {
             aria-hidden="true"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/plane.png" alt="" draggable={false} />
+            <img loading="lazy" decoding="async" src="/plane.png" alt="" draggable={false} />
           </div>
           <button type="submit" className="cx-pill cx-rise" style={{ '--d': 4.5 } as React.CSSProperties} data-state={pill} aria-label={`${label}. Sends your message.`}>
             <span key={pillKey.current} className="cx-pill-text" aria-live="polite">
@@ -656,11 +656,11 @@ export default function Contact() {
 
           <div ref={win.root} className="cx-window" data-shut="true" data-aimed="false" aria-hidden="true">
             {/* eslint-disable @next/next/no-img-element */}
-            <img className="cx-room" src="/contact/room.webp" alt="" draggable={false} />
-            <img className="cx-scene" src="/contact/scene.webp" alt="" draggable={false} />
+            <img loading="lazy" decoding="async" className="cx-room" src="/contact/room.webp" alt="" draggable={false} />
+            <img loading="lazy" decoding="async" className="cx-scene" src="/contact/scene.webp" alt="" draggable={false} />
             <Shutter side="l" />
             <Shutter side="r" />
-            <img className="cx-hands" src="/contact/hands.webp" alt="" draggable={false} />
+            <img loading="lazy" decoding="async" className="cx-hands" src="/contact/hands.webp" alt="" draggable={false} />
             {/* eslint-enable @next/next/no-img-element */}
           </div>
         </form>

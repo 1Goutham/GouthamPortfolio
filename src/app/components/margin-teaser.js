@@ -241,7 +241,7 @@ export default function MarginTeaser() {
         onClick={onClick}
         draggable={false}
         aria-label="Margin, an experimental playground by 1Gartlab. Draw something and send it to me"
-        className="block outline-none"
+        className="focus-ring block outline-none"
       >
         <div ref={stageRef} className="mt-stage" onPointerMove={onPointerMove} onPointerLeave={onPointerLeave}>
           <canvas ref={canvasRef} className="mt-ink" aria-hidden="true" />

@@ -87,6 +87,32 @@ const SWATCHES = PALETTE.slice(1).map((c, i) => {
 
 const DEFAULT_STATUS = "For Help, click Help Topics on the Help Menu.";
 
+/** Arrow keys, Home and End move between a menu's items, as in Windows. */
+export function menuKeys(e) {
+  const items = [...e.currentTarget.querySelectorAll('[role="menuitem"]')];
+  const i = items.indexOf(document.activeElement);
+  const to = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: items.length - 1 }[e.key];
+  if (to === undefined || !items.length) return;
+  e.preventDefault();
+  items[(to + items.length) % items.length].focus();
+}
+
+/**
+ * One Tab stop for a grid of buttons (the toolbox, the palette): the arrow
+ * keys move along it, `cols` to a row, and Enter or Space picks.
+ */
+const gridKeys = (cols) => (e) => {
+  const items = [...e.currentTarget.querySelectorAll("button")];
+  const i = items.indexOf(document.activeElement);
+  if (i < 0) return;
+  const to = { ArrowRight: i + 1, ArrowLeft: i - 1, ArrowDown: i + cols, ArrowUp: i - cols, Home: 0, End: items.length - 1 }[e.key];
+  if (to === undefined) return;
+  e.preventDefault();
+  items[Math.max(0, Math.min(items.length - 1, to))].focus();
+};
+const TOOL_KEYS = gridKeys(2);
+const PALETTE_KEYS = gridKeys(14);
+
 // Where Goutham stands in the picture (canvas px).
 const CUT_H = Math.round(CH * 0.92);
 const CUT_W = Math.round((CUT_H * 650) / 928);
@@ -132,18 +158,23 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     const b = backRef.current.getContext("2d");
     b.fillStyle = "#ffffff";
     b.fillRect(0, 0, CW, CH);
-    // Goutham's outline, for deciding which layer a stroke belongs to.
-    const img = new Image();
-    img.src = "/os/cutout.webp";
-    img.onload = () => {
-      const m = document.createElement("canvas");
-      m.width = CW;
-      m.height = CH;
-      const c = m.getContext("2d", { willReadFrequently: true });
-      c.drawImage(img, CUT_X, CUT_Y, CUT_W, CUT_H);
-      maskRef.current = c.getImageData(0, 0, CW, CH).data;
-    };
   }, []);
+
+  // Goutham's outline, for deciding which layer a stroke belongs to: read
+  // from his picture once it has loaded (it loads lazily, with the window).
+  const readMask = () => {
+    const img = cutRef.current;
+    if (!img?.naturalWidth || maskRef.current) return;
+    const m = document.createElement("canvas");
+    m.width = CW;
+    m.height = CH;
+    const c = m.getContext("2d", { willReadFrequently: true });
+    c.drawImage(img, CUT_X, CUT_Y, CUT_W, CUT_H);
+    maskRef.current = c.getImageData(0, 0, CW, CH).data;
+  };
+  useEffect(() => {
+    if (cutRef.current?.complete) readMask();
+  });
 
   const onHim = (x, y) => {
     const m = maskRef.current;
@@ -691,11 +722,24 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, doUndo, save]);
 
-  // Menus close on a click elsewhere, or Escape.
+  // A menu opened from the keyboard takes the focus to its first item.
+  const menuByKey = useRef(false);
+  const rootRef = useRef(null);
+  useEffect(() => {
+    if (!menu || !menuByKey.current) return;
+    menuByKey.current = false;
+    rootRef.current?.querySelector('.pt-menubtn[data-open="true"] + .os-menu [role="menuitem"]')?.focus();
+  }, [menu]);
+
+  // Menus close on a click elsewhere, or Escape (which hands the focus back).
   useEffect(() => {
     if (!menu) return;
     const off = (e) => !e.target.closest?.(".pt-menu, .pt-menubtn") && setMenu(null);
-    const esc = (e) => e.key === "Escape" && setMenu(null);
+    const esc = (e) => {
+      if (e.key !== "Escape") return;
+      rootRef.current?.querySelector('.pt-menubtn[data-open="true"]')?.focus();
+      setMenu(null);
+    };
     window.addEventListener("pointerdown", off);
     window.addEventListener("keydown", esc);
     return () => {
@@ -742,9 +786,9 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     : undefined;
 
   return (
-    <div className="pt" onContextMenu={(e) => e.preventDefault()}>
+    <div ref={rootRef} className="pt" onContextMenu={(e) => e.preventDefault()}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="pt-frame" src="/os/paint.webp" alt="" width={FW} height={FH} draggable={false} />
+      <img loading="lazy" decoding="async" className="pt-frame" src="/os/paint.webp" alt="" width={FW} height={FH} draggable={false} />
 
       <div className="pt-drag" style={box(PG.title)} onPointerDown={onTitleDown} onDoubleClick={onMaximize} aria-hidden="true" />
       <button type="button" className="os-hit os-btn" style={box(PG.min)} onClick={onMinimize} aria-label="Minimise Paint" />
@@ -759,13 +803,17 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
             data-open={menu === name}
             aria-haspopup="menu"
             aria-expanded={menu === name}
-            onClick={() => setMenu((m) => (m === name ? null : name))}
+            onClick={(e) => {
+              // detail 0: Enter or Space rather than a click.
+              menuByKey.current = e.detail === 0;
+              setMenu((m) => (m === name ? null : name));
+            }}
             onMouseEnter={() => menu && setMenu(name)}
           >
             <span className="sr-only">{name}</span>
           </button>
           {menu === name && (
-            <ul className="os-menu" role="menu">
+            <ul className="os-menu" role="menu" aria-label={name} onKeyDown={menuKeys}>
               {MENUS[name].map((it, i) =>
                 it.sep ? (
                   <li key={i} className="os-sep" role="separator" />
@@ -807,10 +855,11 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
         >
           <canvas ref={backRef} width={CW} height={CH} />
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <img loading="lazy" decoding="async"
             ref={cutRef}
             className="pt-cutout"
             src="/os/cutout.webp"
+            onLoad={readMask}
             alt="Goutham, standing in Paint. Draw on him."
             draggable={false}
             style={{ left: `${(CUT_X / CW) * 100}%`, top: `${(CUT_Y / CH) * 100}%`, width: `${(CUT_W / CW) * 100}%`, filter: SHADOW }}
@@ -832,7 +881,8 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
         </div>
       </div>
 
-      {/* Toolbox. */}
+      {/* Toolbox: one Tab stop, arrow keys inside. */}
+      <div role="toolbar" aria-label="Tools" aria-orientation="vertical" className="contents" onKeyDown={TOOL_KEYS}>
       {TOOLS.map(([id, label, help], i) => (
         <button
           key={id}
@@ -842,11 +892,15 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
           data-on={tool === id}
           aria-label={label}
           aria-pressed={tool === id}
+          tabIndex={tool === id ? 0 : -1}
           onClick={() => chooseTool(id)}
           onMouseEnter={() => setStatus(help)}
           onMouseLeave={() => setStatus(DEFAULT_STATUS)}
+          onFocus={() => setStatus(help)}
+          onBlur={() => setStatus(DEFAULT_STATUS)}
         />
       ))}
+      </div>
 
       {/* Options for the tool: three sizes. */}
       <div className="pt-options" style={box(PG.options)}>
@@ -861,14 +915,17 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
       {/* Colours. */}
       <span className="pt-swatch pt-bg" style={{ ...box(PG.bg), background: bg }} aria-hidden="true" />
       <span className="pt-swatch pt-fg" style={{ ...box(PG.fg), background: fg }} aria-hidden="true" />
-      {SWATCHES.map(([c, b]) => (
+      <div role="toolbar" aria-label="Colours. Enter picks the drawing colour, Shift+Enter the background." className="contents" onKeyDown={PALETTE_KEYS}>
+      {SWATCHES.map(([c, b], i) => (
         <button
           key={c + b[0]}
           type="button"
           className="os-hit pt-colour"
           style={box(b)}
           aria-label={`Colour ${c}`}
-          onClick={() => setFg(c)}
+          aria-pressed={fg === c}
+          tabIndex={(SWATCHES.some(([sc]) => sc === fg) ? fg === c : i === 0) ? 0 : -1}
+          onClick={(e) => (e.shiftKey ? setBg(c) : setFg(c))}
           onContextMenu={(e) => {
             e.preventDefault();
             setBg(c);
@@ -877,6 +934,7 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
           onMouseLeave={() => setStatus(DEFAULT_STATUS)}
         />
       ))}
+      </div>
 
       <div className="pt-status" style={box(PG.status)} aria-live="polite">
         {status}

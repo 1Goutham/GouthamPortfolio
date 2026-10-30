@@ -318,9 +318,18 @@ export default function LivePortrait({ enabled = true, onReady, onHead, api, cla
     const canvas = ref.current;
     if (!canvas || !enabled) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const opts = { premultipliedAlpha: true, alpha: true, antialias: false };
+    // failIfMajorPerformanceCaveat: with no GPU to draw on (software
+    // rendering, a blocklisted driver) every frame would cost the page
+    // ~100ms, so he stays the still photo instead.
+    const opts = { premultipliedAlpha: true, alpha: true, antialias: false, failIfMajorPerformanceCaveat: true };
     const gl = canvas.getContext("webgl2", opts) || canvas.getContext("webgl", opts);
     if (!gl) return;
+    // Not every browser counts its own software renderer as a caveat.
+    const info = gl.getExtension("WEBGL_debug_renderer_info");
+    if (/swiftshader|llvmpipe|softpipe|software|basic render/i.test(gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || "")) {
+      gl.getExtension("WEBGL_lose_context")?.loseContext();
+      return;
+    }
 
     let raf = 0;
     let alive = true;
