@@ -182,15 +182,6 @@ video {
   box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
 }
 
-/* About portrait: slow zoom + slight brighten on hover, nothing moves. */
-.about-portrait img {
-  transition: transform 1.4s var(--ease-out-expo), filter 0.8s ease;
-}
-.about-portrait:hover img {
-  transform: scale(1.05);
-  filter: brightness(1.06);
-}
-
 /* Inputs: border warms up and lifts a hair on focus. */
 .input-glow {
   transition:
@@ -1476,15 +1467,6 @@ video {
 .bracket-link-dark.bracket-heading:hover .bracket-link-l,
 .bracket-link-dark.bracket-heading:hover .bracket-link-r {
   color: #000;
-}
-
-/* About portrait: parallax drift against the cursor (vars set inline). */
-.about-portrait img {
-  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.06);
-  transition: transform 1s var(--ease-out-expo), filter 0.8s ease;
-}
-.about-portrait:hover img {
-  transform: translate3d(var(--ax, 0px), var(--ay, 0px), 0) scale(1.09);
 }
 
 /* Skills radar. The artwork is a white square on a white ground, so no
@@ -4917,4 +4899,579 @@ a:focus-visible .mt-pill-fill {
   .mp-np span[data-on="true"] {
     animation: none;
   }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Goutham OS (the About section's desktop)                           */
+/* ------------------------------------------------------------------ */
+
+/* --u is one pixel of the 488 x 482 design, from the desktop's own size. */
+.about-os {
+  position: relative;
+  height: min(128vw, 640px);
+}
+@media (min-width: 768px) {
+  .about-os {
+    height: auto;
+    align-self: stretch;
+    min-height: 560px;
+  }
+}
+.os {
+  --u: min(calc(100cqw / 488), calc(100cqh / 482));
+  --tb: max(30px, calc(27 * var(--u)));
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  container-type: size;
+  font-family: Tahoma, Verdana, "Segoe UI", sans-serif;
+  color: #000;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.os-desk {
+  position: absolute;
+  inset: 0 0 var(--tb) 0;
+  background: #6d8fb8 url(/os/desktop.webp) center 62% / cover no-repeat;
+}
+.os-hit {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+.os-btn:active {
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.6), inset -1px -1px 0 rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* Desktop icons: a click selects (the label goes navy), a double-click (or
+   a tap) opens; they can be dragged about. */
+.os-icon {
+  position: absolute;
+  left: calc(22 * var(--u));
+  /* --top clears the site's fixed nav pill on wide screens */
+  top: calc(var(--top, 14px) + var(--row, 0) * max(66px, calc(50 * var(--u))));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: max(64px, calc(54 * var(--u)));
+  padding: 2px;
+  border: 0;
+  background: none;
+  cursor: default;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (min-width: 768px) {
+  .os-icon {
+    --top: max(84px, calc(14 * var(--u)));
+  }
+}
+.os-icon img {
+  width: max(34px, calc(28 * var(--u)));
+  height: auto;
+  image-rendering: pixelated;
+  transition: transform 0.35s var(--ease-spring);
+}
+.os-icon:hover img {
+  transform: translateY(-2px);
+}
+.os-icon span {
+  padding: 0 2px;
+  font-size: max(10px, calc(6.4 * var(--u)));
+  line-height: 1.2;
+  color: #fff;
+  text-align: center;
+  text-shadow: 1px 1px 1px #000, 0 0 2px #000;
+}
+.os-icon[data-selected="true"] img {
+  filter: brightness(0.7) sepia(1) hue-rotate(190deg) saturate(3);
+}
+.os-icon[data-selected="true"] span {
+  background: #0b246a;
+  text-shadow: none;
+  outline: 1px dotted #fff;
+}
+.os-icon:focus-visible {
+  outline: none;
+}
+
+/* Windows. */
+.os-window {
+  position: absolute;
+  z-index: 2;
+  width: calc(253 * var(--u));
+  aspect-ratio: 942 / 1416;
+  box-shadow: 0 calc(14 * var(--u)) calc(30 * var(--u)) rgba(0, 0, 0, 0.35);
+  transition: transform 0.35s var(--ease-out-expo), opacity 0.25s ease;
+}
+.os-paint {
+  left: calc(50% - 126.5 * var(--u) + 20 * var(--u));
+  top: calc(50% - 192.5 * var(--u));
+  animation: os-pop 0.32s var(--ease-out-expo);
+}
+.os-window[data-dragging] {
+  transition: none;
+}
+.os-window[data-state="minimized"] {
+  transform: translateY(60%) scale(0.15);
+  opacity: 0;
+  pointer-events: none;
+}
+.os-window[data-max="true"] {
+  z-index: 3;
+}
+@keyframes os-pop {
+  from { transform: scale(0.94); opacity: 0; }
+}
+
+/* Paint, over its designed frame. */
+.pt {
+  position: absolute;
+  inset: 0;
+}
+.pt-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.pt-drag {
+  position: absolute;
+  cursor: grab;
+  touch-action: none;
+}
+.os-window[data-dragging] .pt-drag {
+  cursor: grabbing;
+}
+.pt-menuwrap {
+  position: absolute;
+}
+.pt-menubtn {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pt-menubtn:hover,
+.pt-menubtn[data-open="true"] {
+  box-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.9), inset -1px -1px 0 rgba(0, 0, 0, 0.45);
+}
+.pt-menubtn[data-open="true"] {
+  box-shadow: inset 1px 1px 0 rgba(0, 0, 0, 0.45), inset -1px -1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.pt-canvas {
+  position: absolute;
+  overflow: hidden;
+  background: #fff;
+}
+.pt-stack {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  cursor: crosshair;
+  transition: transform 0.35s var(--ease-out-expo);
+}
+.pt-stack[data-tool="fill"] { cursor: cell; }
+.pt-stack[data-tool="zoom"] { cursor: zoom-in; }
+.pt-stack[data-tool="text"] { cursor: text; }
+.pt-stack canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.pt-cutout {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
+}
+.pt-text {
+  position: absolute;
+  min-width: 4em;
+  padding: 0 2px;
+  border: 1px dashed #000;
+  background: transparent;
+  font: 700 calc(9.13 * var(--u)) Tahoma, Verdana, sans-serif;
+  outline: none;
+}
+
+/* The toolbox: the chosen tool sits pressed in. */
+.pt-tool:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+.pt-tool[data-on="true"] {
+  background: rgba(255, 255, 255, 0.28);
+  box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.7), inset -2px -2px 0 rgba(255, 255, 255, 0.95);
+}
+.pt-tool[data-nope="true"] {
+  animation: pt-nope 0.4s ease;
+}
+@keyframes pt-nope {
+  25% { transform: translateX(-2px); }
+  50% { transform: translateX(2px); }
+  75% { transform: translateX(-1px); }
+}
+.pt-options {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8%;
+}
+.pt-size {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70%;
+  height: 24%;
+  border: 0;
+  background: none;
+  cursor: default;
+}
+.pt-size span {
+  width: calc(var(--s) * 0.6);
+  height: calc(var(--s) * 0.6);
+  max-width: 80%;
+  background: #000;
+}
+.pt-size[data-on="true"] {
+  background: #000080;
+}
+.pt-size[data-on="true"] span {
+  background: #fff;
+}
+.pt-swatch {
+  position: absolute;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff;
+}
+.pt-colour:hover {
+  outline: 1px solid #000;
+  outline-offset: -1px;
+}
+.pt-colour:active {
+  transform: scale(0.92);
+}
+.pt-status,
+.pt-coords {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding-left: 1%;
+  overflow: hidden;
+  font-size: max(7px, calc(4.6 * var(--u)));
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pt-coords:not(:empty) {
+  background: #bebdbd;
+}
+
+/* Menus, as Windows 98 drew them. */
+.os-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 6;
+  min-width: 170px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #dfdfdf, inset -2px -2px 0 #808080, inset 2px 2px 0 #fff, 2px 2px 4px rgba(0, 0, 0, 0.3);
+  font-size: 11px;
+  animation: os-menu 0.12s ease-out;
+}
+@keyframes os-menu {
+  from { opacity: 0; transform: translateY(-3px); }
+}
+.os-menu button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 3px 14px 3px 2px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: #000;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.os-menu button:hover,
+.os-menu button:focus-visible {
+  background: #000080;
+  color: #fff;
+  outline: none;
+}
+.os-check {
+  width: 18px;
+  text-align: center;
+}
+.os-mlabel {
+  flex: 1;
+}
+.os-keys {
+  margin-left: 22px;
+}
+.os-sep {
+  height: 2px;
+  margin: 3px 1px;
+  border-top: 1px solid #808080;
+  border-bottom: 1px solid #fff;
+}
+.os-ctx {
+  top: auto;
+}
+
+/* Dialogs. */
+.os-dialog {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 5;
+  width: max(220px, calc(170 * var(--u)));
+  transform: translate(-50%, -50%);
+  padding: 3px;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #dfdfdf, inset -2px -2px 0 #808080, inset 2px 2px 0 #fff, 4px 4px 10px rgba(0, 0, 0, 0.35);
+  font-size: 11px;
+  animation: os-pop 0.25s var(--ease-out-expo);
+}
+.os-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 3px 3px 3px 5px;
+  background: linear-gradient(90deg, #000080, #1084d0);
+  color: #fff;
+  font-weight: 700;
+}
+.os-dialog-bar button,
+.os-ok {
+  border: 0;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #fff, inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+  font: inherit;
+  color: #000;
+  cursor: default;
+}
+.os-dialog-bar button {
+  width: 16px;
+  height: 14px;
+  line-height: 12px;
+  font-weight: 700;
+}
+.os-dialog-bar button:active,
+.os-ok:active {
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #fff, inset 2px 2px 0 #808080;
+}
+.os-dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 12px 10px;
+}
+.os-dialog-body strong {
+  font-size: 12px;
+}
+.os-ok {
+  align-self: flex-end;
+  min-width: 72px;
+  margin-top: 8px;
+  padding: 4px 10px;
+}
+
+/* Taskbar. */
+.os-taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: max(4px, calc(3 * var(--u)));
+  height: var(--tb);
+  padding: 2px 3px;
+  background: #c0c0c0;
+  box-shadow: inset 0 1px 0 #dfdfdf, inset 0 2px 0 #fff;
+  font-size: max(11px, calc(6.6 * var(--u)));
+}
+.os-startbtn,
+.os-task {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: calc(100% - 4px);
+  padding: 0 6px 0 4px;
+  border: 0;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #fff, inset -2px -2px 0 #808080, inset 2px 2px 0 #dfdfdf;
+  font: inherit;
+  color: #000;
+  white-space: nowrap;
+  cursor: default;
+}
+.os-startbtn img,
+.os-task img {
+  height: 68%;
+  width: auto;
+}
+.os-startbtn[data-on="true"],
+.os-task[data-on="true"] {
+  box-shadow: inset 1px 1px 0 #0a0a0a, inset -1px -1px 0 #fff, inset 2px 2px 0 #808080, inset -2px -2px 0 #dfdfdf;
+}
+.os-task[data-on="true"] {
+  background: repeating-conic-gradient(#fff 0 25%, #c0c0c0 0 50%) 0 0 / 2px 2px;
+  font-weight: 700;
+}
+.os-task {
+  width: min(42%, calc(110 * var(--u)));
+  overflow: hidden;
+}
+.os-task span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.os-task-sep {
+  width: 2px;
+  height: 80%;
+  border-left: 1px solid #808080;
+  border-right: 1px solid #fff;
+}
+.os-tray {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: calc(100% - 4px);
+  margin-left: auto;
+  padding: 0 8px 0 4px;
+  box-shadow: inset 1px 1px 0 #808080, inset -1px -1px 0 #fff;
+  cursor: default;
+}
+.os-tray img {
+  height: 70%;
+  width: auto;
+}
+.os-clock {
+  min-width: 4.6em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Start menu. */
+.os-start {
+  position: absolute;
+  left: 2px;
+  bottom: calc(var(--tb) - 2px);
+  z-index: 8;
+  display: flex;
+  padding: 3px;
+  background: #c0c0c0;
+  box-shadow: inset -1px -1px 0 #0a0a0a, inset 1px 1px 0 #dfdfdf, inset -2px -2px 0 #808080, inset 2px 2px 0 #fff, 3px 3px 8px rgba(0, 0, 0, 0.3);
+  font-size: max(11px, calc(6.8 * var(--u)));
+  animation: os-start 0.16s ease-out;
+  transform-origin: bottom left;
+}
+@keyframes os-start {
+  from { opacity: 0; transform: translateY(8px); }
+}
+.os-start-band {
+  display: flex;
+  align-items: flex-end;
+  padding: 6px 3px;
+  background: linear-gradient(0deg, #000080, #1084d0);
+  color: #c0c0c0;
+  font-size: 1.5em;
+  letter-spacing: 0.02em;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.os-start-band b {
+  color: #fff;
+}
+.os-start ul {
+  min-width: 170px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.os-start button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 18px 5px 6px;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: #000;
+  text-align: left;
+  white-space: nowrap;
+  cursor: default;
+}
+.os-start button:hover,
+.os-start button:focus-visible {
+  background: #000080;
+  color: #fff;
+  outline: none;
+}
+.os-start img {
+  width: 24px;
+  height: auto;
+  image-rendering: pixelated;
+}
+.os-start-dot {
+  width: 24px;
+  height: 6px;
+  background: radial-gradient(circle, currentColor 2px, transparent 2.5px) center / 6px 6px no-repeat;
+}
+
+/* Shut down: the screen everyone remembers, and the way back. */
+.os-power {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border: 0;
+  background: #000;
+  cursor: pointer;
+  animation: fade-in 0.4s ease;
+}
+.os-power-text {
+  max-width: 80%;
+  color: #ff8a00;
+  font: 700 max(14px, calc(11 * var(--u))) / 1.3 Tahoma, Verdana, sans-serif;
+  text-align: center;
+}
+.os-power-hint {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+}
+.os-boot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #fff;
+  font-size: 12px;
+}
+.os-boot img {
+  width: 48px;
+  animation: os-boot 1.6s ease-in-out;
+}
+@keyframes os-boot {
+  0% { opacity: 0; transform: scale(0.8); }
+  40%, 100% { opacity: 1; transform: none; }
 }

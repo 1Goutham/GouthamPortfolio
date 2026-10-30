@@ -1,11 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
+import { useEffect, useRef, useState } from "react";
 import BracketHeading from "./layout/bracket-heading";
-
-// Drop your new portrait in at /public/about-portrait.png to swap the photo.
-const PORTRAIT_SRC = "/about-portrait.png";
+import Desktop from "./os/desktop";
 
 // The facts, in the order a reader wants them: what now, what before, and the degree.
 const FACTS = [
@@ -15,30 +12,6 @@ const FACTS = [
 ];
 
 export default function About() {
-  // The portrait has depth: it drifts a few pixels against the cursor, like
-  // a print behind glass, and settles back on leave.
-  const frameRef = useRef(null);
-  const raf = useRef(0);
-  const onPointerMove = useCallback((e) => {
-    const el = frameRef.current;
-    if (!el || e.pointerType !== "mouse") return;
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - 0.5;
-    const y = (e.clientY - r.top) / r.height - 0.5;
-    if (raf.current) return;
-    raf.current = requestAnimationFrame(() => {
-      raf.current = 0;
-      el.style.setProperty("--ax", `${(-x * 14).toFixed(1)}px`);
-      el.style.setProperty("--ay", `${(-y * 10).toFixed(1)}px`);
-    });
-  }, []);
-  const onPointerLeave = useCallback(() => {
-    const el = frameRef.current;
-    if (!el) return;
-    el.style.setProperty("--ax", "0px");
-    el.style.setProperty("--ay", "0px");
-  }, []);
-
   // The copy rises in line by line once the section is in view (see .about-rise).
   const ref = useRef(null);
   const [inView, setInView] = useState(false);
@@ -96,23 +69,9 @@ export default function About() {
         </div>
       </div>
 
-      {/* Portrait: full-bleed on desktop, a slow zoom and brighten on hover. */}
-      <div className="flex w-full items-center justify-center px-6 pb-10 md:w-1/2 md:items-stretch md:justify-end md:p-0">
-        <div
-          ref={frameRef}
-          onPointerMove={onPointerMove}
-          onPointerLeave={onPointerLeave}
-          className="about-portrait relative h-[340px] w-full overflow-hidden rounded-xl md:h-auto md:self-stretch md:rounded-none"
-        >
-          <Image
-            className="object-cover object-left-top md:object-center"
-            src={PORTRAIT_SRC}
-            alt="Goutham - AI fullstack developer with a design foundation"
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            quality={88}
-          />
-        </div>
+      {/* Goutham OS: a little desktop that works (see os/desktop.js). */}
+      <div className="about-os w-full md:w-1/2">
+        <Desktop />
       </div>
     </div>
   );
