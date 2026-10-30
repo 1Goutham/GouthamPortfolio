@@ -1469,66 +1469,190 @@ video {
   color: #000;
 }
 
-/* Skills radar. The artwork is a white square on a white ground, so no
-   shadow or tilt (both outline the square). Instead the chart's own circle
-   gets a radar sweep that turns while hovered, and a ring that pulses out
-   once on entry. --cx/--cy/--r locate the circle inside the artwork. */
-.skills-radar {
-  /* The ring's centre and radius, measured from the artwork (1220x1242). */
-  --cx: 49.9%;
-  --cy: 50.7%;
-  --r: 37.7%;
-}
-.skills-radar img {
+/* Skills: the portrait stands on the section's bottom edge with three glass
+   cards floating on him. --px/--py (the eased cursor, -1..1) drift the
+   portrait a little and each card by its --d, so they read as sitting at
+   different depths; a card tilts towards the cursor, lifts on hover, and can
+   be pulled off and let go. Geometry is the mock at 1440 wide, in --u. */
+.sk {
   position: relative;
-  z-index: 0;
-  transition: transform 0.9s var(--ease-out-expo);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  overflow: hidden;
+  background: #fff;
+  container-type: inline-size;
 }
-.skills-radar:hover img {
-  transform: scale(1.015);
+/* --u lives on the children: cq units resolve against .sk only from inside it. */
+.sk > * {
+  --u: min(calc(100cqw / 1440), 1.1px);
 }
-.skills-sweep,
-.skills-ring {
+.sk-text {
+  order: 1;
+  padding: 56px 24px 8px;
+}
+.sk-para {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.7;
+}
+.sk-art {
+  order: 2;
+  display: flex;
+  justify-content: center;
+  padding-top: 20px;
+}
+.sk-stage {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  width: min(78vw, 360px);
+  aspect-ratio: 1195 / 1444;
+  margin-bottom: -1.2%;
+  perspective: 900px;
+}
+.sk-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform: translate3d(calc(var(--px) * -6px), calc(var(--py) * -4px), 0);
+}
+.sk-card {
+  --dx: 0px;
+  --dy: 0px;
+  --tilt: 0deg;
   position: absolute;
-  left: var(--cx);
-  top: var(--cy);
-  width: calc(var(--r) * 2);
-  aspect-ratio: 1;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
+  left: var(--x);
+  top: var(--y);
   z-index: 1;
-  mix-blend-mode: multiply;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  translate: var(--dx) calc(-50% + var(--dy));
+  rotate: var(--tilt);
+  transition: translate 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), rotate 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.skills-sweep {
-  background: conic-gradient(
-    from 0deg,
-    rgba(0, 0, 0, 0) 0deg,
-    rgba(0, 0, 0, 0.12) 46deg,
-    rgba(0, 0, 0, 0.2) 60deg,
-    rgba(0, 0, 0, 0) 61deg,
-    rgba(0, 0, 0, 0) 360deg
-  );
+.sk-card[data-drag] {
+  z-index: 2;
+  cursor: grabbing;
+  transition: none;
+}
+.sk-card-in {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+  padding: 0.34em 0.55em;
+  border-radius: 0.58em;
+  background: rgba(120, 120, 120, 0.58);
+  -webkit-backdrop-filter: blur(6px) saturate(1.2);
+  backdrop-filter: blur(6px) saturate(1.2);
+  box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.28), 0 4px 14px -6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font: 700 10px/1.35 "Anonymous Pro", monospace;
+  white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transform: translate3d(calc(var(--px) * var(--d) * 14px), calc(var(--py) * var(--d) * 10px), 0)
+    rotateY(calc(var(--px) * 14deg)) rotateX(calc(var(--py) * -12deg)) translateY(10px) scale(0.9);
+  filter: blur(4px);
+  transition: opacity 0.7s ease, filter 0.7s ease, transform 0.9s var(--ease-out-expo), background-color 0.35s ease,
+    box-shadow 0.35s ease;
+  transition-delay: calc(0.25s + var(--i) * 0.14s), calc(0.25s + var(--i) * 0.14s), calc(0.25s + var(--i) * 0.14s), 0s, 0s;
 }
-@keyframes skills-turn {
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-.skills-radar:hover .skills-sweep {
+.sk-stage[data-in] .sk-card-in {
   opacity: 1;
-  animation: skills-turn 3.2s linear infinite;
+  filter: none;
+  transform: translate3d(calc(var(--px) * var(--d) * 14px), calc(var(--py) * var(--d) * 10px), 0)
+    rotateY(calc(var(--px) * 14deg)) rotateX(calc(var(--py) * -12deg));
 }
-.skills-ring {
-  border: 1px solid rgba(0, 0, 0, 0.35);
-  opacity: 0;
+/* After the entrance the transform follows the cursor directly (it is
+   already eased in JS), and only hover/drag animate. */
+.sk-stage[data-in] .sk-card-in {
+  transition: opacity 0.7s ease, filter 0.7s ease, transform 0.35s var(--ease-out-expo), background-color 0.35s ease,
+    box-shadow 0.35s ease;
+  transition-delay: calc(0.25s + var(--i) * 0.14s), calc(0.25s + var(--i) * 0.14s), 0s, 0s, 0s;
 }
-@keyframes skills-ping {
-  0%   { transform: translate(-50%, -50%) scale(0.2); opacity: 0.6; }
-  100% { transform: translate(-50%, -50%) scale(1.02); opacity: 0; }
+.sk-b {
+  transition: transform 0.45s var(--ease-out-expo);
 }
-.skills-radar:hover .skills-ring {
-  animation: skills-ping 1.4s var(--ease-out-expo) both;
+@media (hover: hover) {
+  .sk-card:hover .sk-card-in,
+  .sk-card[data-drag] .sk-card-in {
+    background-color: rgba(20, 20, 20, 0.78);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.35), 0 14px 28px -10px rgba(0, 0, 0, 0.45);
+    transform: translate3d(calc(var(--px) * var(--d) * 14px), calc(var(--py) * var(--d) * 10px - 3px), 0)
+      rotateY(calc(var(--px) * 14deg)) rotateX(calc(var(--py) * -12deg)) scale(1.06);
+  }
+  .sk-card:hover .sk-b:first-child { transform: translateX(-3px); }
+  .sk-card:hover .sk-b:last-child { transform: translateX(3px); }
+}
+/* Touch: no cursor to follow, so the cards bob gently on their own. */
+@media (hover: none) {
+  .sk-stage[data-in] .sk-card {
+    animation: sk-bob 4.6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -1.5s);
+  }
+}
+@keyframes sk-bob {
+  0%, 100% { translate: var(--dx) calc(-50% + var(--dy)); }
+  50% { translate: var(--dx) calc(-50% + var(--dy) - 4px); }
+}
+.sk-card[data-drag] {
+  animation: none !important;
+}
+@media (min-width: 768px) {
+  .sk {
+    display: block;
+    aspect-ratio: 1440 / 615;
+    min-height: 470px;
+    max-height: calc(615 * 1.1px);
+  }
+  /* Centred on the section, so on screens wider than the mock it stays together. */
+  .sk-text {
+    position: absolute;
+    left: calc(50% - 32 * var(--u));
+    top: 50%;
+    width: calc(610 * var(--u));
+    padding: 0;
+    transform: translateY(-50%);
+  }
+  .sk-h {
+    font-size: max(28px, calc(46.4 * var(--u)));
+  }
+  .sk-tagline {
+    margin-top: calc(22 * var(--u));
+    font-size: max(19px, calc(33 * var(--u)));
+  }
+  .sk-para {
+    margin-top: calc(20 * var(--u));
+    font-size: max(14px, calc(22.8 * var(--u)));
+    line-height: 1.24;
+    text-align: justify;
+  }
+  .sk-art {
+    position: absolute;
+    left: calc(50% - 640 * var(--u));
+    bottom: 0;
+    padding: 0;
+  }
+  .sk-stage {
+    width: calc(482 * var(--u));
+    margin-bottom: calc(-6.5 * var(--u));
+  }
+  .sk-card-in {
+    font-size: max(9px, calc(12 * var(--u)));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk-card-in,
+  .sk-stage[data-in] .sk-card-in {
+    transition: background-color 0.3s ease;
+    filter: none;
+    opacity: 1;
+    transform: none;
+  }
+  .sk-card { animation: none !important; }
 }
 
 /* Skills tagline: each word underlines in turn, left to right. */
