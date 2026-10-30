@@ -30,8 +30,6 @@ const START = [
   { label: "Arcade", open: "/arcade" },
   { label: "1G-works", open: "/works" },
   { label: "Contact Goutham", open: "#contact" },
-  { sep: true },
-  { label: "Shut Down…", open: "shutdown" },
 ];
 
 const VEIL_MS = 420;
@@ -74,7 +72,6 @@ export default function Desktop() {
   const [start, setStart] = useState(false);
   const [ctx, setCtx] = useState(null); // desktop right-click menu at { x, y }
   const [dialog, setDialog] = useState(null); // "about-paint" | "props"
-  const [power, setPower] = useState("on"); // on | off | booting
   const { time, full } = useIST();
 
   // ------------------------------------------------------------- opening
@@ -102,8 +99,7 @@ export default function Desktop() {
     else if (what === "paint") {
       setPaint("open");
       setActive("paint");
-    } else if (what === "shutdown") shutDown();
-    else go(what);
+    } else go(what);
   };
 
   // ------------------------------------------------------------- icons
@@ -185,20 +181,6 @@ export default function Desktop() {
     else setActive("paint");
   };
 
-  // ------------------------------------------------------------- power
-  const shutDown = () => {
-    setPower("off");
-  };
-  const powerOn = () => {
-    setPower("booting");
-    setTimeout(() => {
-      setPower("on");
-      setPaint("open");
-      setPaintPos(null);
-      setMaxed(false);
-      setActive("paint");
-    }, 1600);
-  };
 
   // Menus close on a click elsewhere, or Escape.
   useEffect(() => {
@@ -348,23 +330,6 @@ export default function Desktop() {
           </ul>
         )}
 
-        {/* Shut down, and back. */}
-        {power !== "on" && (
-          <button type="button" className="os-power" data-state={power} onClick={power === "off" ? powerOn : undefined}>
-            {power === "off" ? (
-              <>
-                <span className="os-power-text">It&rsquo;s now safe to turn off your computer.</span>
-                <span className="os-power-hint">(or click to turn it back on)</span>
-              </>
-            ) : (
-              <span className="os-boot">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/os/flag.webp" alt="" />
-                <span>Starting Goutham OS…</span>
-              </span>
-            )}
-          </button>
-        )}
       </div>
 
       {/* Start menu. */}
