@@ -9,8 +9,8 @@ import { useCallback, useEffect, useImperativeHandle, useRef, useState } from "r
  * The picture is three layers: paint, then Goutham (cut out, with a soft
  * shadow), then ink. Start a stroke on him and it draws on him; start it
  * anywhere else and it goes behind him (Options can fix it to one or the
- * other). Undo, the tools, the colours, the menus and the status line all
- * work; Save downloads the picture.
+ * other). Undo, all sixteen tools, the colours, the menus and the status
+ * line work; Save downloads the picture.
  */
 
 // The frame, in its own pixels.
@@ -69,10 +69,8 @@ const cell = (i) => {
   const r = Math.floor(i / 2);
   return [24 + c * 76, 125 + r * 77, 24 + c * 76 + 76, 125 + r * 77 + 77];
 };
-// Not in this version: they say so, kindly.
-const LATER = new Set(["free", "select", "curve", "polygon"]);
 // Sizes (canvas px) offered in the options box, small to large.
-const SIZES = { brush: [6, 12, 22], eraser: [10, 20, 34], airbrush: [12, 22, 36], line: [3, 7, 12], rect: [3, 7, 12], ellipse: [3, 7, 12], round: [3, 7, 12] };
+const SIZES = { brush: [6, 12, 22], eraser: [10, 20, 34], airbrush: [12, 22, 36], line: [3, 7, 12], curve: [3, 7, 12], polygon: [3, 7, 12], rect: [3, 7, 12], ellipse: [3, 7, 12], round: [3, 7, 12] };
 
 const PALETTE = [
   "#000000", "#5f5e5e", "#7e7e7e", "#9b0101", "#a85b03", "#e4e132", "#0c8a18", "#08b56f", "#06727d", "#299efc", "#0e6afe", "#0227c7", "#5111f9", "#8e02a1", "#63350f",
@@ -119,8 +117,13 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
   const [flip, setFlip] = useState(false);
   const [invert, setInvert] = useState(false);
   const [text, setText] = useState(null); // { x, y, layer, value }
-  const [nope, setNope] = useState(null);
   const undo = useRef([]);
+  // The tools that take more than one gesture: a lifted selection, a curve
+  // waiting to be bent, a polygon still being clicked out.
+  const sel = useRef(null);
+  const [selOn, setSelOn] = useState(false);
+  const curve = useRef(null);
+  const poly = useRef(null);
   const drag = useRef(null);
   const spray = useRef(0);
 
@@ -160,11 +163,21 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     if (undo.current.length > 8) undo.current.shift();
   };
   const doUndo = useCallback(() => {
+    // A selection, curve or polygon in progress is dropped first; the lift's
+    // snapshot below puts back what it took.
+    if (sel.current || curve.current || poly.current) {
+      sel.current = curve.current = poly.current = null;
+      setSelOn(false);
+      previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+    }
     const u = undo.current.pop();
     if (!u) return setStatus("Nothing to undo.");
     u.canvas.getContext("2d").putImageData(u.data, 0, 0);
   }, []);
   const clearAll = useCallback(() => {
+    sel.current = curve.current = poly.current = null;
+    setSelOn(false);
+    previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
     snapshot(backRef.current);
     snapshot(frontRef.current);
     const b = backRef.current.getContext("2d");
@@ -307,6 +320,152 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     setTool(prevTool.current);
   };
 
+
+  // --------------------------------------------------- selections
+  // A selection is lifted off its layer into its own canvas (what's left
+  // behind is the background colour, or clear on the ink layer), floats on
+  // the preview with marching ants, moves with the pointer, and is put down
+  // again on a click outside it, a new tool, or Escape. Delete throws it away.
+  const lift = (layer, path, bx) => {
+    const x = Math.max(0, Math.floor(bx.x0));
+    const y = Math.max(0, Math.floor(bx.y0));
+    const w = Math.min(CW, Math.ceil(bx.x1)) - x;
+    const h = Math.min(CH, Math.ceil(bx.y1)) - y;
+    if (w < 3 || h < 3) return false;
+    snapshot(layer);
+    const img = document.createElement("canvas");
+    img.width = w;
+    img.height = h;
+    const ic = img.getContext("2d");
+    ic.translate(-x, -y);
+    ic.clip(path);
+    ic.drawImage(layer, 0, 0);
+    const lc = layer.getContext("2d");
+    lc.save();
+    lc.clip(path);
+    if (layer === backRef.current) {
+      lc.fillStyle = bg;
+      lc.fillRect(x, y, w, h);
+    } else lc.clearRect(x, y, w, h);
+    lc.restore();
+    sel.current = { layer, img, path, x, y, w, h, dx: 0, dy: 0, ants: 0 };
+    setSelOn(true);
+    setStatus("Drag the selection to move it; hold Ctrl to leave a copy. Delete removes it.");
+    return true;
+  };
+  const drawSel = () => {
+    const sl = sel.current;
+    const pv = previewRef.current.getContext("2d");
+    pv.clearRect(0, 0, CW, CH);
+    if (!sl) return;
+    pv.drawImage(sl.img, sl.x + sl.dx, sl.y + sl.dy);
+    pv.save();
+    pv.translate(sl.dx, sl.dy);
+    pv.lineWidth = 1.5;
+    pv.setLineDash([6, 5]);
+    pv.strokeStyle = "#fff";
+    pv.stroke(sl.path);
+    pv.strokeStyle = "#000";
+    pv.lineDashOffset = sl.ants;
+    pv.stroke(sl.path);
+    pv.restore();
+  };
+  const inSel = (p) => {
+    const sl = sel.current;
+    if (!sl) return false;
+    return previewRef.current.getContext("2d").isPointInPath(sl.path, p.x - sl.dx, p.y - sl.dy);
+  };
+  const putDown = () => {
+    const sl = sel.current;
+    if (!sl) return;
+    sl.layer.getContext("2d").drawImage(sl.img, sl.x + sl.dx, sl.y + sl.dy);
+    sel.current = null;
+    setSelOn(false);
+    previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+  };
+  const dropSel = () => {
+    sel.current = null;
+    setSelOn(false);
+    previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+  };
+
+  // The ants march while there's a selection.
+  useEffect(() => {
+    if (!selOn) return;
+    let raf = 0;
+    let t0 = 0;
+    const loop = (t) => {
+      if (t - t0 > 70 && sel.current) {
+        t0 = t;
+        sel.current.ants = (sel.current.ants + 1) % 11;
+        drawSel();
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [selOn]);
+
+  // --------------------------------------------------- curve and polygon
+  // Curve: drag a straight line, then click (or drag) twice to bend it.
+  // Polygon: drag the first side, click each corner after; click the first
+  // corner, double-click, or press Enter to close it.
+  const drawCurve = (ctx, c, w) => {
+    ctx.save();
+    ctx.strokeStyle = c.ink;
+    ctx.lineWidth = w;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(c.a.x, c.a.y);
+    const c1 = c.c1 || c.a;
+    const c2 = c.c2 || c.c1 || c.b;
+    ctx.bezierCurveTo(c1.x, c1.y, c2.x, c2.y, c.b.x, c.b.y);
+    ctx.stroke();
+    ctx.restore();
+  };
+  const drawPoly = (ctx, pg, w, closed) => {
+    const pts = closed ? pg.pts : [...pg.pts, pg.cur];
+    ctx.save();
+    ctx.strokeStyle = pg.ink;
+    ctx.lineWidth = w;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    pts.forEach((q, i) => (i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y)));
+    if (closed) ctx.closePath();
+    ctx.stroke();
+    ctx.restore();
+  };
+  const previewOf = (fn) => {
+    const pv = previewRef.current.getContext("2d");
+    pv.clearRect(0, 0, CW, CH);
+    fn(pv);
+  };
+  const finishCurve = () => {
+    const c = curve.current;
+    if (!c) return;
+    curve.current = null;
+    previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+    drawCurve(c.layer.getContext("2d"), c, c.w);
+  };
+  const finishPoly = () => {
+    const pg = poly.current;
+    if (!pg) return;
+    poly.current = null;
+    previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+    if (pg.pts.length < 2) return;
+    snapshot(pg.layer);
+    drawPoly(pg.layer.getContext("2d"), pg, pg.w, pg.pts.length > 2);
+    setStatus(DEFAULT_STATUS);
+  };
+  // Anything half-done is finished before the next thing starts.
+  const settle = () => {
+    putDown();
+    finishCurve();
+    finishPoly();
+  };
+
   const onDown = (e) => {
     if (e.button !== 0 && e.button !== 2) return;
     e.preventDefault();
@@ -314,7 +473,54 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     const right = e.button === 2;
     const colour = right ? bg : fg;
     const p = at(e);
-    if (LATER.has(tool)) return;
+    const capture = () => e.currentTarget.setPointerCapture(e.pointerId);
+
+    if (tool === "select" || tool === "free") {
+      if (inSel(p)) {
+        // Ctrl leaves a copy where it was.
+        if (e.ctrlKey || e.metaKey) sel.current.layer.getContext("2d").drawImage(sel.current.img, sel.current.x + sel.current.dx, sel.current.y + sel.current.dy);
+        capture();
+        drag.current = { mode: "move", from: p, dx: sel.current.dx, dy: sel.current.dy, id: e.pointerId };
+        return;
+      }
+      putDown();
+      capture();
+      drag.current = { mode: tool, start: p, pts: [p], id: e.pointerId, layer: layerFor(p.x, p.y) };
+      return;
+    }
+    if (tool === "curve") {
+      const c = curve.current;
+      capture();
+      if (c) {
+        // First click bends it towards both handles, the second sets the other.
+        if (!c.c1) c.c1 = p;
+        else c.c2 = p;
+        drag.current = { mode: "bend", id: e.pointerId };
+        previewOf((pv) => drawCurve(pv, c, c.w));
+        return;
+      }
+      const layer = layerFor(p.x, p.y);
+      snapshot(layer);
+      curve.current = { layer, a: p, b: p, ink: colour, w: width() };
+      drag.current = { mode: "curve", id: e.pointerId };
+      return;
+    }
+    if (tool === "polygon") {
+      const pg = poly.current;
+      if (pg) {
+        const first = pg.pts[0];
+        if (pg.pts.length > 2 && Math.hypot(p.x - first.x, p.y - first.y) < 14) return finishPoly();
+        pg.pts.push(p);
+        pg.cur = p;
+        previewOf((pv) => drawPoly(pv, pg, pg.w));
+        return;
+      }
+      capture();
+      poly.current = { layer: layerFor(p.x, p.y), pts: [p], cur: p, ink: colour, w: width() };
+      drag.current = { mode: "polyfirst", id: e.pointerId };
+      setStatus("Click each corner. Click the first one, double-click or press Enter to close it.");
+      return;
+    }
     if (tool === "picker") return pick(p, right);
     if (tool === "zoom") {
       setZoom((z) => (z ? null : p));
@@ -341,9 +547,44 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
   const onMove = (e) => {
     const p = at(e);
     if (p.x >= 0 && p.y >= 0 && p.x <= CW && p.y <= CH) setCoords(`${Math.round(p.x)},${Math.round(p.y)}`);
+    // Over a selection the pointer offers to move it.
+    if (sel.current || stackRef.current.style.cursor) stackRef.current.style.cursor = inSel(p) ? "move" : "";
+    const pg = poly.current;
+    if (pg && !drag.current) {
+      pg.cur = p;
+      previewOf((pv) => drawPoly(pv, pg, pg.w));
+    }
     const d = drag.current;
     if (!d || e.pointerId !== d.id) return;
-    if (tool === "pencil" || tool === "brush" || tool === "eraser") {
+    if (d.mode === "move") {
+      sel.current.dx = d.dx + p.x - d.from.x;
+      sel.current.dy = d.dy + p.y - d.from.y;
+      drawSel();
+    } else if (d.mode === "select" || d.mode === "free") {
+      d.last = p;
+      if (d.mode === "free") d.pts.push(p);
+      previewOf((pv) => {
+        pv.save();
+        pv.lineWidth = 1.5;
+        pv.setLineDash([6, 5]);
+        pv.strokeStyle = "#000";
+        pv.beginPath();
+        if (d.mode === "select") pv.rect(d.start.x, d.start.y, p.x - d.start.x, p.y - d.start.y);
+        else d.pts.forEach((q, i) => (i ? pv.lineTo(q.x, q.y) : pv.moveTo(q.x, q.y)));
+        pv.stroke();
+        pv.restore();
+      });
+      return;
+    } else if (d.mode === "curve" || d.mode === "bend") {
+      const c = curve.current;
+      if (d.mode === "curve") c.b = p;
+      else if (c.c2) c.c2 = p;
+      else c.c1 = p;
+      previewOf((pv) => drawCurve(pv, c, c.w));
+    } else if (d.mode === "polyfirst") {
+      pg.cur = p;
+      previewOf((pv) => drawPoly(pv, pg, pg.w));
+    } else if (tool === "pencil" || tool === "brush" || tool === "eraser") {
       stroke(d.ctx, d.last, p, tool === "pencil" ? 3 : width(), d.ink, d.erase);
     } else if (tool === "airbrush") {
       sprayAt(d.ctx, p, d.ink);
@@ -358,7 +599,41 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     const d = drag.current;
     if (!d || e.pointerId !== d.id) return;
     clearInterval(spray.current);
-    if (["line", "rect", "ellipse", "round"].includes(tool)) {
+    if (d.mode === "select" || d.mode === "free") {
+      previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
+      const end = at(e);
+      const path = new Path2D();
+      let bx;
+      if (d.mode === "select") {
+        const x0 = Math.min(d.start.x, end.x);
+        const y0 = Math.min(d.start.y, end.y);
+        const x1 = Math.max(d.start.x, end.x);
+        const y1 = Math.max(d.start.y, end.y);
+        path.rect(x0, y0, x1 - x0, y1 - y0);
+        bx = { x0, y0, x1, y1 };
+      } else {
+        d.pts.forEach((q, i) => (i ? path.lineTo(q.x, q.y) : path.moveTo(q.x, q.y)));
+        path.closePath();
+        const xs = d.pts.map((q) => q.x);
+        const ys = d.pts.map((q) => q.y);
+        bx = { x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) };
+      }
+      lift(d.layer, path, bx);
+    } else if (d.mode === "curve") {
+      const c = curve.current;
+      if (Math.hypot(c.b.x - c.a.x, c.b.y - c.a.y) < 3) curve.current = null;
+      else setStatus("Now click or drag to bend the curve, twice.");
+    } else if (d.mode === "bend") {
+      if (curve.current?.c2) {
+        finishCurve();
+        setStatus(DEFAULT_STATUS);
+      }
+    } else if (d.mode === "polyfirst") {
+      const pg = poly.current;
+      const p = at(e);
+      if (Math.hypot(p.x - pg.pts[0].x, p.y - pg.pts[0].y) > 3) pg.pts.push(p);
+      pg.cur = p;
+    } else if (["line", "rect", "ellipse", "round"].includes(tool)) {
       previewRef.current.getContext("2d").clearRect(0, 0, CW, CH);
       shape(d.ctx, tool, d.start, at(e), width(), d.ink);
     }
@@ -379,13 +654,8 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     });
   };
 
-  const chooseTool = (id, label) => {
-    if (LATER.has(id)) {
-      setNope(id);
-      setTimeout(() => setNope(null), 450);
-      setStatus(`${label} isn't in this version. The pencil is, though!`);
-      return;
-    }
+  const chooseTool = (id) => {
+    settle();
     if (id === "picker" && tool !== "picker") prevTool.current = tool;
     else prevTool.current = id;
     setTool(id);
@@ -397,6 +667,15 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     if (!active) return;
     const onKey = (e) => {
       if (e.target.closest?.("input, textarea")) return;
+      if (sel.current && (e.key === "Delete" || e.key === "Backspace")) {
+        e.preventDefault();
+        return dropSel();
+      }
+      if (e.key === "Escape" || e.key === "Enter") {
+        if (sel.current) putDown();
+        if (curve.current) finishCurve();
+        if (poly.current) finishPoly();
+      }
       const mod = e.metaKey || e.ctrlKey;
       if (!mod) return;
       const k = e.key.toLowerCase();
@@ -408,6 +687,8 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
+    // The finishers only touch refs, so the first ones stay good.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, doUndo, save]);
 
   // Menus close on a click elsewhere, or Escape.
@@ -521,6 +802,7 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
           onPointerMove={onMove}
           onPointerUp={onUp}
           onPointerCancel={onUp}
+          onDoubleClick={() => tool === "polygon" && finishPoly()}
           onPointerLeave={() => setCoords("")}
         >
           <canvas ref={backRef} width={CW} height={CH} />
@@ -558,10 +840,9 @@ export default function Paint({ api, onClose, onMinimize, onMaximize, onTitleDow
           className="os-hit pt-tool"
           style={box(cell(i))}
           data-on={tool === id}
-          data-nope={nope === id}
           aria-label={label}
           aria-pressed={tool === id}
-          onClick={() => chooseTool(id, label)}
+          onClick={() => chooseTool(id)}
           onMouseEnter={() => setStatus(help)}
           onMouseLeave={() => setStatus(DEFAULT_STATUS)}
         />
