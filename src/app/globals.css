@@ -1491,11 +1491,6 @@ video {
   order: 1;
   padding: 56px 24px 8px;
 }
-.sk-para {
-  margin-top: 12px;
-  font-size: 15px;
-  line-height: 1.7;
-}
 .sk-art {
   order: 2;
   display: flex;
@@ -1613,22 +1608,9 @@ video {
     position: absolute;
     left: calc(50% - 32 * var(--u));
     top: 50%;
-    width: calc(610 * var(--u));
+    width: min(calc(610 * var(--u)), 28rem);
     padding: 0;
     transform: translateY(-50%);
-  }
-  .sk-h {
-    font-size: max(28px, calc(46.4 * var(--u)));
-  }
-  .sk-tagline {
-    margin-top: calc(22 * var(--u));
-    font-size: max(19px, calc(33 * var(--u)));
-  }
-  .sk-para {
-    margin-top: calc(20 * var(--u));
-    font-size: max(14px, calc(22.8 * var(--u)));
-    line-height: 1.24;
-    text-align: justify;
   }
   .sk-art {
     position: absolute;
