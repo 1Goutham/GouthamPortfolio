@@ -42,6 +42,7 @@ export const SITE_TARGETS: SiteTarget[] = [
 
   // Pages
   { id: 'projects-page', label: 'Projects page', path: '/projects', description: 'The full projects page with every product in detail.', words: ['project page', 'all projects', 'projects page'] },
+  { id: 'case-studies', label: 'Case studies', path: '/casestudies', description: 'A case file of every product (Ideako, ZtudyLock, FabricNest, IdeaGuard AI and this portfolio): the problem, what was built, how it flows and the decisions behind it.', words: ['case study', 'case studies', 'process', 'how you built', 'decisions'] },
   { id: 'beyond-page', label: 'Beyond', path: '/beyond', description: 'His personal story: from freelance design to code to AI.', words: ['story', 'beyond', 'journey', 'personal'] },
   { id: 'arcade', label: 'Arcade', path: '/arcade', description: 'Five small retro games starring Goutham.', words: ['game', 'arcade', 'play', 'retro'] },
   { id: 'margin-page', label: 'Margin', path: '/margin', description: 'Margin by 1Gartlab: a drawing playground where you can sketch, send it to him, or pin it to the wall of visitor sketches.', words: ['draw', 'margin', 'sketch', 'art', 'paint', '1gartlab', 'wall', 'gallery'] },

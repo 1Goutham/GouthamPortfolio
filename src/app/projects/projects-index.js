@@ -391,6 +391,11 @@ export default function ProjectsIndex() {
               <span className="bracket-link-text">Back home</span>
               <span className="bracket-link-r" aria-hidden="true">]</span>
             </TransitionLink>
+            <TransitionLink href="/casestudies" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
+              <span className="bracket-link-l" aria-hidden="true">[</span>
+              <span className="bracket-link-text">Case studies</span>
+              <span className="bracket-link-r" aria-hidden="true">]</span>
+            </TransitionLink>
             <TransitionLink href="/#contact" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
               <span className="bracket-link-text">Let&rsquo;s talk</span>
