@@ -10,6 +10,7 @@ export const CASES = [
     art: "notebook",
     icon: "/ideako.png",
     tile: "#efeeea",
+    bare: true,
     screen: "/Ideakoss.jpg",
     live: "https://ideako.vercel.app/",
     code: "https://github.com/1Goutham/Ideako",
