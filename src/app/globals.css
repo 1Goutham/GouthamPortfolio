@@ -5591,3 +5591,668 @@ a:focus-visible .mt-pill-fill {
   background: radial-gradient(circle, currentColor 2px, transparent 2.5px) center / 6px 6px no-repeat;
 }
 
+/* ------------------------------------------------------------------ */
+/*  Case Studies                                                       */
+/* ------------------------------------------------------------------ */
+
+/* Card sizes are in --q, a hundredth of the folder's width. Registered, so
+   it computes to px and can be handed to the card that flies across. */
+@property --q {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 8px;
+}
+
+.cs-page {
+  --ink: #161616;
+  --muted: #6b6a66;
+  --faint: #a3a29d;
+  --rule: rgba(0, 0, 0, 0.09);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  position: relative;
+  overflow-x: clip;
+  background: #f3f2ef;
+}
+
+/* Entrances: the title, the folder sliding in, the cards laid on it. */
+.cs-page[data-ready="false"] .cs-rise {
+  opacity: 0;
+}
+.cs-page[data-ready="true"] .cs-rise {
+  animation: cs-rise 1s var(--ease-out-expo) backwards;
+  animation-delay: calc(var(--i, 0) * 160ms);
+}
+@keyframes cs-rise {
+  from { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+}
+.cs-page[data-ready="true"] .cs-folder.cs-rise {
+  animation-name: cs-folder-in;
+  animation-duration: 1.3s;
+}
+@keyframes cs-folder-in {
+  from { opacity: 0; transform: translateX(10%) rotate(2deg); }
+}
+
+/* ---- stage ---- */
+.cs-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin-top: 36px;
+  padding-bottom: 40px;
+}
+.cs-left {
+  order: 2;
+  padding: 48px 24px 96px;
+}
+.cs-right {
+  order: 1;
+}
+@media (min-width: 768px) {
+  .cs-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 46fr) minmax(0, 54fr);
+    align-items: start;
+    margin-top: 80px;
+    padding-bottom: 120px;
+  }
+  .cs-left {
+    order: 1;
+    padding: 64px 5vw 140px max(24px, 8.5vw);
+    min-height: min(84vh, 880px);
+  }
+  .cs-right {
+    order: 2;
+    position: sticky;
+    top: 96px;
+  }
+}
+
+/* ---- the folder ---- */
+.cs-folder {
+  --fx: 0;
+  --fy: 0;
+  --lx: 50%;
+  --ly: 30%;
+  position: relative;
+  width: 100%;
+  height: 150vw;
+  container-type: size;
+}
+@media (min-width: 768px) {
+  .cs-folder {
+    width: calc(100% + 2vw);
+    height: clamp(580px, 82vh, 860px);
+  }
+}
+.cs-folder-back,
+.cs-folder-tab {
+  position: absolute;
+  background: var(--grain), linear-gradient(160deg, #dcd8d0, #cdc8bf);
+  background-blend-mode: soft-light, normal;
+  box-shadow: 0 30px 60px -30px rgba(40, 32, 20, 0.35);
+}
+.cs-folder-back {
+  left: 6cqw;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 2.4cqw 0 0 0;
+}
+.cs-folder-tab {
+  left: 0;
+  top: 3%;
+  width: 10cqw;
+  height: 30%;
+  border-radius: 2.2cqw 0 0 2.2cqw;
+}
+.cs-sheet {
+  position: absolute;
+  left: 9cqw;
+  top: 4.5%;
+  right: -3cqw;
+  bottom: -3%;
+  background-color: #f7f6f3;
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.045) 1px, transparent 1px);
+  background-size: 1.4cqw 1.4cqw;
+  transform: rotate(-1.2deg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+.cs-pocket {
+  /* Here, not on the folder: cq units measure the container from inside it.
+     Bound by the height too, so the cards always fit the pocket. */
+  --q: min(1cqw, 1.05cqh);
+  position: absolute;
+  left: 13cqw;
+  top: 9.5%;
+  right: -3cqw;
+  bottom: -4%;
+  overflow: hidden;
+  background: var(--grain), linear-gradient(170deg, #d3cfc6, #c6c1b7);
+  background-blend-mode: soft-light, normal;
+  transform: rotate(-1.2deg);
+  box-shadow: inset 10px 10px 22px -16px rgba(0, 0, 0, 0.4);
+}
+/* A soft light that follows the pointer across the folder. */
+.cs-light {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at var(--lx) var(--ly), rgba(255, 255, 255, 0.45), transparent 42%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+  transition: background-position 0.3s ease;
+}
+.cs-contents {
+  position: absolute;
+  right: 9cqw;
+  bottom: 9%;
+  font-size: max(8px, calc(1 * var(--q)));
+
+  font-family: var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.42);
+}
+
+/* ---- the cards ---- */
+.cs-cards {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(2, calc(21 * var(--q)));
+  column-gap: calc(8 * var(--q));
+  row-gap: calc(3 * var(--q));
+  padding: 6% 0 0 8%;
+}
+@media (max-width: 767px) {
+  .cs-cards {
+    grid-template-columns: repeat(2, calc(32 * var(--q)));
+    column-gap: calc(7 * var(--q));
+    row-gap: calc(5 * var(--q));
+    padding: 8% 0 0 7%;
+  }
+}
+.cs-item {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.cs-item:nth-child(even) {
+  transform: translateY(42%);
+}
+.cs-page[data-ready="true"] .cs-item {
+  animation: cs-lay 0.9s var(--ease-out-expo) backwards;
+  animation-delay: calc(0.6s + var(--n) * 0.09s);
+}
+@keyframes cs-lay {
+  from { opacity: 0; translate: 0 -18px; scale: 1.04; }
+}
+.cs-item-in {
+  display: block;
+  transform: rotate(var(--r)) translate3d(calc(var(--fx) * -5px), calc(var(--fy) * -5px), 0);
+  transition: transform 0.7s var(--ease-out-expo), opacity 0.45s ease, filter 0.45s ease;
+}
+.cs-card {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 4 / 4.5;
+  padding: calc(1.4 * var(--q));
+  border-radius: calc(0.8 * var(--q));
+  background: #fcfbf9;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(30, 24, 14, 0.08),
+    0 16px 30px -20px rgba(30, 24, 14, 0.45);
+  transition: box-shadow 0.6s var(--ease-out-expo), background-color 0.4s ease;
+}
+.cs-card-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: max(10px, calc(1.25 * var(--q)));
+
+  font-family: var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.08em;
+  color: #8d8c87;
+}
+.cs-card-top span:last-child {
+  display: inline-block;
+  transition: transform 0.7s var(--ease-out-expo), color 0.3s ease;
+}
+.cs-card .cs-mark {
+  width: 42%;
+  margin-top: calc(1.8 * var(--q));
+}
+.cs-card-name {
+  margin-top: auto;
+  font-size: max(11px, calc(1.6 * var(--q)));
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.cs-card-tag {
+  margin-top: calc(0.3 * var(--q));
+  overflow: hidden;
+  font-size: max(8px, calc(0.9 * var(--q)));
+
+  font-family: var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: #8d8c87;
+}
+@media (hover: hover) {
+  .cs-item:hover .cs-item-in {
+    transform: translateY(-10px) rotate(0deg) scale(1.035);
+  }
+  .cs-item:hover .cs-card {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 2px 4px rgba(30, 24, 14, 0.06),
+      0 40px 50px -26px rgba(30, 24, 14, 0.5);
+  }
+  .cs-item:hover .cs-card-top span:last-child {
+    transform: rotate(90deg);
+    color: var(--ink);
+  }
+  .cs-cards:has(.cs-item:hover) .cs-item:not(:hover) .cs-item-in {
+    opacity: 0.55;
+    filter: saturate(0.5);
+  }
+}
+.cs-item:focus-visible {
+  outline: none;
+}
+.cs-item:focus-visible .cs-item-in {
+  transform: translateY(-10px) rotate(0deg) scale(1.035);
+}
+.cs-item:focus-visible .cs-card {
+  outline: 1.5px solid var(--ink);
+  outline-offset: 4px;
+}
+.cs-item:active .cs-item-in {
+  transform: translateY(-4px) rotate(0deg) scale(0.99);
+}
+/* Taken out: only its outline stays on the folder. */
+.cs-item[data-open="true"] .cs-card {
+  background: transparent;
+  box-shadow: none;
+  outline: 1px dashed rgba(0, 0, 0, 0.32);
+  outline-offset: -1px;
+}
+.cs-item[data-open="true"] .cs-card > * {
+  opacity: 0.22;
+}
+
+/* The product mark. */
+.cs-mark {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-radius: 24%;
+  background: var(--tile, #111);
+}
+.cs-mark img {
+  width: 58%;
+  height: auto;
+  user-select: none;
+}
+.cs-mark-bare {
+  background: none;
+}
+.cs-mark-bare img {
+  width: 100%;
+}
+
+/* The card that flies to the open file. */
+.cs-ghost {
+  position: fixed;
+  z-index: 90;
+  margin: 0;
+  pointer-events: none;
+  transform-origin: center;
+  border-radius: 8px;
+  will-change: transform, opacity;
+}
+
+/* ---- the left page ---- */
+.cs-view {
+  max-width: 540px;
+}
+.cs-in {
+  animation: cs-in 0.8s var(--ease-out-expo) backwards;
+  animation-delay: calc(60ms + var(--i, 0) * 50ms);
+}
+@keyframes cs-in {
+  from { opacity: 0; transform: translateY(12px); filter: blur(5px); }
+}
+.cs-kicker {
+  font: 11px var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.cs-lead {
+  margin-top: 22px;
+  font-size: clamp(22px, 2vw, 27px);
+  font-weight: 300;
+  line-height: 1.42;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+}
+.cs-p {
+  margin-top: 20px;
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.cs-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 44px;
+  font-size: 14px;
+  color: var(--ink);
+}
+.cs-hint-arrow {
+  width: 18px;
+  height: 18px;
+  animation: cs-nudge 2.2s var(--ease-out-expo) infinite;
+}
+@keyframes cs-nudge {
+  0%, 60%, 100% { transform: translateX(0); }
+  30% { transform: translateX(6px); }
+}
+.cs-hint-m {
+  display: none;
+}
+
+.cs-file-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.cs-slot {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.cs-slot .cs-mark {
+  width: 100%;
+  box-shadow: 0 10px 20px -12px rgba(0, 0, 0, 0.5);
+}
+.cs-slot .cs-mark-bare {
+  box-shadow: none;
+}
+.cs-slot[data-landed="false"] {
+  opacity: 0;
+}
+.cs-slot[data-landed="true"] {
+  animation: cs-land 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+}
+@keyframes cs-land {
+  from { transform: scale(0.8); }
+}
+.cs-name {
+  margin-top: 26px;
+  font-size: clamp(40px, 4.4vw, 64px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  outline: none;
+}
+.cs-tagline {
+  margin-top: 14px;
+  font: 11px var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cs-brief {
+  margin-top: 28px;
+  font-size: clamp(18px, 1.5vw, 21px);
+  font-weight: 300;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  color: #2a2a2a;
+}
+.cs-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid var(--rule);
+}
+.cs-meta dt {
+  font: 10px var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+.cs-meta dd {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+.cs-live-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 7px;
+  border-radius: 50%;
+  background: #47a614;
+  vertical-align: 1px;
+  animation: cs-pulse 2.4s ease-out infinite;
+}
+@keyframes cs-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(71, 166, 20, 0.45); }
+  70%, 100% { box-shadow: 0 0 0 6px rgba(71, 166, 20, 0); }
+}
+.cs-sec {
+  margin-top: 48px;
+}
+.cs-sec h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font: 11px var(--font-anonymous-pro), monospace;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.cs-sec h3 span {
+  color: var(--faint);
+}
+.cs-sec p {
+  margin-top: 14px;
+  font-size: 15.5px;
+  line-height: 1.75;
+  color: var(--muted);
+}
+.cs-flow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 18px;
+  margin-top: 10px;
+  counter-reset: f;
+}
+.cs-flow li {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 15px;
+  color: var(--ink);
+  counter-increment: f;
+  animation: cs-in 0.7s var(--ease-out-expo) backwards;
+  animation-delay: calc(450ms + var(--s) * 70ms);
+}
+.cs-flow li::before {
+  content: "0" counter(f);
+  font-family: var(--font-anonymous-pro), monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--faint);
+}
+@media (max-width: 767px) {
+  .cs-flow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.cs-shot {
+  width: 230px;
+  margin-top: 56px;
+  overflow: hidden;
+  border-radius: 26px;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 40px 60px -34px rgba(20, 16, 8, 0.45);
+  transition: transform 0.8s var(--ease-out-expo), box-shadow 0.8s var(--ease-out-expo);
+}
+.cs-shot-wide {
+  width: min(100%, 480px);
+  border-radius: 12px;
+}
+.cs-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.cs-shot:hover {
+  transform: translateY(-6px);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 56px 70px -36px rgba(20, 16, 8, 0.5);
+}
+.cs-decisions {
+  margin-top: 8px;
+}
+.cs-decisions li {
+  display: grid;
+  gap: 4px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--rule);
+}
+.cs-decisions li:last-child {
+  border-bottom: 0;
+}
+.cs-decisions b {
+  font-size: 15.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+.cs-decisions span {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.cs-links {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 48px;
+}
+.cs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: var(--ink);
+  font-size: 14px;
+  color: #fff;
+  transition: transform 0.5s var(--ease-out-expo), background-color 0.3s ease;
+}
+.cs-btn svg,
+.cs-textlink svg {
+  transition: transform 0.5s var(--ease-out-expo);
+}
+.cs-btn:hover {
+  background: #333;
+}
+.cs-btn:hover svg,
+.cs-textlink:hover svg {
+  transform: translate(2px, -2px);
+}
+.cs-textlink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: var(--ink);
+  background: linear-gradient(currentColor, currentColor) left bottom / 100% 1px no-repeat;
+  padding-bottom: 2px;
+}
+.cs-textlink:hover {
+  background-size: 0 1px;
+  background-position: right bottom;
+  transition: background-size 0.4s var(--ease-out-expo);
+}
+.cs-next {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin-top: 72px;
+  padding: 26px 0 0;
+  border: 0;
+  border-top: 1px solid var(--rule);
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+.cs-next-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: clamp(26px, 2.4vw, 34px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.cs-next-arrow {
+  width: 26px;
+  height: 26px;
+  transition: transform 0.6s var(--ease-out-expo);
+}
+.cs-next:hover .cs-next-arrow,
+.cs-next:focus-visible .cs-next-arrow {
+  transform: translateX(8px);
+}
+.cs-btn:focus-visible,
+.cs-textlink:focus-visible,
+.cs-next:focus-visible {
+  outline: 1.5px solid var(--ink);
+  outline-offset: 4px;
+}
+@media (max-width: 767px) {
+  .cs-hint-d {
+    display: none;
+  }
+  .cs-hint-m {
+    display: inline;
+  }
+  .cs-hint-arrow {
+    transform: rotate(-90deg);
+    animation: none;
+  }
+  .cs-meta {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cs-shot {
+    width: 58%;
+  }
+  .cs-shot-wide {
+    width: 100%;
+  }
+}

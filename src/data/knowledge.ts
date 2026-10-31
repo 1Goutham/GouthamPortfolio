@@ -151,7 +151,7 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
   {
     id: 'project-portfolio',
     title: 'Projects',
-    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Outfit and Anonymous Pro, with GSAP, Lenis and Three.js for motion and 3D. It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
+    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Outfit and Anonymous Pro, with Lenis, WebGL and Three.js for motion and 3D. Every product has a case study at /casestudies (the problem, what was built, how it flows, the decisions and what's next). It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
   },
   {
     id: 'project-gtalk',
