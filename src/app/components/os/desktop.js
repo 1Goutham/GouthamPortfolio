@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Paint, { FW, FH } from "./paint";
+import Paint, { FW, FH, menuKeys } from "./paint";
 
 /**
  * Goutham OS: the right half of the About section, a little desktop that
@@ -62,6 +62,17 @@ export default function Desktop() {
   const router = useRouter();
   const deskRef = useRef(null);
   const paintApi = useRef(null);
+  const osRef = useRef(null);
+  const startBtnRef = useRef(null);
+  const startRef = useRef(null);
+  const ctxRef = useRef(null);
+  // The wallpaper waits until the desktop is nearly on screen.
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const io = new IntersectionObserver(([e]) => e.isIntersecting && (setNear(true), io.disconnect()), { rootMargin: "600px 0px" });
+    io.observe(osRef.current);
+    return () => io.disconnect();
+  }, []);
   const [selected, setSelected] = useState(null);
   const [iconPos, setIconPos] = useState({}); // id -> { x, y } once moved
   // Paint: open | minimized | closed; where it is once dragged; maximised?
@@ -190,7 +201,13 @@ export default function Desktop() {
       setStart(false);
       setCtx(null);
     };
-    const esc = (e) => e.key === "Escape" && (setStart(false), setCtx(null));
+    const esc = (e) => {
+      if (e.key !== "Escape") return;
+      // Escape from the Start menu goes back to the Start button.
+      if (start) startBtnRef.current?.focus();
+      setStart(false);
+      setCtx(null);
+    };
     window.addEventListener("pointerdown", off);
     window.addEventListener("keydown", esc);
     return () => {
@@ -198,6 +215,14 @@ export default function Desktop() {
       window.removeEventListener("keydown", esc);
     };
   }, [start, ctx]);
+
+  // An open menu takes the focus to its first item, as in Windows.
+  useEffect(() => {
+    if (start) startRef.current?.querySelector('[role="menuitem"]')?.focus();
+  }, [start]);
+  useEffect(() => {
+    if (ctx) ctxRef.current?.querySelector('[role="menuitem"]')?.focus();
+  }, [ctx]);
 
   const onDeskDown = (e) => {
     if (e.target !== e.currentTarget) return;
@@ -218,7 +243,7 @@ export default function Desktop() {
       : undefined;
 
   return (
-    <div className="os" onContextMenu={(e) => e.preventDefault()}>
+    <div ref={osRef} className="os" data-near={near} onContextMenu={(e) => e.preventDefault()}>
       <div ref={deskRef} className="os-desk" onPointerDown={onDeskDown} onContextMenu={onDeskContext}>
         {/* Desktop icons. */}
         {ICONS.map((ic, i) => (
@@ -230,12 +255,16 @@ export default function Desktop() {
             style={iconPos[ic.id] ? { left: `${iconPos[ic.id].x}px`, top: `${iconPos[ic.id].y}px` } : { "--row": i }}
             onPointerDown={(e) => onIconDown(e, ic.id)}
             onDoubleClick={() => open(ic.open)}
-            onKeyDown={(e) => e.key === "Enter" && open(ic.open)}
+            onKeyDown={(e) => {
+              if (e.key !== "Enter" && e.key !== " ") return;
+              e.preventDefault();
+              open(ic.open);
+            }}
             onFocus={() => setSelected(ic.id)}
             aria-label={`Open ${ic.label}`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={ic.img} alt="" draggable={false} />
+            <img loading="lazy" decoding="async" src={ic.img} alt="" draggable={false} />
             <span>{ic.label}</span>
           </button>
         ))}
@@ -247,6 +276,8 @@ export default function Desktop() {
             data-state={paint}
             data-active={active === "paint"}
             data-max={maxed}
+            // Minimised, it is out of sight and out of the Tab order.
+            inert={paint === "minimized"}
             style={paintStyle}
             onPointerDown={() => setActive("paint")}
           >
@@ -300,7 +331,7 @@ export default function Desktop() {
 
         {/* Right-click on the desktop. */}
         {ctx && (
-          <ul className="os-menu os-ctx" role="menu" style={{ left: `${ctx.x}px`, top: `${ctx.y}px` }}>
+          <ul ref={ctxRef} className="os-menu os-ctx" role="menu" aria-label="Desktop" onKeyDown={menuKeys} style={{ left: `${ctx.x}px`, top: `${ctx.y}px` }}>
             <li role="none">
               <button type="button" role="menuitem" onClick={() => (setIconPos({}), setCtx(null))}>
                 <span className="os-check" />
@@ -334,7 +365,7 @@ export default function Desktop() {
 
       {/* Start menu. */}
       {start && (
-        <div className="os-start" role="menu">
+        <div ref={startRef} className="os-start" role="menu" aria-label="Start" onKeyDown={menuKeys}>
           <div className="os-start-band" aria-hidden="true">
             <b>1Goutham</b> OS
           </div>
@@ -347,7 +378,7 @@ export default function Desktop() {
                   <button type="button" role="menuitem" onClick={() => open(it.open)}>
                     {it.img ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={it.img} alt="" />
+                      <img loading="lazy" decoding="async" src={it.img} alt="" />
                     ) : (
                       <span className="os-start-dot" aria-hidden="true" />
                     )}
@@ -362,22 +393,22 @@ export default function Desktop() {
 
       {/* Taskbar. */}
       <div className="os-taskbar">
-        <button type="button" className="os-startbtn" data-on={start} onClick={() => setStart((s) => !s)} aria-expanded={start} aria-haspopup="menu">
+        <button ref={startBtnRef} type="button" className="os-startbtn" data-on={start} onClick={() => setStart((s) => !s)} aria-expanded={start} aria-haspopup="menu">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/os/flag.webp" alt="" />
+          <img loading="lazy" decoding="async" src="/os/flag.webp" alt="" />
           <b>Start</b>
         </button>
         <span className="os-task-sep" aria-hidden="true" />
         {paint !== "closed" && (
           <button type="button" className="os-task" data-on={paint === "open" && active === "paint"} onClick={taskClick}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/os/paint-icon.webp" alt="" />
+            <img loading="lazy" decoding="async" src="/os/paint-icon.webp" alt="" />
             <span>untitled - Paint</span>
           </button>
         )}
         <div className="os-tray" title={full ? `${full} · IST, Goutham's time` : undefined}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/os/tray.webp" alt="" />
+          <img loading="lazy" decoding="async" src="/os/tray.webp" alt="" />
           <span className="os-clock" aria-label={time ? `Goutham's time: ${time} IST` : undefined}>
             {time}
           </span>

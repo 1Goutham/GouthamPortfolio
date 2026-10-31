@@ -262,6 +262,12 @@ export default function IntroPlayer() {
       m: toggleMute,
       f: fullscreen,
       s: stop,
+      // Escape closes it and hands the focus back to whatever opened it.
+      escape: () => {
+        close();
+        const to = backTo.current?.isConnected ? backTo.current : openerRef.current;
+        to?.focus({ preventScroll: true });
+      },
     };
     if (map[k]) {
       e.preventDefault();
@@ -330,8 +336,11 @@ export default function IntroPlayer() {
   };
   // Open out of the button, and start the film (in the same click, so the
   // browser lets it play with sound).
+  // Where the focus was when the window opened, to give it back on Escape.
+  const backTo = useRef(null);
   const open = () => {
     if (win === "open" || win === "opening") return windowRef.current?.focus();
+    backTo.current = document.activeElement;
     const r = openerRef.current?.getBoundingClientRect();
     if (r) setFrom({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
     setPos((p) => place(p || centred()));
@@ -374,6 +383,7 @@ export default function IntroPlayer() {
   openRef.current =
     win === "minimized"
       ? () => {
+          backTo.current = document.activeElement;
           restore();
           play();
         }
@@ -599,13 +609,13 @@ export default function IntroPlayer() {
               data-started={started}
               tabIndex={0}
               role="region"
-              aria-label="1Goutham Media Player. Space plays and pauses, arrows seek and change volume, M mutes, F goes fullscreen."
+              aria-label="1Goutham Media Player. Space plays and pauses, arrows seek and change volume, M mutes, F goes fullscreen, Escape closes it."
               onKeyDown={onKeyDown}
             >
               {/* The window keeps its proportions inside (in fullscreen too). */}
               <div ref={frameRef} className="mp-body">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <img loading="lazy" decoding="async"
                   className="mp-skin"
                   src="/intro/player.webp"
                   alt=""
@@ -746,7 +756,7 @@ export default function IntroPlayer() {
                   )}
                 </div>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <img loading="lazy" decoding="async"
                   ref={thumbRef}
                   className="mp-sprite mp-seek-thumb"
                   src="/intro/seek.webp"
@@ -767,10 +777,10 @@ export default function IntroPlayer() {
                   }}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/intro/vol-wedge.webp" alt="" draggable={false} />
+                  <img loading="lazy" decoding="async" src="/intro/vol-wedge.webp" alt="" draggable={false} />
                 </span>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <img loading="lazy" decoding="async"
                   className="mp-sprite mp-vol-thumb"
                   src="/intro/vol-thumb.webp"
                   alt=""
@@ -802,7 +812,7 @@ export default function IntroPlayer() {
                 >
                   {playing && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src="/intro/pause.webp" alt="" draggable={false} />
+                    <img loading="lazy" decoding="async" src="/intro/pause.webp" alt="" draggable={false} />
                   )}
                 </button>
                 <button
@@ -951,7 +961,7 @@ export default function IntroPlayer() {
                 aria-label="Restore 1Goutham Media Player"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/intro/icon.webp" alt="" />
+                <img loading="lazy" decoding="async" src="/intro/icon.webp" alt="" />
                 <span>1Goutham Media Player</span>
               </button>
             )}

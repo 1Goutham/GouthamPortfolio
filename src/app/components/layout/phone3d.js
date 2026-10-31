@@ -85,7 +85,12 @@ function roundedPlane(w, h, rTop, rBottom = rTop) {
   return geo;
 }
 
+// Reduced motion: no float, sway, lean or scroll turn; the phone still spins
+// when you drag it, and draws only while it is moving.
+const calm = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 function PhoneModel({ src, bg, hostRef, ready, onReady }) {
+  const invalidate = useThree((st) => st.invalidate);
   const { scene } = useGLTF(MODEL);
   const tex = useLoader(THREE.TextureLoader, src);
   const outer = useRef();
@@ -202,7 +207,8 @@ function PhoneModel({ src, bg, hostRef, ready, onReady }) {
         s.ty += dx * 0.012;
         s.lastX = e.clientX;
         s.lastT = now;
-      } else if (e.pointerType === "mouse") {
+        invalidate();
+      } else if (e.pointerType === "mouse" && !calm()) {
         s.hx = (e.clientX - r.left) / r.width - 0.5;
         s.hy = (e.clientY - r.top) / r.height - 0.5;
         s.hover = 1;
@@ -236,7 +242,7 @@ function PhoneModel({ src, bg, hostRef, ready, onReady }) {
       host.removeEventListener("pointercancel", onUp);
       host.removeEventListener("pointerleave", onLeave);
     };
-  }, [hostRef]);
+  }, [hostRef, invalidate]);
 
   // The host's position is measured only when the page has scrolled or
   // resized, never every frame, so the render loop forces no layout.
@@ -267,11 +273,14 @@ function PhoneModel({ src, bg, hostRef, ready, onReady }) {
       s.ty += (0 - s.ty) * Math.min(1, dt * 0.5);
     }
 
-    const targetY = REST.y + scroll * 0.5 + Math.sin(t * 0.5) * 0.05 + s.hx * 0.5 * s.hover + s.ty;
-    const targetX = REST.x - s.hy * 0.3 * s.hover + Math.sin(t * 0.4) * 0.015;
+    const m = calm() ? 0 : 1;
+    const targetY = REST.y + (scroll * 0.5 + Math.sin(t * 0.5) * 0.05 + s.hx * 0.5 * s.hover) * m + s.ty;
+    const targetX = REST.x + (-s.hy * 0.3 * s.hover + Math.sin(t * 0.4) * 0.015) * m;
     g.rotation.y += (targetY - g.rotation.y) * Math.min(1, dt * 6);
     g.rotation.x += (targetX - g.rotation.x) * Math.min(1, dt * 6);
-    g.position.y = Math.sin(t * 0.8) * 0.05;
+    g.position.y = Math.sin(t * 0.8) * 0.05 * m;
+    // On demand: keep drawing only until a spin has settled.
+    if (!m && (Math.abs(targetY - g.rotation.y) > 0.001 || Math.abs(s.ty) > 0.001 || s.dragging)) invalidate();
   });
 
   return (
@@ -342,7 +351,7 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
       {mounted && (
       <Canvas
         dpr={[1, 1.5]}
-        frameloop={active ? "always" : "never"}
+        frameloop={active ? (calm() ? "demand" : "always") : "never"}
         camera={{ position: [0, 0, 14], fov: 28 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}

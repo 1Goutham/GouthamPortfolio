@@ -1,32 +1,33 @@
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useEffect, useRef, useMemo, useState } from 'react';
 
-gsap.registerPlugin(ScrollTrigger);
-
+/**
+ * Reveals its children as they come on screen: they rise a little, sharpen
+ * from a blur and fade in, once. An IntersectionObserver and a CSS
+ * transition do the work (styles: .sr in globals.css), so nothing runs per
+ * frame. Plain text is split into words that arrive one after another.
+ * With reduced motion the content is simply there.
+ */
 const ScrollReveal = ({
   children,
-  scrollContainerRef,
   enableBlur = true,
   baseOpacity = 0.1,
-  baseRotation = 3,
   blurStrength = 6,
   containerClassName = '',
   textClassName = '',
-  rotationEnd = 'bottom bottom',
-  wordAnimationEnd = 'bottom bottom',
 }) => {
   const containerRef = useRef(null);
+  const [shown, setShown] = useState(false);
   const isTextOnly = typeof children === 'string';
 
   const splitText = useMemo(() => {
     if (!isTextOnly) return null;
+    let n = 0;
     return children.split(/(\s+)/).map((word, index) => {
       if (word.match(/^\s+$/)) return word;
       return (
-        <span className="inline-block word" key={index}>
+        <span className="sr-word inline-block" key={index} style={{ '--w': n++ }}>
           {word}
         </span>
       );
@@ -36,75 +37,36 @@ const ScrollReveal = ({
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (!e.isIntersecting) return;
+        setShown(true);
+        io.disconnect();
+      },
+      { rootMargin: '0px 0px -10% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
 
-    const scroller = scrollContainerRef?.current || window;
-
-    // gsap.context scopes every tween/trigger to this element so cleanup only
-    // kills what this component created (previously it killed *every* trigger).
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-
-      mm.add('(prefers-reduced-motion: no-preference)', () => {
-        const isInViewport = el.getBoundingClientRect().top < window.innerHeight;
-        const triggerStart = isInViewport ? 'top bottom' : 'top 90%';
-
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: el,
-            scroller,
-            start: triggerStart,
-            end: rotationEnd,
-            scrub: 0.7,
-          },
-        });
-
-        const target = isTextOnly ? el.querySelectorAll('.word') : el;
-        timeline.fromTo(
-          target,
-          {
-            opacity: baseOpacity,
-            y: 18,
-            filter: enableBlur ? `blur(${blurStrength}px)` : 'none',
-          },
-          {
-            opacity: 1,
-            y: 0,
-            filter: 'blur(0px)',
-            stagger: isTextOnly ? 0.1 : 0,
-            ease: 'power2.out',
-            duration: isTextOnly ? 1.5 : 1.8,
-            // Drop the compositor hint once the reveal has settled.
-            onComplete: () => gsap.set(target, { clearProps: 'filter,willChange' }),
-          }
-        );
-      });
-
-      // Reduced motion: content is simply visible.
-      mm.add('(prefers-reduced-motion: reduce)', () => {
-        gsap.set(el, { opacity: 1, filter: 'none' });
-      });
-    }, el);
-
-    return () => ctx.revert();
-  }, [
-    scrollContainerRef,
-    enableBlur,
-    baseRotation,
-    baseOpacity,
-    rotationEnd,
-    wordAnimationEnd,
-    blurStrength,
-    isTextOnly,
-  ]);
+  const style = {
+    '--sr-o': baseOpacity,
+    '--sr-b': enableBlur ? `${blurStrength}px` : '0px',
+  };
 
   return (
-    <div ref={containerRef} className={`my-5 ${containerClassName}`}>
+    <div
+      ref={containerRef}
+      className={`sr my-5 ${isTextOnly ? 'sr-words' : ''} ${containerClassName}`}
+      data-shown={shown}
+      style={style}
+    >
       {isTextOnly ? (
-        <p
-          className={`text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}
-        >
-          {splitText}
-        </p>
+        <p className={`text-[clamp(1.6rem,4vw,3rem)] leading-[1.5] font-semibold ${textClassName}`}>{splitText}</p>
       ) : (
         <div className={textClassName}>{children}</div>
       )}

@@ -99,6 +99,26 @@ export default function Skills() {
     card.addEventListener("pointercancel", up);
   };
 
+  // From the keyboard: arrows nudge a card about, and it springs home when
+  // the focus moves on (or on Escape).
+  const home = (card) => {
+    card.style.setProperty("--dx", "0px");
+    card.style.setProperty("--dy", "0px");
+    card.style.setProperty("--tilt", "0deg");
+  };
+  const onCardKey = (e) => {
+    const card = e.currentTarget;
+    if (e.key === "Escape") return home(card);
+    const step = { ArrowLeft: [-14, 0], ArrowRight: [14, 0], ArrowUp: [0, -14], ArrowDown: [0, 14] }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const dx = parseFloat(card.style.getPropertyValue("--dx")) || 0;
+    const dy = parseFloat(card.style.getPropertyValue("--dy")) || 0;
+    card.style.setProperty("--dx", `${Math.max(-160, Math.min(160, dx + step[0]))}px`);
+    card.style.setProperty("--dy", `${Math.max(-160, Math.min(160, dy + step[1]))}px`);
+    card.style.setProperty("--tilt", `${Math.max(-12, Math.min(12, (dx + step[0]) / 8))}deg`);
+  };
+
   return (
     <div id="skills" className="sk">
       {/* The portrait, standing on the section's bottom edge, with the cards on him. */}
@@ -118,7 +138,11 @@ export default function Skills() {
               key={c.label}
               className="sk-card"
               style={{ "--x": `${c.x}%`, "--y": `${c.y}%`, "--d": c.depth, "--i": i }}
+              tabIndex={0}
+              aria-label={`${c.label}. Arrow keys move it.`}
               onPointerDown={onCardDown}
+              onKeyDown={onCardKey}
+              onBlur={(e) => home(e.currentTarget)}
             >
               <span className="sk-card-in">
                 <span className="sk-b" aria-hidden="true">[</span>
@@ -131,13 +155,13 @@ export default function Skills() {
       </div>
 
       <div className="sk-text">
-        <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
+        <ScrollReveal baseOpacity={0} enableBlur={true} blurStrength={10}>
           <BracketHeading as="h2" dark className="text-black font-anonymous-pro text-3xl md:text-5xl">
             Skills
           </BracketHeading>
         </ScrollReveal>
 
-        <ScrollReveal baseOpacity={0} enableBlur={true} baseRotation={5} blurStrength={10}>
+        <ScrollReveal baseOpacity={0} enableBlur={true} blurStrength={10}>
           <div>
             {/* Each word underlines in turn, left to right, on hover. */}
             <h3 className="sk-tagline skills-tagline mt-6 text-black font-outfit text-xl md:mt-8">

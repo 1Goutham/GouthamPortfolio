@@ -28,12 +28,14 @@ const SpotlightCard = ({ children, className = "", spotlightColor = "rgba(255, 2
     const rect = el.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
+    // Reduced motion keeps the light but not the lean.
+    const lean = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 5;
     pending.current = {
       x,
       y,
       // Tilt at most ~2.5deg toward the cursor - felt, not seen.
-      tiltY: ((x / rect.width) - 0.5) * 5,
-      tiltX: (0.5 - (y / rect.height)) * 5,
+      tiltY: ((x / rect.width) - 0.5) * lean,
+      tiltX: (0.5 - (y / rect.height)) * lean,
     };
     if (!frame.current) frame.current = requestAnimationFrame(apply);
   }, [apply]);
