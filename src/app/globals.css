@@ -5624,7 +5624,11 @@ a:focus-visible .mt-pill-fill {
   /* The machine's width: as big as fits with room above it for the page. */
   --w: min(92vw, 80svh, 840px);
   position: relative;
-  height: calc(100svh + var(--run, 2400px));
+  height: calc(100vh + var(--run, 2400px));
+  /* lvh: the screen with the browser bar hidden. With svh, once a phone
+     hides its bar the pinned view stops short and leaves a strip of page
+     under the machine. */
+  height: calc(100lvh + var(--run, 2400px));
 }
 @media (max-width: 767px) {
   .ty-stage {
@@ -5634,7 +5638,8 @@ a:focus-visible .mt-pill-fill {
 .ty-pin {
   position: sticky;
   top: 0;
-  height: 100svh;
+  height: 100vh;
+  height: 100lvh;
   overflow: hidden;
 }
 .ty-machine {
@@ -5671,7 +5676,8 @@ a:focus-visible .mt-pill-fill {
   left: calc(var(--px) * 100%);
   width: calc(var(--pw) * 100%);
   bottom: calc(100% - var(--platen) * var(--w));
-  height: calc(100svh + 40px);
+  height: calc(100vh + 40px);
+  height: calc(100lvh + 40px);
   overflow: hidden;
   /* The sheet leans back over the paper rest, away from you (the lean is
      simulated in the page script; this is where it starts). */
