@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import { pageMeta } from "@/lib/seo";
-import CaseStudies from "./case-studies";
+import NotACaseStudy from "./not-a-case-study";
 
 export const metadata: Metadata = pageMeta({
-  title: "Case Studies | Goutham G",
+  title: "Not a Case Study | Goutham G",
   description:
-    "How Ideako, ZtudyLock, FabricNest, IdeaGuard AI and this portfolio were made: the problem, the decisions and the build, file by file.",
+    "How Goutham thinks about making things: curiosity, experiments, thoughtful design, purposeful AI and the 1G identity.",
   path: "/casestudies",
   image: "projects",
-  alt: "Case studies by Goutham G: a case file of products",
+  alt: "Not a case study: how Goutham G makes things",
 });
 
 export default function CaseStudiesPage() {
-  return <CaseStudies />;
+  return <NotACaseStudy />;
 }

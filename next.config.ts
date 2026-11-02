@@ -14,11 +14,15 @@ const nextConfig: NextConfig = {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com", pathname: "/margin/**" }],
   },
   async redirects() {
-    return [{ source: "/fun", destination: "/arcade", permanent: true }];
+    return [
+      { source: "/fun", destination: "/arcade", permanent: true },
+      { source: "/casestudy", destination: "/casestudies", permanent: true },
+      { source: "/notacasestudy", destination: "/casestudies", permanent: true },
+    ];
   },
   experimental: {
     // Tree-shake heavy animation libs down to what is actually imported.
-    optimizePackageImports: ["framer-motion", "gsap", "lucide-react", "react-markdown"],
+    optimizePackageImports: ["lucide-react", "react-markdown"],
   },
 };
 

@@ -228,7 +228,7 @@ export default function BeyondStory() {
         <div className="mt-8 space-y-6 md:mt-10">
           <p className={`beyond-rise ${para}`} style={{ "--i": 3 }}>
             <span className="font-bold text-black">Hey, Vanakkam!</span> I&rsquo;m Goutham. I&rsquo;m a little curious,
-            a little obsessive, and I tend to notice small things - sometimes a little too much. I can spend a
+            a little obsessive, and I tend to notice small things, sometimes a little too much. I can spend a
             surprising amount of time wondering if something is{" "}
             {/* It is. Hover it and it settles into place. */}
             <span className="beyond-2px">2px out of place</span>, then realise I&rsquo;ve been sitting there for
@@ -244,7 +244,7 @@ export default function BeyondStory() {
 
           <p className={`beyond-rise ${para}`} style={{ "--i": 5 }}>
             I like making things, learning things, trying things, and occasionally overthinking them. Nothing
-            too profound - just trying to stay curious and enjoy the process.
+            too profound, just trying to stay curious and enjoy the process.
           </p>
 
           {/* The console is the link: it leans when you reach for it. */}
@@ -253,7 +253,7 @@ export default function BeyondStory() {
             <TransitionLink href="/arcade" aria-label="Try my arcade" className="beyond-console">
               <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="28px" draggable={false} />
             </TransitionLink>{" "}
-            click on it - try my arcade!
+            click on it and try my arcade!
           </p>
 
           <FadeContent duration={900} threshold={0.2} className="pt-2 md:pt-4">
@@ -290,7 +290,7 @@ export default function BeyondStory() {
               Back then, AI wasn&rsquo;t capable enough for me to rely on it for building products, so I decided
               to learn full-stack development from scratch. It took me nearly a year to become comfortable
               building things on my own. Somewhere along the way, I realised how interesting it was to bring
-              design and development together - I could think about the experience and actually make it work.
+              design and development together: I could think about the experience and actually make it work.
             </p>
           </FadeContent>
 

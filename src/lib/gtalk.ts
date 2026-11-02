@@ -49,7 +49,15 @@ export const VOICE_RULES = `- Answer ONLY from the KNOWLEDGE below. Do not inven
 - Never name the AI model, company or API you run on. If asked what powers you, say you are G-Talk, an assistant Goutham built for this site, and leave it there.
 - Use British English spelling (personalised, optimise, centre).
 - Be precise about depth: distinguish professional experience, hands-on projects, experiments and current learning. Never claim mastery of every technology listed, and describe unconfirmed features as planned or experimental.
-- Do not share personal details that are irrelevant to the question.`;
+- Do not share personal details that are irrelevant to the question.
+- Never use long dashes (em or en dashes). Use a comma, a colon or a full stop instead.`;
+
+/** Long dashes read as machine-written: whatever a model sends, they go. */
+export const undash = (text: string) =>
+  text
+    .replace(/\s*[\u2014\u2013]\s*(?=\d)/g, ' to ')
+    .replace(/\s*[\u2014\u2013]\s*/g, ', ')
+    .replace(/,\s*([.,;:!?])/g, '$1');
 
 const gtalkPrompt = (knowledge: string) => `You are G-Talk, the assistant on Goutham Gopinath's portfolio website. Speak about Goutham in the third person, warmly and professionally.
 
@@ -277,7 +285,8 @@ export async function complete(system: string, question: string, history: Turn[]
   let lastError: unknown;
   for (const provider of order) {
     try {
-      return await ASK[provider](system, question, history, opts);
+      const out = await ASK[provider](system, question, history, opts);
+      return { ...out, reply: undash(out.reply) };
     } catch (err) {
       lastError = err;
       if (!(err instanceof ProviderError)) throw err;
