@@ -149,9 +149,14 @@ export const KNOWLEDGE: KnowledgeChunk[] = [
     text: `IdeaGuard AI, "AI Product Intelligence", is an agentic AI workspace that researches, stress-tests and turns early-stage ideas into evidence-backed product strategy using a multi-agent architecture: market research, competitive analysis, feasibility assessment, risk analysis, assumption stress testing, MVP planning, experiments, and a PRD and technical blueprint. Earlier prototyping used Streamlit and Ollama with Gemma 3. Live at https://ideaguard-ai-zeta.vercel.app/, code at https://github.com/1Goutham/IdeaGuardAI. Do not claim user numbers or commercial traction.`,
   },
   {
+    id: 'approach',
+    title: 'How Goutham works',
+    text: `In his own words on the "Not a case study" page (/casestudies): Goutham is curious about how things are made and why some products feel so good to use. He prefers exploring and experimenting over the usual patterns, and wants his work to have its own identity, which he is building as 1G. He admires Teenage Engineering for bringing together thoughtful design, playful interactions, unusual details and genuinely useful functionality. He looks for the sweet spot where good design, great functionality and purposeful technology meet, and uses AI only where it actually makes sense. His projects start from a random thought, a problem or an idea he can't stop thinking about, then go through research, references, sketching, interface design, interaction experiments, engineering and shipping. He treats this portfolio as one big experiment, refined for months down to the pixels. He wants his work to feel thoughtful without being too serious, functional without being boring, and experimental without losing its purpose.`,
+  },
+  {
     id: 'project-portfolio',
     title: 'Projects',
-    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Outfit and Anonymous Pro, with Lenis, WebGL and Three.js for motion and 3D. Every product has a case study at /casestudies (the problem, what was built, how it flows, the decisions and what's next). It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
+    text: `This portfolio (1goutham.space) is built with Next.js and Tailwind CSS, set in Outfit and Anonymous Pro, with Lenis, WebGL and Three.js for motion and 3D. It presents Goutham's profile, work and skills, and is itself a demonstration of his frontend engineering and visual design: minimal, polished, responsive, with contemporary motion and interaction patterns. Do not claim performance metrics or awards.`,
   },
   {
     id: 'project-gtalk',

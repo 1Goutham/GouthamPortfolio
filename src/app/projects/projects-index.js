@@ -53,7 +53,7 @@ const PROJECTS = [
     name: "ZtudyLock",
     tagline: "Adaptive AI Study Workspace",
     description:
-      "An AI study workspace that turns your own learning material into a personalised study system — helping you understand concepts, practise, identify weaknesses, and revise what actually needs attention.",
+      "An AI study workspace that turns your own learning material into a personalised study system, helping you understand concepts, practise, identify weaknesses, and revise what actually needs attention.",
     outcome:
       "Built on the student's own notes, so revision targets the real gaps.",
     features: [
@@ -76,7 +76,7 @@ const PROJECTS = [
     name: "FabricNest",
     tagline: "Intelligent Commerce Platform",
     description:
-      "A full-stack commerce platform built around discovery, personalisation, and real purchasing — combining a premium storefront with intelligent product discovery, recommendations, secure checkout, and progressive personalisation.",
+      "A full-stack commerce platform built around discovery, personalisation, and real purchasing, combining a premium storefront with intelligent product discovery, recommendations, secure checkout, and progressive personalisation.",
     outcome:
       "Real Stripe checkout, orders and admin, not a storefront demo.",
     features: [
@@ -393,7 +393,7 @@ export default function ProjectsIndex() {
             </TransitionLink>
             <TransitionLink href="/casestudies" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
               <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">Case studies</span>
+              <span className="bracket-link-text">Not a case study</span>
               <span className="bracket-link-r" aria-hidden="true">]</span>
             </TransitionLink>
             <TransitionLink href="/#contact" className="bracket-link font-anonymous-pro text-lg text-white md:text-2xl">
