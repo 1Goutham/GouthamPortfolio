@@ -309,17 +309,45 @@ function PhoneModel({ src, bg, hostRef, ready, onReady }) {
   );
 }
 
-/* When a paused canvas is switched back to "always", the shared render loop
-   may already have stopped; a single invalidate() restarts it. The store
-   applies the new frameloop asynchronously, so watch the store, not the prop. */
-function Wake() {
-  const frameloop = useThree((s) => s.frameloop);
-  const invalidate = useThree((s) => s.invalidate);
+/* Draws on demand: every frame while the page scrolls or the phone is
+   handled, and at 30 a second otherwise (enough for its slow float), so an
+   idle page doesn't keep four 3D views drawing flat out. */
+function Pace({ hostRef }) {
+  const invalidate = useThree((st) => st.invalidate);
   useEffect(() => {
-    if (frameloop === "always") invalidate();
-  }, [frameloop, invalidate]);
+    const host = hostRef.current;
+    const now = () => invalidate();
+    now();
+    window.addEventListener("scroll", now, { passive: true });
+    host?.addEventListener("pointermove", now, { passive: true });
+    host?.addEventListener("pointerdown", now, { passive: true });
+    const idle = calm() ? 0 : window.setInterval(now, 33);
+    return () => {
+      clearInterval(idle);
+      window.removeEventListener("scroll", now);
+      host?.removeEventListener("pointermove", now);
+      host?.removeEventListener("pointerdown", now);
+    };
+  }, [invalidate, hostRef]);
   return null;
 }
+
+/* Without a GPU (software rendering), four 3D views would bring scrolling
+   to a crawl: the phone is shown as its screenshot instead. */
+let software = null;
+const noGpu = () => {
+  if (software !== null) return software;
+  try {
+    const gl = document.createElement("canvas").getContext("webgl");
+    const info = gl?.getExtension("WEBGL_debug_renderer_info");
+    const name = gl ? gl.getParameter(info ? info.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || "" : "";
+    software = !gl || /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name);
+    gl?.getExtension("WEBGL_lose_context")?.loseContext();
+  } catch {
+    software = true;
+  }
+  return software;
+};
 
 useGLTF.preload(MODEL);
 
@@ -334,6 +362,12 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
   // renders only while near the viewport; off-screen phones cost nothing.
   const [mounted, setMounted] = useState(false);
   const [active, setActive] = useState(false);
+  const [flat, setFlat] = useState(false);
+  useEffect(() => {
+    const f = noGpu();
+    setFlat(f);
+    if (f) setReady(true);
+  }, []);
   useEffect(() => {
     const t = setTimeout(() => setMounted(true), 150 + (order++ % 8) * 450);
     return () => clearTimeout(t);
@@ -348,15 +382,19 @@ export default function Phone3D({ src, bg = "#000", className = "" }) {
   return (
     <div ref={host} className={`phone3d ${className}`} data-ready={ready} aria-label="3D phone showing the product" role="img">
       <span className="phone3d-shadow" aria-hidden="true" />
-      {mounted && (
+      {flat && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img className="phone3d-flat" src={src} alt="" loading="lazy" decoding="async" />
+      )}
+      {mounted && !flat && (
       <Canvas
-        dpr={[1, 1.5]}
-        frameloop={active ? (calm() ? "demand" : "always") : "never"}
+        dpr={[1, 1.25]}
+        frameloop={active ? "demand" : "never"}
         camera={{ position: [0, 0, 14], fov: 28 }}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance", stencil: false }}
         style={{ background: "transparent" }}
       >
-        <Wake />
+        <Pace hostRef={host} />
         <Suspense fallback={null}>
           <ambientLight intensity={0.25} />
           <directionalLight position={[-4, 6, 6]} intensity={1.6} color="#dfe6ff" />

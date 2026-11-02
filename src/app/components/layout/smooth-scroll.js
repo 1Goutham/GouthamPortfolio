@@ -3,25 +3,14 @@ import { useEffect } from "react";
 import Lenis from "lenis";
 import { scrollToSection } from "./scroll-to";
 
-// A long, soft finish for every programmatic glide.
-const easeOutExpo = (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t));
-
-// Homepage sections the scroll can settle on. Thin strips (the marquee, the
-// 1G-works label, the intro band) are left out: settling on them would feel like a snag.
-const SECTIONS = "header.hero, #about, #skills, #projects, #beyond, #margin, #Gtalk, #contact";
-const SETTLE_RANGE = 0.12; // of the viewport height
-const SETTLE_IDLE_MS = 160;
-
 /**
  * Buttery smooth scrolling driven by Lenis. Its frame loop only runs while
  * something is moving: a wheel, a touch, a key or a glide wakes it, and it
  * sleeps again once the page is still, so an idle page costs nothing.
  *
  * Touch screens keep the browser's own momentum scrolling (smoother than
- * anything script can do on a phone). With a wheel or trackpad, when the
- * page comes to rest just short of or just past the start of a section, it
- * eases the last few pixels so the section lines up; stopping anywhere else
- * is left alone.
+ * anything script can do on a phone). The page stops where the visitor
+ * stops it: no easing onto sections afterwards, which reads as lag.
  *
  * Every on-page link ("#about", "#" for the top) goes through
  * scrollToSection, and a page opened at a hash ("/#contact" from another
@@ -83,7 +72,8 @@ export default function SmoothScroll() {
     if (reduce) return;
 
     const lenis = new Lenis({
-      lerp: 0.1,
+      // Tight enough to follow the wheel closely, loose enough to be smooth.
+      lerp: 0.14,
       wheelMultiplier: 1,
       touchMultiplier: 1.4,
       smoothWheel: true,
@@ -116,52 +106,9 @@ export default function SmoothScroll() {
     // The site agent scrolls through it, so a programmatic scroll eases like a wheel one.
     window.__lenis = lenis;
 
-    // ---- settle onto a section ------------------------------------
-    const fine = window.matchMedia("(pointer: fine)").matches;
-    let idle = 0;
-    let settling = false;
-    let lastWheel = 0;
-    const onWheel = () => {
-      lastWheel = performance.now();
-      // The visitor takes over from a settle in progress.
-      settling = false;
-    };
-    const settle = () => {
-      if (settling || !fine) return;
-      // Only after the visitor's own scrolling, not a glide we started.
-      if (performance.now() - lastWheel > 1500) return;
-      const y = lenis.scroll;
-      const range = window.innerHeight * SETTLE_RANGE;
-      let best = null;
-      document.querySelectorAll(SECTIONS).forEach((el) => {
-        const top = el.getBoundingClientRect().top + y;
-        const d = top - y;
-        if (Math.abs(d) > 2 && Math.abs(d) < range && (best === null || Math.abs(d) < Math.abs(best - y))) best = top;
-      });
-      if (best === null) return;
-      settling = true;
-      lenis.scrollTo(best, {
-        duration: 0.75,
-        easing: easeOutExpo,
-        onComplete: () => {
-          settling = false;
-        },
-      });
-    };
-    const onScroll = () => {
-      clearTimeout(idle);
-      if (!settling) idle = setTimeout(settle, SETTLE_IDLE_MS);
-    };
-    if (fine) {
-      window.addEventListener("wheel", onWheel, { passive: true });
-      lenis.on("scroll", onScroll);
-    }
-
     return () => {
-      clearTimeout(idle);
       cancelAnimationFrame(raf);
       WAKE.forEach((t) => window.removeEventListener(t, wake));
-      window.removeEventListener("wheel", onWheel);
       if (window.__lenis === lenis) delete window.__lenis;
       lenis.destroy();
     };
