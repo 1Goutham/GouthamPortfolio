@@ -2049,6 +2049,20 @@ video {
   opacity: 1;
 }
 /* Soft ground shadow, drawn by CSS instead of a per-canvas shadow pass. */
+/* No GPU: the phone as its screenshot, in a plain phone frame. */
+.phone3d-flat {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  aspect-ratio: 589 / 1120;
+  object-fit: cover;
+  object-position: top;
+  border: 6px solid #111;
+  border-radius: 28px;
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transform: translate(-50%, -50%) rotate(-4deg);
+}
 .phone3d-shadow {
   position: absolute;
   left: 50%;
@@ -5763,22 +5777,28 @@ a:focus-visible .mt-pill-fill {
   color: #777;
 }
 
-/* Each character, struck in with its own ink. */
+/* Each character in its own ink: a touch lighter or darker, a hair off
+   the line. They are all printed from the start; what isn't typed yet is
+   under the covers below. */
 .ty-c {
   position: relative;
   top: var(--j);
-  opacity: 0;
-}
-.ty-c.on {
   opacity: var(--o);
-  animation: ty-strike 140ms ease-out;
 }
-.ty-fast .ty-c.on {
-  animation: none;
+/* Paper over what isn't typed yet, shaded like the sheet where it sits. */
+.ty-cover {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  display: none;
+  background: linear-gradient(180deg, #fbfbf9, #f3f2ef 55%, #ebeae6) 0 calc(-1 * (var(--text-top) + var(--cy, 0px))) / 100% var(--sheet-h) no-repeat;
+  pointer-events: none;
 }
-/* Struck: the ink lands dark and settles to its own shade. */
-@keyframes ty-strike {
-  from { opacity: 1; }
+.ty-cover-rest {
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
 }
 /* The end of the sheet: the signature, and under it the way out, both on
    the text's right edge. They come in once the last line is typed. */

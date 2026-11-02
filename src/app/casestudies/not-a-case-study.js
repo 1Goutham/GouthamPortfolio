@@ -206,11 +206,15 @@ export default function NotACaseStudy() {
     const machine = machineRef.current;
     const sign = signRef.current;
     const body = machine?.querySelector(".ty-body");
+    const pin = stage?.querySelector(".ty-pin");
+    const coverLine = text?.querySelector(".ty-cover-line");
+    const coverRest = text?.querySelector(".ty-cover-rest");
     if (!stage || !text) return;
     const still = reduced();
     let chars = [];
     let lines = [];
     let shown = 0;
+    let drawnAt = -1; // the character the covers were last set for
     let intro = 0; // lines typed by the opening, before any scrolling
     let introTarget = 0;
     let raf = 0;
@@ -237,26 +241,46 @@ export default function NotACaseStudy() {
         const L = lines[at[i].line];
         const f = (at[i].x - L.left) / Math.max(1, L.right - L.left);
         c._t = at[i].line + 0.8 * f;
+        c._line = at[i].line;
+        c._x = at[i].x;
       });
       // The opening types the first paragraph.
       const lastOfFirst = [...(text.querySelector(".nc-p")?.querySelectorAll(".ty-c") || [])].pop();
       introTarget = lastOfFirst ? Math.floor(lastOfFirst._t) + 0.999 : 0;
       // Scroll room for the rest, and a little for the sheet to feed out.
       stage.style.setProperty("--run", `${(Math.max(0, lines.length - introTarget) + FEED_OUT) * SCROLL_PER_LINE + 80}px`);
+      cache();
     };
 
-    // The typing line, on screen; and the top of the paper's box (worked
-    // out from the machine, as its tilt would skew a measured box).
-    const geometry = () => {
-      const m = machine.getBoundingClientRect();
-      return { typeY: m.top + TW.type * m.width, clipTop: m.top + TW.platen * m.width - paper.offsetHeight };
+    // Every size the frame needs, read once here (on load and on resize),
+    // never inside a frame: reading layout there, after the letters have
+    // changed, would make the browser lay out the whole sheet every frame.
+    const box = {};
+    const cache = () => {
+      box.mw = machine.offsetWidth;
+      box.mh = machine.offsetHeight;
+      box.textTop = text.offsetTop;
+      box.paperH = paper.offsetHeight;
+      box.signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop;
+      box.textW = text.offsetWidth;
+      // The covers wear the sheet's own shading, so they match where they sit.
+      text.style.setProperty("--sheet-h", `${sheet.offsetHeight}px`);
+      text.style.setProperty("--text-top", `${box.textTop}px`);
+      drawnAt = -1;
+    };
+
+    // The typing line, on screen, and the top of the paper's box, from
+    // where the pinned view is (the frame's only layout read, made first).
+    const geometry = (pinTop, pinH) => {
+      const mTop = pinTop + pinH - TW.show * box.mw;
+      return { typeY: mTop + TW.type * box.mw, clipTop: mTop + TW.platen * box.mw - box.paperH };
     };
 
     // The sheet's motion is simulated, not set: it glides to where the
     // typing puts it, and it hangs on gravity. The more of it is out, the
     // further it leans back over the paper rest; fed up quickly it lags,
     // then flops back and settles with a little sway (a damped spring).
-    const sim = { y: 0, x: 0, a: 7, av: 0, last: 0, kick: 0, on: false };
+    const sim = { y: 0, x: 0, a: 7, av: 0, last: 0, kick: 0, on: false, drawn: 0 };
     let doneNow = false;
 
     const frame = (t = performance.now()) => {
@@ -265,16 +289,36 @@ export default function NotACaseStudy() {
       const dt = sim.last ? Math.min(48, t - sim.last) : 16;
       sim.last = t;
       const top = stage.getBoundingClientRect().top;
+      const pinR = pin.getBoundingClientRect();
       const scrolled = Math.max(0, -top);
       const p = still ? lines.length + FEED_OUT : intro + scrolled / SCROLL_PER_LINE;
 
-      // Strike in (or lift out) the characters up to p.
+      // How far the typing has got: the first character not yet typed.
+      // Everything after it is hidden by two paper-coloured covers, one over
+      // the rest of the line being typed and one over the lines below; the
+      // characters themselves never change, so a frame touches two boxes,
+      // not hundreds of letters.
+      let lo = 0;
+      let hi = chars.length;
+      while (lo < hi) {
+        const mid = (lo + hi) >> 1;
+        if (chars[mid]._t <= p) lo = mid + 1;
+        else hi = mid;
+      }
       const before = shown;
-      while (shown < chars.length && chars[shown]._t <= p) chars[shown++].classList.add("on");
-      while (shown > 0 && chars[shown - 1]._t > p) chars[--shown].classList.remove("on");
-      // A fast scroll lands whole lines at once: no strike animation for those.
-      if (Math.abs(shown - before) > 25) text.classList.add("ty-fast");
-      else if (shown !== before) text.classList.remove("ty-fast");
+      shown = lo;
+      if (shown !== drawnAt) {
+        drawnAt = shown;
+        if (shown < chars.length) {
+          const c = chars[shown];
+          const L = lines[c._line];
+          coverLine.style.cssText = `display:block;transform:translate3d(${c._x - 1}px,${L.top - 3}px,0);width:${box.textW - c._x + 8}px;height:${L.bottom - L.top + 6}px;--cy:${L.top - 3}px`;
+          coverRest.style.cssText = `display:block;top:${L.bottom + 3}px;--cy:${L.bottom + 3}px`;
+        } else {
+          coverLine.style.display = "none";
+          coverRest.style.display = "none";
+        }
+      }
       // The machine gives a little with the keystrokes (not every frame).
       if (shown > before && !still && t - sim.kick > 70) {
         sim.kick = t;
@@ -294,12 +338,12 @@ export default function NotACaseStudy() {
       let y = cur.bottom + (p < n ? smooth((frac - 0.75) / 0.25) * (next.bottom - cur.bottom) : 0);
       if (p >= n) {
         // Fed out until the end of the sheet stands clear above the bail rod.
-        const clear = (TW.type - TW.rod + 0.04) * machine.offsetWidth;
-        const signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop + clear;
+        const clear = (TW.type - TW.rod + 0.04) * box.mw;
+        const signEnd = box.signEnd + clear;
         y = lines[n - 1].bottom + smooth((p - n) / FEED_OUT) * (signEnd - lines[n - 1].bottom);
       }
-      const { typeY, clipTop } = geometry();
-      const ty = typeY - clipTop - text.offsetTop - y;
+      const { typeY, clipTop } = geometry(pinR.top, pinR.height);
+      const ty = typeY - clipTop - box.textTop - y;
       // The carriage creeps left along the line and returns at its end.
       const tx = p < n ? (0.5 - Math.min(1, frac / 0.75)) * 14 : 0;
 
@@ -314,13 +358,18 @@ export default function NotACaseStudy() {
       const vy = (sim.y - prevY) / dt; // px per ms; negative as it rises
 
       // Gravity: lean by how much paper is out, plus a lag when it moves.
-      const out = Math.max(0, paper.offsetHeight - sim.y);
-      const lean = 6 + 9 * Math.min(1.2, out / window.innerHeight) + Math.max(-3, Math.min(4, -vy * 9));
+      const out = Math.max(0, box.paperH - sim.y);
+      const lean = 6 + 9 * Math.min(1.2, out / pinR.height) + Math.max(-3, Math.min(4, -vy * 9));
       if (still) sim.a = lean;
       sim.av += ((lean - sim.a) * 0.00014 - sim.av * 0.013) * dt;
       sim.a += sim.av * dt;
 
-      paper.style.transform = `perspective(1500px) rotateX(${sim.a.toFixed(3)}deg)`;
+      // The lean is only rewritten when it has moved enough to see: each
+      // change makes the browser redraw the tilted sheet.
+      if (Math.abs(sim.a - sim.drawn) > 0.04) {
+        sim.drawn = sim.a;
+        paper.style.transform = `perspective(1500px) rotateX(${sim.a.toFixed(2)}deg)`;
+      }
       sheet.style.transform = `translate3d(${sim.x.toFixed(2)}px, ${sim.y.toFixed(2)}px, 0)`;
 
       // Keep going while anything is still moving.
@@ -363,13 +412,17 @@ export default function NotACaseStudy() {
     });
     ro.observe(text);
     window.addEventListener("scroll", kick, { passive: true });
-    window.addEventListener("resize", kick);
+    const onResize = () => {
+      if (chars.length) cache();
+      kick();
+    };
+    window.addEventListener("resize", onResize);
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("scroll", kick);
-      window.removeEventListener("resize", kick);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
@@ -420,6 +473,8 @@ export default function NotACaseStudy() {
                     </p>
                   ))}
                   <p className="nc-p nc-closing">{CLOSING}</p>
+                  <span className="ty-cover ty-cover-line" aria-hidden="true" />
+                  <span className="ty-cover ty-cover-rest" aria-hidden="true" />
                 </div>
                 {/* Signed, and the way out typed under it. */}
                 <div ref={signRef} className="ty-end" data-on={done}>
