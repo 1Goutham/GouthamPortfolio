@@ -293,7 +293,9 @@ export default function NotACaseStudy() {
       const next = lines[Math.min(n - 1, i + 1)];
       let y = cur.bottom + (p < n ? smooth((frac - 0.75) / 0.25) * (next.bottom - cur.bottom) : 0);
       if (p >= n) {
-        const signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop + 24;
+        // Fed out until the end of the sheet stands clear above the bail rod.
+        const clear = (TW.type - TW.rod + 0.04) * machine.offsetWidth;
+        const signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop + clear;
         y = lines[n - 1].bottom + smooth((p - n) / FEED_OUT) * (signEnd - lines[n - 1].bottom);
       }
       const { typeY, clipTop } = geometry();
@@ -402,12 +404,6 @@ export default function NotACaseStudy() {
         style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen, "--type": TW.type, "--rod": TW.rod }}
       >
         <div className="ty-pin">
-          {/* The page ends with the machine; the way out is beside it. */}
-          <TransitionLink href="/" className="ty-home bracket-link bracket-link-dark font-anonymous-pro text-black">
-            <span className="bracket-link-l" aria-hidden="true">[</span>
-            <span className="bracket-link-text">Back home</span>
-            <span className="bracket-link-r" aria-hidden="true">]</span>
-          </TransitionLink>
           <div ref={machineRef} className="ty-machine" data-ready={ready}>
             {/* The machine's dark insides, behind the paper. */}
             <span className="ty-cavity" aria-hidden="true" />
@@ -425,9 +421,17 @@ export default function NotACaseStudy() {
                   ))}
                   <p className="nc-p nc-closing">{CLOSING}</p>
                 </div>
-                <p ref={signRef} className="ty-sign" data-on={done} aria-hidden="true">
-                  Goutham
-                </p>
+                {/* Signed, and the way out typed under it. */}
+                <div ref={signRef} className="ty-end" data-on={done}>
+                  <p className="ty-sign" aria-hidden="true">
+                    Goutham
+                  </p>
+                  <TransitionLink href="/" className="ty-home bracket-link bracket-link-dark font-anonymous-pro text-black" tabIndex={done ? 0 : -1}>
+                    <span className="bracket-link-l" aria-hidden="true">[</span>
+                    <span className="bracket-link-text">Back home</span>
+                    <span className="bracket-link-r" aria-hidden="true">]</span>
+                  </TransitionLink>
+                </div>
               </div>
             </div>
             {/* Light on the paper inside the machine: the frame arms shade its
