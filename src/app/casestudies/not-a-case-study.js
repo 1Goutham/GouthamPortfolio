@@ -9,11 +9,8 @@ import TransitionLink from "../components/layout/transition-link";
 /**
  * Not a Case Study: the woven patch, then how I make things, in my words.
  *
- * The patch weaves itself together on arrival: it is cut into horizontal
- * threads that slide in from alternate sides, like weft through a loom, and
- * a sheen runs over the stitching once it's whole. Hovered, it tilts toward
- * the pointer and the sheen follows. The text arrives paragraph by
- * paragraph, its key words settling to full black just after.
+ * The patch is embroidered on arrival (see Patch). The text arrives
+ * paragraph by paragraph, its key words settling to full black just after.
  */
 
 const NAV_ITEMS = [
@@ -22,8 +19,7 @@ const NAV_ITEMS = [
   { label: "Projects", href: "/projects" },
 ];
 
-const PATCH = "/notacasestudy.png";
-const THREADS = 14;
+const PATCH = "/notacasestudy.webp";
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const B = ({ children }) => <b className="nc-key">{children}</b>;
@@ -94,11 +90,25 @@ const CLOSING = (
   </>
 );
 
-/** The woven patch. */
+/**
+ * The patch, embroidered in front of you: a stitching head sweeps across,
+ * laying satin-stitch threads that thicken into solid embroidery behind it,
+ * with the needle glinting at its edge. Then it lifts and presses down onto
+ * the page, and a sheen runs over the threads. Hovered, it tilts toward the
+ * pointer; clicked, it's stitched again.
+ */
 function Patch({ ready }) {
   const ref = useRef(null);
+  const [state, setState] = useState("wait"); // wait | stitch | done
+  const [run, setRun] = useState(0);
 
-  // Tilt toward the pointer; the sheen follows it across the threads.
+  useEffect(() => {
+    if (!ready) return;
+    if (reduced()) return setState("done");
+    setState("stitch");
+  }, [ready, run]);
+
+  // Tilt toward the pointer; the sheen follows it.
   useEffect(() => {
     const el = ref.current;
     if (!el || reduced()) return;
@@ -106,9 +116,9 @@ function Patch({ ready }) {
     let p = null;
     const paint = () => {
       raf = 0;
-      el.style.setProperty("--tx", p ? `${(-p.y * 10).toFixed(2)}deg` : "0deg");
-      el.style.setProperty("--ty", p ? `${(p.x * 14).toFixed(2)}deg` : "0deg");
-      el.style.setProperty("--sx", p ? `${((p.x + 0.5) * 100).toFixed(1)}%` : "-30%");
+      el.style.setProperty("--tx", p ? `${(-p.y * 12).toFixed(2)}deg` : "0deg");
+      el.style.setProperty("--ty", p ? `${(p.x * 16).toFixed(2)}deg` : "0deg");
+      el.style.setProperty("--sx", p ? `${((0.5 - p.x) * 100 + 50).toFixed(1)}%` : "120%");
     };
     const onMove = (e) => {
       if (e.pointerType !== "mouse") return;
@@ -132,20 +142,29 @@ function Patch({ ready }) {
   }, []);
 
   return (
-    <div ref={ref} className="nc-patch" data-ready={ready} style={{ "--mask": `url(${PATCH})` }}>
-      <div className="nc-patch-in">
-        {/* Holds the size; the threads are drawn over it. */}
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="nc-patch-base" src={PATCH} alt="Not a case study" draggable={false} />
-        {Array.from({ length: THREADS }, (_, k) => (
-          <span key={k} className="nc-thread" style={{ "--k": k, "--n": THREADS }} aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={PATCH} alt="" draggable={false} />
-          </span>
-        ))}
-        <span className="nc-sheen" aria-hidden="true" />
-      </div>
-    </div>
+    <button
+      ref={ref}
+      type="button"
+      className="nc-patch"
+      data-state={state}
+      style={{ "--mask": `url(${PATCH})` }}
+      onClick={() => state === "done" && setRun((n) => n + 1)}
+      aria-label="Not a case study. Click to stitch it again."
+    >
+      <span
+        key={run}
+        className="nc-press"
+        onAnimationEnd={(e) => e.animationName === "nc-press" && setState("done")}
+      >
+        <span className="nc-shadow" aria-hidden="true" />
+        <span className="nc-tilt">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="nc-patch-img" src={PATCH} alt="" width={760} height={369} draggable={false} />
+          <span className="nc-needle" aria-hidden="true" />
+          <span className="nc-sheen" aria-hidden="true" />
+        </span>
+      </span>
+    </button>
   );
 }
 
