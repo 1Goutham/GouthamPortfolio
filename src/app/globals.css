@@ -5648,14 +5648,6 @@ a:focus-visible .mt-pill-fill {
   height: auto;
   user-select: none;
 }
-/* A keystroke: the machine gives a little. */
-.ty-machine.ty-kick .ty-body {
-  animation: ty-kick 90ms ease-out;
-}
-@keyframes ty-kick {
-  40% { transform: translateY(0.9px); }
-}
-
 /* The paper, from the top of the screen down to where it meets the roller. */
 .ty-paper-clip {
   position: absolute;
@@ -5665,9 +5657,11 @@ a:focus-visible .mt-pill-fill {
   bottom: calc(100% - var(--platen) * var(--w));
   height: calc(100svh + 40px);
   overflow: hidden;
-  /* The sheet leans back over the paper rest, away from you. */
-  transform: perspective(1500px) rotateX(10deg);
+  /* The sheet leans back over the paper rest, away from you (the lean is
+     simulated in the page script; this is where it starts). */
+  transform: perspective(1500px) rotateX(7deg);
   transform-origin: 50% 100%;
+  will-change: transform;
 }
 /* Where it curls round into the platen it falls into shadow, as in the photo. */
 .ty-shade {
@@ -5687,7 +5681,7 @@ a:focus-visible .mt-pill-fill {
   width: 100%;
   container-type: inline-size;
   padding: 0 8.5% 40cqw;
-  border-radius: 14cqw 2px 0 0;
+  border-radius: 2px 2px 0 0;
   background:
     linear-gradient(90deg, rgba(0, 0, 0, 0.06), transparent 2.5%, transparent 97.5%, rgba(0, 0, 0, 0.06)),
     linear-gradient(180deg, #fbfbf9, #f3f2ef 55%, #ebeae6);
@@ -5743,8 +5737,12 @@ a:focus-visible .mt-pill-fill {
   opacity: var(--o);
   animation: ty-strike 140ms ease-out;
 }
+.ty-fast .ty-c.on {
+  animation: none;
+}
+/* Struck: the ink lands dark and settles to its own shade. */
 @keyframes ty-strike {
-  from { opacity: 1; filter: blur(0.6px); }
+  from { opacity: 1; }
 }
 .ty-sign {
   margin-top: 9cqw;

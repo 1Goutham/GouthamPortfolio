@@ -203,6 +203,7 @@ export default function NotACaseStudy() {
     const text = textRef.current;
     const machine = machineRef.current;
     const sign = signRef.current;
+    const body = machine?.querySelector(".ty-body");
     if (!stage || !text) return;
     const still = reduced();
     let chars = [];
@@ -249,9 +250,18 @@ export default function NotACaseStudy() {
       return { typeY: m.top + TW.type * m.width, clipTop: m.top + TW.platen * m.width - paper.offsetHeight };
     };
 
-    const frame = () => {
+    // The sheet's motion is simulated, not set: it glides to where the
+    // typing puts it, and it hangs on gravity. The more of it is out, the
+    // further it leans back over the paper rest; fed up quickly it lags,
+    // then flops back and settles with a little sway (a damped spring).
+    const sim = { y: 0, x: 0, a: 7, av: 0, last: 0, kick: 0, on: false };
+    let doneNow = false;
+
+    const frame = (t = performance.now()) => {
       raf = 0;
       if (!alive || !lines.length) return;
+      const dt = sim.last ? Math.min(48, t - sim.last) : 16;
+      sim.last = t;
       const top = stage.getBoundingClientRect().top;
       const scrolled = Math.max(0, -top);
       const p = still ? lines.length + FEED_OUT : intro + scrolled / SCROLL_PER_LINE;
@@ -260,31 +270,59 @@ export default function NotACaseStudy() {
       const before = shown;
       while (shown < chars.length && chars[shown]._t <= p) chars[shown++].classList.add("on");
       while (shown > 0 && chars[shown - 1]._t > p) chars[--shown].classList.remove("on");
-      if (shown > before && !still) {
-        machine.classList.remove("ty-kick");
-        void machine.offsetWidth;
-        machine.classList.add("ty-kick");
+      // A fast scroll lands whole lines at once: no strike animation for those.
+      if (Math.abs(shown - before) > 25) text.classList.add("ty-fast");
+      else if (shown !== before) text.classList.remove("ty-fast");
+      // The machine gives a little with the keystrokes (not every frame).
+      if (shown > before && !still && t - sim.kick > 70) {
+        sim.kick = t;
+        body.animate([{ transform: "none" }, { transform: "translateY(0.9px)" }, { transform: "none" }], { duration: 90, easing: "ease-out" });
       }
-      setDone(shown === chars.length);
+      const nowDone = shown === chars.length;
+      if (nowDone !== doneNow) setDone((doneNow = nowDone));
 
-      // Paper: the line being typed sits on the typing line; at the end of
-      // a line it feeds up to the next. Past the last, it feeds on out.
+      // Where the typing wants the paper: the line being typed on the
+      // typing line, feeding up to the next at its end; past the last
+      // line, out until the signature is up.
       const n = lines.length;
       const i = Math.min(Math.floor(p), n - 1);
       const frac = p - Math.floor(p);
       const cur = lines[Math.max(0, i)];
       const next = lines[Math.min(n - 1, i + 1)];
-      let y = cur.bottom + (p < n ? smooth((frac - 0.8) / 0.2) * (next.bottom - cur.bottom) : 0);
-      // Past the last line the sheet feeds out until the signature is up.
+      let y = cur.bottom + (p < n ? smooth((frac - 0.75) / 0.25) * (next.bottom - cur.bottom) : 0);
       if (p >= n) {
         const signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop + 24;
         y = lines[n - 1].bottom + smooth((p - n) / FEED_OUT) * (signEnd - lines[n - 1].bottom);
       }
       const { typeY, clipTop } = geometry();
-      const textTop = text.offsetTop; // within the sheet
+      const ty = typeY - clipTop - text.offsetTop - y;
       // The carriage creeps left along the line and returns at its end.
-      const carriage = p < n ? (0.5 - Math.min(1, frac / 0.8)) * 14 : 0;
-      sheet.style.transform = `translate3d(${carriage.toFixed(1)}px, ${(typeY - clipTop - textTop - y).toFixed(1)}px, 0)`;
+      const tx = p < n ? (0.5 - Math.min(1, frac / 0.75)) * 14 : 0;
+
+      if (!sim.on || still) {
+        sim.on = true;
+        sim.y = ty;
+        sim.x = tx;
+      }
+      const prevY = sim.y;
+      sim.y += (ty - sim.y) * (1 - Math.exp(-dt / 80));
+      sim.x += (tx - sim.x) * (1 - Math.exp(-dt / 110));
+      const vy = (sim.y - prevY) / dt; // px per ms; negative as it rises
+
+      // Gravity: lean by how much paper is out, plus a lag when it moves.
+      const out = Math.max(0, paper.offsetHeight - sim.y);
+      const lean = 6 + 9 * Math.min(1.2, out / window.innerHeight) + Math.max(-3, Math.min(4, -vy * 9));
+      if (still) sim.a = lean;
+      sim.av += ((lean - sim.a) * 0.00014 - sim.av * 0.013) * dt;
+      sim.a += sim.av * dt;
+
+      paper.style.transform = `perspective(1500px) rotateX(${sim.a.toFixed(3)}deg)`;
+      sheet.style.transform = `translate3d(${sim.x.toFixed(2)}px, ${sim.y.toFixed(2)}px, 0)`;
+
+      // Keep going while anything is still moving.
+      const moving = Math.abs(ty - sim.y) > 0.2 || Math.abs(tx - sim.x) > 0.05 || Math.abs(sim.av) > 0.0002 || Math.abs(lean - sim.a) > 0.01;
+      if (moving && !still) raf = requestAnimationFrame(frame);
+      else sim.last = 0;
     };
     const kick = () => {
       if (!raf) raf = requestAnimationFrame(frame);
@@ -307,7 +345,7 @@ export default function NotACaseStudy() {
         const k = Math.max(0, Math.min(1, (t - t0) / total));
         const idx = Math.min(chars.length - 1, Math.floor(k * count));
         intro = k >= 1 ? introTarget : chars[idx]._t;
-        frame();
+        kick();
         if (k < 1) requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
