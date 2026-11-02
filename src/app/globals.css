@@ -57,7 +57,9 @@ html.lenis body {
 
 body {
   min-height: 100vh;
-  overflow-x: hidden;
+  /* clip, not hidden: hidden would make the body a scroll box of its own
+     and break position: sticky everywhere on the site. */
+  overflow-x: clip;
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
@@ -5592,250 +5594,196 @@ a:focus-visible .mt-pill-fill {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Not a Case Study                                                   */
+/*  Not a Case Study: the typewriter                                   */
 /* ------------------------------------------------------------------ */
 
-.nc-body {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 40px 24px 120px;
+.nc-page {
+  overflow-x: clip;
 }
-@media (min-width: 768px) {
-  .nc-body {
-    padding: 72px 48px 160px;
-  }
+.nc-nav {
+  position: absolute;
+  inset: 0 0 auto;
 }
 
-/* ---- the patch, embroidered ---- */
-/* --p: where the stitching head is (0 to 100% across). Registered so it
-   animates and every layer of the patch can follow it. */
-@property --p {
-  syntax: "<percentage>";
-  inherits: true;
-  initial-value: 115%;
-}
-.nc-patch {
-  --tx: 0deg;
-  --ty: 0deg;
-  --sx: 120%;
-  display: block;
-  width: min(380px, 76vw);
-  margin: 0 auto;
-  padding: 0;
-  border: 0;
-  background: none;
-  perspective: 900px;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.nc-patch:focus-visible {
-  outline: 1.5px solid #111;
-  outline-offset: 10px;
-  border-radius: 14px;
-}
-.nc-patch[data-state="wait"] .nc-press {
-  opacity: 0;
-}
-.nc-press {
+/* The stage is as tall as the typing takes; the machine stays pinned. */
+.ty-stage {
+  --w: min(1000px, 100vw);
   position: relative;
-  display: block;
+  height: calc(100svh + var(--run, 2400px));
 }
-.nc-tilt {
+@media (max-width: 767px) {
+  .ty-stage {
+    --w: 132vw;
+  }
+}
+.ty-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.ty-machine {
+  position: absolute;
+  left: 50%;
+  top: calc(100% - var(--show) * var(--w));
+  width: var(--w);
+  transform: translateX(-50%);
+}
+.ty-body {
   position: relative;
-  display: block;
-  transform: rotateX(var(--tx)) rotateY(var(--ty));
-  transform-style: preserve-3d;
-  transition: transform 0.8s var(--ease-out-expo);
-}
-.nc-patch[data-hot] .nc-tilt {
-  transition-duration: 0.3s;
-}
-.nc-patch-img {
+  z-index: 2;
   display: block;
   width: 100%;
   height: auto;
   user-select: none;
-  filter: drop-shadow(0 1px 1px rgba(60, 30, 20, 0.35));
+  filter: drop-shadow(0 -6px 24px rgba(0, 0, 0, 0.08));
 }
-/* Its own shadow, on the page under it: tight while it lies flat. */
-.nc-shadow {
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  bottom: -2%;
-  height: 30%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(40, 20, 10, 0.28), transparent);
-  filter: blur(8px);
-  transform-origin: center;
-  /* Grows in with the stitching. */
-  opacity: clamp(0%, var(--p), 100%);
+/* A keystroke: the machine gives a little. */
+.ty-machine.ty-kick .ty-body {
+  animation: ty-kick 90ms ease-out;
+}
+@keyframes ty-kick {
+  40% { transform: translateY(0.9px); }
 }
 
-/* Stitching: behind the head the patch is solid; just behind it, a band of
-   fine satin-stitch threads; ahead of it, nothing yet. */
-.nc-patch[data-state="stitch"] .nc-press {
-  animation: nc-stitch 1.7s cubic-bezier(0.55, 0.05, 0.35, 1) both, nc-press 0.9s 1.65s cubic-bezier(0.3, 1.3, 0.5, 1) both;
-}
-@keyframes nc-stitch {
-  from { --p: -4%; }
-  to { --p: 115%; }
-}
-.nc-patch[data-state="stitch"] .nc-patch-img {
-  -webkit-mask:
-    linear-gradient(100deg, #000 calc(var(--p) - 24%), transparent calc(var(--p) - 12%)),
-    repeating-linear-gradient(-14deg, #000 0 1.3px, transparent 1.3px 3.2px),
-    linear-gradient(100deg, #000 calc(var(--p) - 1%), transparent calc(var(--p) + 1%));
-  -webkit-mask-composite: source-over, source-in;
-  mask:
-    linear-gradient(100deg, #000 calc(var(--p) - 24%), transparent calc(var(--p) - 12%)),
-    repeating-linear-gradient(-14deg, #000 0 1.3px, transparent 1.3px 3.2px),
-    linear-gradient(100deg, #000 calc(var(--p) - 1%), transparent calc(var(--p) + 1%));
-  mask-composite: add, intersect;
-}
-/* The needle: a glint riding the edge of the stitching, bobbing as it sews. */
-.nc-needle {
+/* The paper, from the top of the screen down to where it meets the roller. */
+.ty-paper-clip {
   position: absolute;
-  top: -8%;
-  bottom: -8%;
-  left: var(--p);
-  width: 3px;
-  margin-left: -1.5px;
-  border-radius: 3px;
-  background: linear-gradient(transparent, rgba(255, 255, 255, 0.95) 30%, #fff 50%, rgba(255, 255, 255, 0.95) 70%, transparent);
-  box-shadow: 0 0 10px 2px rgba(255, 240, 225, 0.7), 0 0 26px 6px rgba(255, 220, 190, 0.22);
-  transform: rotate(10deg);
-  opacity: 0;
+  z-index: 1;
+  left: calc(var(--px) * 100%);
+  width: calc(var(--pw) * 100%);
+  bottom: calc(100% - var(--platen) * var(--w));
+  height: calc(100svh + 40px);
+  overflow: hidden;
+}
+.ty-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  container-type: inline-size;
+  padding: 0 8.5% 40cqw;
+  border-radius: 9cqw 3px 0 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.05), transparent 3%, transparent 97%, rgba(0, 0, 0, 0.05)),
+    linear-gradient(180deg, #f6f5f1, #f9f8f5 30%, #f7f6f2);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 10px 40px -10px rgba(0, 0, 0, 0.18);
+  will-change: transform;
+}
+/* Grain, so it reads as paper. */
+.ty-sheet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .5 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.06;
   pointer-events: none;
 }
-.nc-patch[data-state="stitch"] .nc-needle {
-  animation: nc-needle 1.7s ease both, nc-bob 0.09s steps(2) infinite;
+.ty-head {
+  position: relative;
+  padding: 11cqw 0 8cqw;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
 }
-@keyframes nc-needle {
-  0%, 100% { opacity: 0; }
-  8%, 88% { opacity: 1; }
+.ty-text {
+  position: relative;
+  padding-top: 7cqw;
+  font-size: clamp(12px, 2.45cqw, 17.5px);
+  line-height: 1.62;
+  color: #1c1c1c;
 }
-@keyframes nc-bob {
-  to { translate: 0 2px; }
+.ty-text .nc-p {
+  text-align: justify;
 }
-/* Done stitching: it lifts off the page, then presses down into place. */
-@keyframes nc-press {
-  0% { transform: none; }
-  38% { transform: translateY(-10px) scale(1.045) rotate(-1.2deg); }
-  70% { transform: translateY(1px) scale(0.985) rotate(0.2deg); }
-  100% { transform: none; }
+.ty-text .nc-p + .nc-p {
+  margin-top: 1.2em;
 }
-.nc-patch[data-state="stitch"] .nc-shadow {
-  /* forwards, not both: until it starts, the shadow grows with the stitching. */
-  animation: nc-shadow 0.9s 1.65s cubic-bezier(0.3, 1.3, 0.5, 1) forwards;
+.ty-text .nc-key {
+  font-weight: 600;
 }
-@keyframes nc-shadow {
-  0% { opacity: 1; transform: none; }
-  38% { opacity: 0.35; transform: translateY(14px) scale(1.12); }
-  70% { opacity: 1; transform: scale(0.96); }
-  100% { opacity: 1; transform: none; }
+.ty-text .nc-closing::before {
+  content: "*\00a0\00a0\00a0*\00a0\00a0\00a0*";
+  display: block;
+  margin: 0.4em 0 1.4em;
+  text-align: center;
+  color: #777;
 }
 
-/* A sheen over the threads: once when it lands, then with the pointer. */
+/* Each character, struck in with its own ink. */
+.ty-c {
+  position: relative;
+  top: var(--j);
+  opacity: 0;
+}
+.ty-c.on {
+  opacity: var(--o);
+  animation: ty-strike 140ms ease-out;
+}
+@keyframes ty-strike {
+  from { opacity: 1; filter: blur(0.6px); }
+}
+.ty-sign {
+  margin-top: 9cqw;
+  text-align: right;
+  font: 400 clamp(26px, 6cqw, 46px) / 1 var(--font-hand), cursive;
+  color: #1f2a52;
+  transform: rotate(-4deg);
+  opacity: 0;
+  transition: opacity 1.2s ease 0.3s;
+}
+.ty-sign[data-on="true"] {
+  opacity: 0.9;
+}
+
+/* The patch, the sheet's letterhead. */
+.nc-patch {
+  --tx: 0deg;
+  --ty: 0deg;
+  --sx: 50%;
+  --sy: 0%;
+  width: 46%;
+  margin: 0 auto;
+  perspective: 700px;
+}
+.nc-tilt {
+  position: relative;
+  transform: rotateX(var(--tx)) rotateY(var(--ty)) rotate(-1.5deg);
+  transition: transform 0.8s var(--ease-out-expo);
+  filter: drop-shadow(0 1px 1px rgba(60, 30, 20, 0.35)) drop-shadow(0 6px 10px rgba(60, 30, 20, 0.16));
+}
+.nc-patch[data-hot] .nc-tilt {
+  transition-duration: 0.3s;
+}
+.nc-tilt img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+/* Light on the threads, from where the pointer is. */
 .nc-sheen {
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%) var(--sx) 0 / 300% 100% no-repeat;
+  background: radial-gradient(circle at var(--sx) var(--sy), rgba(255, 255, 255, 0.6), transparent 55%);
   mix-blend-mode: soft-light;
   -webkit-mask: var(--mask) center / 100% 100% no-repeat;
   mask: var(--mask) center / 100% 100% no-repeat;
-  pointer-events: none;
   opacity: 0;
   transition: opacity 0.4s ease;
-}
-.nc-patch[data-state="done"] .nc-sheen {
-  animation: nc-sheen 1.3s ease-in-out both;
-}
-@keyframes nc-sheen {
-  0% { opacity: 1; background-position: 120% 0; }
-  100% { opacity: 0; background-position: -20% 0; }
+  pointer-events: none;
 }
 .nc-patch[data-hot] .nc-sheen {
   opacity: 1;
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .nc-patch .nc-patch-img {
-    -webkit-mask: none;
-    mask: none;
-  }
 }
 
-/* ---- the text ---- */
-.nc-text {
-  margin-top: 56px;
-}
-@media (min-width: 768px) {
-  .nc-text {
-    margin-top: 72px;
-  }
-}
-.nc-p {
-  font-size: 17px;
-  line-height: 1.68;
-  color: #3a3a3a;
-  text-align: left;
-  transition: opacity 0.9s ease, transform 1.1s var(--ease-out-expo), filter 0.9s ease;
-}
-.nc-p + .nc-p {
-  margin-top: 22px;
-}
-@media (min-width: 768px) {
-  .nc-p {
-    /* Justified as in the design; on a phone the gaps would open up. */
-    text-align: justify;
-    font-size: 19px;
-    line-height: 1.7;
-  }
-}
-.nc-p[data-shown="false"] {
-  opacity: 0;
-  transform: translateY(16px);
-  filter: blur(4px);
-}
-.nc-key {
-  font-weight: 600;
-  color: #111;
-  transition: color 0.8s ease 0.35s;
-}
-.nc-p[data-shown="false"] .nc-key {
-  color: #a5a5a5;
-}
-.nc-closing {
-  margin-top: 56px !important;
-  padding-top: 40px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  font-size: 21px;
-  line-height: 1.55;
-  text-align: left;
-  color: #1b1b1b;
-}
-@media (min-width: 768px) {
-  .nc-closing {
-    font-size: 26px;
-    letter-spacing: -0.01em;
-  }
-}
 .nc-end {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  margin-top: 64px;
-  text-align: left;
+  justify-content: center;
+  gap: 36px;
+  padding: 72px 24px 110px;
 }
-.nc-sign {
-  font: 400 40px/1 var(--font-hand), cursive;
-  color: #222;
-  transform: rotate(-4deg);
-}
-.nc-links {
-  display: flex;
-  gap: 28px;
+@media (prefers-reduced-motion: reduce) {
+  .ty-c {
+    opacity: var(--o);
+  }
 }
