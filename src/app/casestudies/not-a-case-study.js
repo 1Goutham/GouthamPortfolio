@@ -7,10 +7,16 @@ import MinimalNav from "../components/layout/navbar";
 import TransitionLink from "../components/layout/transition-link";
 
 /**
- * Not a Case Study: the woven patch, then how I make things, in my words.
+ * Not a Case Study, typed out on a typewriter as you scroll.
  *
- * The patch is embroidered on arrival (see Patch). The text arrives
- * paragraph by paragraph, its key words settling to full black just after.
+ * The machine is pinned to the bottom of the screen with a sheet in it; the
+ * woven patch is the sheet's letterhead. On arrival the first paragraph
+ * types itself; after that the scroll is the typist: each character is
+ * struck in at the typing line (in slightly uneven ink), the carriage
+ * creeps along the line and the paper feeds up a line at its end, and the
+ * machine jolts with the keystrokes. Scrolling back un-types it. The whole
+ * text is in the page from the start, so it reads and searches as text;
+ * with reduced motion it is simply all there.
  */
 
 const NAV_ITEMS = [
@@ -20,7 +26,21 @@ const NAV_ITEMS = [
 ];
 
 const PATCH = "/notacasestudy.webp";
+const MACHINE = "/printer.png";
+
+// Where things are on the typewriter image, as shares of its width:
+//  show:  how much of it (from the top) stands above the bottom of the screen
+//  type:  the typing line, just above where the paper meets the roller
+//  platen: where the paper disappears into the roller
+//  paperX / paperW: the sheet's left edge and width
+const TW = { show: 0.36, type: -0.012, platen: 0.01, paperX: 0.141, paperW: 0.705 };
+
+const SCROLL_PER_LINE = 34; // px of scroll per typed line
+const FEED_OUT = 4; // lines' worth of scroll to feed the signed sheet out
+const INTRO_MS_PER_CHAR = 14; // the first paragraph types itself at this pace
+
 const reduced = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const smooth = (t) => (t <= 0 ? 0 : t >= 1 ? 1 : t * t * (3 - 2 * t));
 
 const B = ({ children }) => <b className="nc-key">{children}</b>;
 
@@ -90,25 +110,9 @@ const CLOSING = (
   </>
 );
 
-/**
- * The patch, embroidered in front of you: a stitching head sweeps across,
- * laying satin-stitch threads that thicken into solid embroidery behind it,
- * with the needle glinting at its edge. Then it lifts and presses down onto
- * the page, and a sheen runs over the threads. Hovered, it tilts toward the
- * pointer; clicked, it's stitched again.
- */
-function Patch({ ready }) {
+/** The patch, a real thing on the page: it tilts toward the pointer and the light moves over its threads. */
+function Patch() {
   const ref = useRef(null);
-  const [state, setState] = useState("wait"); // wait | stitch | done
-  const [run, setRun] = useState(0);
-
-  useEffect(() => {
-    if (!ready) return;
-    if (reduced()) return setState("done");
-    setState("stitch");
-  }, [ready, run]);
-
-  // Tilt toward the pointer; the sheen follows it.
   useEffect(() => {
     const el = ref.current;
     if (!el || reduced()) return;
@@ -116,9 +120,10 @@ function Patch({ ready }) {
     let p = null;
     const paint = () => {
       raf = 0;
-      el.style.setProperty("--tx", p ? `${(-p.y * 12).toFixed(2)}deg` : "0deg");
-      el.style.setProperty("--ty", p ? `${(p.x * 16).toFixed(2)}deg` : "0deg");
-      el.style.setProperty("--sx", p ? `${((0.5 - p.x) * 100 + 50).toFixed(1)}%` : "120%");
+      el.style.setProperty("--tx", p ? `${(-p.y * 14).toFixed(2)}deg` : "0deg");
+      el.style.setProperty("--ty", p ? `${(p.x * 18).toFixed(2)}deg` : "0deg");
+      el.style.setProperty("--sx", p ? `${((0.5 - p.x) * 100 + 50).toFixed(1)}%` : "50%");
+      el.style.setProperty("--sy", p ? `${((p.y + 0.5) * 100).toFixed(1)}%` : "0%");
     };
     const onMove = (e) => {
       if (e.pointerType !== "mouse") return;
@@ -140,79 +145,194 @@ function Patch({ ready }) {
       el.removeEventListener("pointerleave", onLeave);
     };
   }, []);
-
   return (
-    <button
-      ref={ref}
-      type="button"
-      className="nc-patch"
-      data-state={state}
-      style={{ "--mask": `url(${PATCH})` }}
-      onClick={() => state === "done" && setRun((n) => n + 1)}
-      aria-label="Not a case study. Click to stitch it again."
-    >
-      <span
-        key={run}
-        className="nc-press"
-        onAnimationEnd={(e) => e.animationName === "nc-press" && setState("done")}
-      >
-        <span className="nc-shadow" aria-hidden="true" />
-        <span className="nc-tilt">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="nc-patch-img" src={PATCH} alt="" width={760} height={369} draggable={false} />
-          <span className="nc-needle" aria-hidden="true" />
-          <span className="nc-sheen" aria-hidden="true" />
-        </span>
-      </span>
-    </button>
+    <div ref={ref} className="nc-patch" style={{ "--mask": `url(${PATCH})` }}>
+      <div className="nc-tilt">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={PATCH} alt="Not a case study" width={760} height={369} draggable={false} />
+        <span className="nc-sheen" aria-hidden="true" />
+      </div>
+    </div>
   );
 }
 
-/** A paragraph that rises in once it's on screen. */
-function Para({ children, className = "" }) {
-  const ref = useRef(null);
-  const [shown, setShown] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (reduced()) return setShown(true);
-    const io = new IntersectionObserver(
-      ([e]) => {
-        if (!e.isIntersecting) return;
-        setShown(true);
-        io.disconnect();
-      },
-      { rootMargin: "0px 0px -12% 0px" }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  return (
-    <p ref={ref} className={`nc-p ${className}`} data-shown={shown}>
-      {children}
-    </p>
-  );
+/**
+ * Wrap every printed character of the sheet in its own span, with its own
+ * ink: a touch lighter or darker, a hair off the line, as type bars leave
+ * them. Spaces stay plain text, so the justification still works.
+ */
+function wrapChars(root) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  for (const node of nodes) {
+    const frag = document.createDocumentFragment();
+    for (const ch of node.textContent) {
+      if (/\s/.test(ch)) {
+        frag.appendChild(document.createTextNode(ch));
+        continue;
+      }
+      const s = document.createElement("span");
+      s.className = "ty-c";
+      s.textContent = ch;
+      s.style.setProperty("--o", (0.74 + rnd() * 0.26).toFixed(2));
+      s.style.setProperty("--j", `${((rnd() - 0.5) * 0.7).toFixed(2)}px`);
+      frag.appendChild(s);
+    }
+    node.replaceWith(frag);
+  }
+  return [...root.querySelectorAll(".ty-c")];
 }
 
 export default function NotACaseStudy() {
+  const stageRef = useRef(null);
+  const paperRef = useRef(null);
+  const sheetRef = useRef(null);
+  const textRef = useRef(null);
+  const machineRef = useRef(null);
+  const signRef = useRef(null);
   const [ready, setReady] = useState(false);
+  const [done, setDone] = useState(false);
+
   useEffect(() => {
+    const stage = stageRef.current;
+    const paper = paperRef.current;
+    const sheet = sheetRef.current;
+    const text = textRef.current;
+    const machine = machineRef.current;
+    const sign = signRef.current;
+    if (!stage || !text) return;
+    const still = reduced();
+    let chars = [];
+    let lines = [];
+    let shown = 0;
+    let intro = 0; // lines typed by the opening, before any scrolling
+    let introTarget = 0;
+    let raf = 0;
     let alive = true;
-    const go = () => alive && setReady(true);
-    // Start the weave once the patch has loaded (and the fonts, for the text).
-    const img = new window.Image();
-    img.src = PATCH;
-    Promise.all([img.decode().catch(() => {}), document.fonts?.ready]).then(go);
-    const t = setTimeout(go, 1500);
+
+    // Each character's place in the typing order: its line, plus how far
+    // along that line it sits (the line is typed in its first 80%).
+    const measure = () => {
+      const base = text.getBoundingClientRect();
+      lines = [];
+      const at = [];
+      for (const c of chars) {
+        const r = c.getBoundingClientRect();
+        const top = Math.round(r.top - base.top);
+        let line = lines[lines.length - 1];
+        if (!line || Math.abs(line.top - top) > 4) {
+          line = { top, bottom: top + r.height, left: r.left - base.left, right: r.right - base.left };
+          lines.push(line);
+        }
+        line.right = Math.max(line.right, r.right - base.left);
+        at.push({ line: lines.length - 1, x: r.left - base.left });
+      }
+      chars.forEach((c, i) => {
+        const L = lines[at[i].line];
+        const f = (at[i].x - L.left) / Math.max(1, L.right - L.left);
+        c._t = at[i].line + 0.8 * f;
+      });
+      // The opening types the first paragraph.
+      const lastOfFirst = [...(text.querySelector(".nc-p")?.querySelectorAll(".ty-c") || [])].pop();
+      introTarget = lastOfFirst ? Math.floor(lastOfFirst._t) + 0.999 : 0;
+      // Scroll room for the rest, and a little for the sheet to feed out.
+      stage.style.setProperty("--run", `${(Math.max(0, lines.length - introTarget) + FEED_OUT) * SCROLL_PER_LINE + 80}px`);
+    };
+
+    // The typing line, on screen; and the top of the paper's clip box.
+    const geometry = () => {
+      const m = machine.getBoundingClientRect();
+      return { typeY: m.top + TW.type * m.width, clipTop: paper.getBoundingClientRect().top };
+    };
+
+    const frame = () => {
+      raf = 0;
+      if (!alive || !lines.length) return;
+      const top = stage.getBoundingClientRect().top;
+      const scrolled = Math.max(0, -top);
+      const p = still ? lines.length + FEED_OUT : intro + scrolled / SCROLL_PER_LINE;
+
+      // Strike in (or lift out) the characters up to p.
+      const before = shown;
+      while (shown < chars.length && chars[shown]._t <= p) chars[shown++].classList.add("on");
+      while (shown > 0 && chars[shown - 1]._t > p) chars[--shown].classList.remove("on");
+      if (shown > before && !still) {
+        machine.classList.remove("ty-kick");
+        void machine.offsetWidth;
+        machine.classList.add("ty-kick");
+      }
+      setDone(shown === chars.length);
+
+      // Paper: the line being typed sits on the typing line; at the end of
+      // a line it feeds up to the next. Past the last, it feeds on out.
+      const n = lines.length;
+      const i = Math.min(Math.floor(p), n - 1);
+      const frac = p - Math.floor(p);
+      const cur = lines[Math.max(0, i)];
+      const next = lines[Math.min(n - 1, i + 1)];
+      let y = cur.bottom + (p < n ? smooth((frac - 0.8) / 0.2) * (next.bottom - cur.bottom) : 0);
+      // Past the last line the sheet feeds out until the signature is up.
+      if (p >= n) {
+        const signEnd = sign.offsetTop + sign.offsetHeight - text.offsetTop + 24;
+        y = lines[n - 1].bottom + smooth((p - n) / FEED_OUT) * (signEnd - lines[n - 1].bottom);
+      }
+      const { typeY, clipTop } = geometry();
+      const textTop = text.offsetTop; // within the sheet
+      // The carriage creeps left along the line and returns at its end.
+      const carriage = p < n ? (0.5 - Math.min(1, frac / 0.8)) * 14 : 0;
+      sheet.style.transform = `translate3d(${carriage.toFixed(1)}px, ${(typeY - clipTop - textTop - y).toFixed(1)}px, 0)`;
+    };
+    const kick = () => {
+      if (!raf) raf = requestAnimationFrame(frame);
+    };
+
+    const start = async () => {
+      await document.fonts?.ready;
+      if (!alive) return;
+      chars = wrapChars(text);
+      measure();
+      setReady(true);
+      if (still) return frame();
+      // The opening: the first paragraph types itself.
+      const t0 = performance.now();
+      const count = chars.filter((c) => c._t <= introTarget).length;
+      const total = count * INTRO_MS_PER_CHAR;
+      const step = (t) => {
+        if (!alive) return;
+        // (a frame can be stamped a touch before t0)
+        const k = Math.max(0, Math.min(1, (t - t0) / total));
+        const idx = Math.min(chars.length - 1, Math.floor(k * count));
+        intro = k >= 1 ? introTarget : chars[idx]._t;
+        frame();
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    start();
+
+    const ro = new ResizeObserver(() => {
+      if (!chars.length) return;
+      measure();
+      kick();
+    });
+    ro.observe(text);
+    window.addEventListener("scroll", kick, { passive: true });
+    window.addEventListener("resize", kick);
     return () => {
       alive = false;
-      clearTimeout(t);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("scroll", kick);
+      window.removeEventListener("resize", kick);
     };
   }, []);
 
   return (
     <main className="nc-page min-h-screen bg-white font-outfit text-black" data-ready={ready}>
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
+      <nav className="nc-nav relative z-20 flex items-center justify-between px-6 py-6 md:px-12">
         <TransitionLink
           href="/"
           aria-label="Home"
@@ -232,33 +352,49 @@ export default function NotACaseStudy() {
         </TransitionLink>
       </nav>
 
-      <article className="nc-body">
-        <h1 className="sr-only">Not a case study</h1>
-        <Patch ready={ready} />
+      <h1 className="sr-only">Not a case study</h1>
 
-        <div className="nc-text">
-          {PARAGRAPHS.map((p, i) => (
-            <Para key={i}>{p}</Para>
-          ))}
-          <Para className="nc-closing">{CLOSING}</Para>
+      {/* The typewriter: pinned while the sheet is typed. */}
+      <section ref={stageRef} className="ty-stage" style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen }}>
+        <div className="ty-pin">
+          <div ref={machineRef} className="ty-machine">
+            {/* The paper, cut off where it goes into the roller. */}
+            <div ref={paperRef} className="ty-paper-clip">
+              <div ref={sheetRef} className="ty-sheet">
+                <div className="ty-head">
+                  <Patch />
+                </div>
+                <div ref={textRef} className="ty-text">
+                  {PARAGRAPHS.map((para, i) => (
+                    <p key={i} className="nc-p">
+                      {para}
+                    </p>
+                  ))}
+                  <p className="nc-p nc-closing">{CLOSING}</p>
+                </div>
+                <p ref={signRef} className="ty-sign" data-on={done} aria-hidden="true">
+                  Goutham
+                </p>
+              </div>
+            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="ty-body" src={MACHINE} alt="" draggable={false} />
+          </div>
         </div>
+      </section>
 
-        <Para className="nc-end">
-          <span className="nc-sign">Goutham</span>
-          <span className="nc-links">
-            <TransitionLink href="/projects" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">See the work</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </TransitionLink>
-            <TransitionLink href="/#contact" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">Let&rsquo;s talk</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </TransitionLink>
-          </span>
-        </Para>
-      </article>
+      <footer className="nc-end">
+        <TransitionLink href="/projects" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
+          <span className="bracket-link-l" aria-hidden="true">[</span>
+          <span className="bracket-link-text">See the work</span>
+          <span className="bracket-link-r" aria-hidden="true">]</span>
+        </TransitionLink>
+        <TransitionLink href="/#contact" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
+          <span className="bracket-link-l" aria-hidden="true">[</span>
+          <span className="bracket-link-text">Let&rsquo;s talk</span>
+          <span className="bracket-link-r" aria-hidden="true">]</span>
+        </TransitionLink>
+      </footer>
     </main>
   );
 }
