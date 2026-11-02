@@ -5607,13 +5607,14 @@ a:focus-visible .mt-pill-fill {
 
 /* The stage is as tall as the typing takes; the machine stays pinned. */
 .ty-stage {
-  --w: min(1000px, 100vw);
+  /* The machine's width: as big as fits with room above it for the page. */
+  --w: min(92vw, 80svh, 840px);
   position: relative;
   height: calc(100svh + var(--run, 2400px));
 }
 @media (max-width: 767px) {
   .ty-stage {
-    --w: 132vw;
+    --w: 118vw;
   }
 }
 .ty-pin {
@@ -5629,6 +5630,16 @@ a:focus-visible .mt-pill-fill {
   width: var(--w);
   transform: translateX(-50%);
 }
+/* On arrival the machine rises into place with its sheet. */
+.ty-machine[data-ready="false"] {
+  opacity: 0;
+}
+.ty-machine[data-ready="true"] {
+  animation: ty-rise 1.1s var(--ease-out-expo) backwards;
+}
+@keyframes ty-rise {
+  from { opacity: 0; transform: translate(-50%, 18%); }
+}
 .ty-body {
   position: relative;
   z-index: 2;
@@ -5636,7 +5647,6 @@ a:focus-visible .mt-pill-fill {
   width: 100%;
   height: auto;
   user-select: none;
-  filter: drop-shadow(0 -6px 24px rgba(0, 0, 0, 0.08));
 }
 /* A keystroke: the machine gives a little. */
 .ty-machine.ty-kick .ty-body {
@@ -5655,6 +5665,20 @@ a:focus-visible .mt-pill-fill {
   bottom: calc(100% - var(--platen) * var(--w));
   height: calc(100svh + 40px);
   overflow: hidden;
+  /* The sheet leans back over the paper rest, away from you. */
+  transform: perspective(1500px) rotateX(10deg);
+  transform-origin: 50% 100%;
+}
+/* Where it curls round into the platen it falls into shadow, as in the photo. */
+.ty-shade {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--px) * 100%);
+  width: calc(var(--pw) * 100%);
+  top: calc((var(--type) - 0.022) * var(--w));
+  height: calc((var(--platen) - var(--type) + 0.022) * var(--w));
+  background: linear-gradient(rgba(20, 20, 24, 0) 0%, rgba(20, 20, 24, 0.12) 45%, rgba(20, 20, 24, 0.55) 100%);
+  pointer-events: none;
 }
 .ty-sheet {
   position: absolute;
@@ -5663,11 +5687,11 @@ a:focus-visible .mt-pill-fill {
   width: 100%;
   container-type: inline-size;
   padding: 0 8.5% 40cqw;
-  border-radius: 9cqw 3px 0 0;
+  border-radius: 14cqw 2px 0 0;
   background:
-    linear-gradient(90deg, rgba(0, 0, 0, 0.05), transparent 3%, transparent 97%, rgba(0, 0, 0, 0.05)),
-    linear-gradient(180deg, #f6f5f1, #f9f8f5 30%, #f7f6f2);
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 10px 40px -10px rgba(0, 0, 0, 0.18);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.06), transparent 2.5%, transparent 97.5%, rgba(0, 0, 0, 0.06)),
+    linear-gradient(180deg, #fbfbf9, #f3f2ef 55%, #ebeae6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), -6px 0 18px -10px rgba(0, 0, 0, 0.2), 6px 0 18px -10px rgba(0, 0, 0, 0.2);
   will-change: transform;
 }
 /* Grain, so it reads as paper. */
@@ -5688,7 +5712,7 @@ a:focus-visible .mt-pill-fill {
 .ty-text {
   position: relative;
   padding-top: 7cqw;
-  font-size: clamp(12px, 2.45cqw, 17.5px);
+  font-size: clamp(11.5px, 2.85cqw, 17px);
   line-height: 1.62;
   color: #1c1c1c;
 }

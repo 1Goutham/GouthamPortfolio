@@ -26,14 +26,14 @@ const NAV_ITEMS = [
 ];
 
 const PATCH = "/notacasestudy.webp";
-const MACHINE = "/printer.png";
+const MACHINE = "/typewriter.webp"; // public/printer.png with its paper cut out
 
 // Where things are on the typewriter image, as shares of its width:
-//  show:  how much of it (from the top) stands above the bottom of the screen
-//  type:  the typing line, just above where the paper meets the roller
+//  show:   its height (it stands on the bottom of the screen)
+//  type:   the typing line, on the strip of paper under the bail rod
 //  platen: where the paper disappears into the roller
 //  paperX / paperW: the sheet's left edge and width
-const TW = { show: 0.36, type: -0.012, platen: 0.01, paperX: 0.141, paperW: 0.705 };
+const TW = { show: 0.5977, type: 0.207, platen: 0.2226, paperX: 0.1356, paperW: 0.7192 };
 
 const SCROLL_PER_LINE = 34; // px of scroll per typed line
 const FEED_OUT = 4; // lines' worth of scroll to feed the signed sheet out
@@ -216,19 +216,19 @@ export default function NotACaseStudy() {
     // Each character's place in the typing order: its line, plus how far
     // along that line it sits (the line is typed in its first 80%).
     const measure = () => {
-      const base = text.getBoundingClientRect();
+      // Layout coordinates (offsets), which the sheet's 3D tilt doesn't touch.
       lines = [];
       const at = [];
       for (const c of chars) {
-        const r = c.getBoundingClientRect();
-        const top = Math.round(r.top - base.top);
+        const top = c.offsetTop;
+        const left = c.offsetLeft;
         let line = lines[lines.length - 1];
         if (!line || Math.abs(line.top - top) > 4) {
-          line = { top, bottom: top + r.height, left: r.left - base.left, right: r.right - base.left };
+          line = { top, bottom: top + c.offsetHeight, left, right: left + c.offsetWidth };
           lines.push(line);
         }
-        line.right = Math.max(line.right, r.right - base.left);
-        at.push({ line: lines.length - 1, x: r.left - base.left });
+        line.right = Math.max(line.right, left + c.offsetWidth);
+        at.push({ line: lines.length - 1, x: left });
       }
       chars.forEach((c, i) => {
         const L = lines[at[i].line];
@@ -242,10 +242,11 @@ export default function NotACaseStudy() {
       stage.style.setProperty("--run", `${(Math.max(0, lines.length - introTarget) + FEED_OUT) * SCROLL_PER_LINE + 80}px`);
     };
 
-    // The typing line, on screen; and the top of the paper's clip box.
+    // The typing line, on screen; and the top of the paper's box (worked
+    // out from the machine, as its tilt would skew a measured box).
     const geometry = () => {
       const m = machine.getBoundingClientRect();
-      return { typeY: m.top + TW.type * m.width, clipTop: paper.getBoundingClientRect().top };
+      return { typeY: m.top + TW.type * m.width, clipTop: m.top + TW.platen * m.width - paper.offsetHeight };
     };
 
     const frame = () => {
@@ -355,9 +356,13 @@ export default function NotACaseStudy() {
       <h1 className="sr-only">Not a case study</h1>
 
       {/* The typewriter: pinned while the sheet is typed. */}
-      <section ref={stageRef} className="ty-stage" style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen }}>
+      <section
+        ref={stageRef}
+        className="ty-stage"
+        style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen, "--type": TW.type }}
+      >
         <div className="ty-pin">
-          <div ref={machineRef} className="ty-machine">
+          <div ref={machineRef} className="ty-machine" data-ready={ready}>
             {/* The paper, cut off where it goes into the roller. */}
             <div ref={paperRef} className="ty-paper-clip">
               <div ref={sheetRef} className="ty-sheet">
@@ -377,8 +382,10 @@ export default function NotACaseStudy() {
                 </p>
               </div>
             </div>
+            {/* Where the paper curls round into the platen, it falls into shadow. */}
+            <span className="ty-shade" aria-hidden="true" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img className="ty-body" src={MACHINE} alt="" draggable={false} />
+            <img className="ty-body" src={MACHINE} alt="" width={1800} height={1076} draggable={false} />
           </div>
         </div>
       </section>
