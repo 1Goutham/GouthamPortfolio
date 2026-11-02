@@ -5644,6 +5644,8 @@ a:focus-visible .mt-pill-fill {
   position: relative;
   z-index: 2;
   display: block;
+  /* Clicks go through to the paper (the link at the end of the sheet). */
+  pointer-events: none;
   width: 100%;
   height: auto;
   user-select: none;
@@ -5778,17 +5780,31 @@ a:focus-visible .mt-pill-fill {
 @keyframes ty-strike {
   from { opacity: 1; }
 }
-.ty-sign {
-  margin-top: 9cqw;
-  text-align: right;
-  font: 400 clamp(26px, 6cqw, 46px) / 1 var(--font-hand), cursive;
-  color: #1f2a52;
-  transform: rotate(-4deg);
+/* The end of the sheet: the signature, and under it the way out, both on
+   the text's right edge. They come in once the last line is typed. */
+.ty-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5cqw;
+  margin-top: 8cqw;
   opacity: 0;
   transition: opacity 1.2s ease 0.3s;
 }
-.ty-sign[data-on="true"] {
+.ty-end[data-on="true"] {
+  opacity: 1;
+}
+.ty-end:not([data-on="true"]) {
+  pointer-events: none;
+}
+.ty-sign {
+  font: 400 clamp(26px, 6cqw, 46px) / 1 var(--font-hand), cursive;
+  color: #1f2a52;
   opacity: 0.9;
+  transform: rotate(-4deg);
+}
+.ty-home {
+  font-size: clamp(12px, 2.6cqw, 16px);
 }
 
 /* The patch, the sheet's letterhead. */
@@ -5832,22 +5848,6 @@ a:focus-visible .mt-pill-fill {
   opacity: 1;
 }
 
-/* The way out, beside the machine. */
-.ty-home {
-  position: absolute;
-  z-index: 3;
-  right: clamp(20px, 4vw, 64px);
-  top: 50%;
-  font-size: 18px;
-  transform: translateY(-50%);
-}
-@media (max-width: 767px) {
-  .ty-home {
-    right: 2px;
-    font-size: 13px;
-    writing-mode: vertical-rl;
-  }
-}
 @media (prefers-reduced-motion: reduce) {
   .ty-c {
     opacity: var(--o);
