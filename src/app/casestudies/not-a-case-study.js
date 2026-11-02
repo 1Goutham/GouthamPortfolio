@@ -32,8 +32,10 @@ const MACHINE = "/typewriter.webp"; // public/printer.png with its paper cut out
 //  show:   its height (it stands on the bottom of the screen)
 //  type:   the typing line, on the strip of paper under the bail rod
 //  platen: where the paper disappears into the roller
-//  paperX / paperW: the sheet's left edge and width
-const TW = { show: 0.5977, type: 0.207, platen: 0.2226, paperX: 0.1356, paperW: 0.7192 };
+//  paperX / paperW: the sheet's left edge and width; a little wider than
+//    the opening, so its edges tuck in behind the frame arms
+//  rod:    the underside of the bail rod
+const TW = { show: 0.5977, type: 0.207, platen: 0.2226, paperX: 0.125, paperW: 0.741, rod: 0.1876 };
 
 const SCROLL_PER_LINE = 34; // px of scroll per typed line
 const FEED_OUT = 4; // lines' worth of scroll to feed the signed sheet out
@@ -397,10 +399,18 @@ export default function NotACaseStudy() {
       <section
         ref={stageRef}
         className="ty-stage"
-        style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen, "--type": TW.type }}
+        style={{ "--px": TW.paperX, "--pw": TW.paperW, "--show": TW.show, "--platen": TW.platen, "--type": TW.type, "--rod": TW.rod }}
       >
         <div className="ty-pin">
+          {/* The page ends with the machine; the way out is beside it. */}
+          <TransitionLink href="/" className="ty-home bracket-link bracket-link-dark font-anonymous-pro text-black">
+            <span className="bracket-link-l" aria-hidden="true">[</span>
+            <span className="bracket-link-text">Back home</span>
+            <span className="bracket-link-r" aria-hidden="true">]</span>
+          </TransitionLink>
           <div ref={machineRef} className="ty-machine" data-ready={ready}>
+            {/* The machine's dark insides, behind the paper. */}
+            <span className="ty-cavity" aria-hidden="true" />
             {/* The paper, cut off where it goes into the roller. */}
             <div ref={paperRef} className="ty-paper-clip">
               <div ref={sheetRef} className="ty-sheet">
@@ -420,7 +430,11 @@ export default function NotACaseStudy() {
                 </p>
               </div>
             </div>
-            {/* Where the paper curls round into the platen, it falls into shadow. */}
+            {/* Light on the paper inside the machine: the frame arms shade its
+                edges, the bail rod casts a line, and where it curls round
+                into the platen it falls into shadow. */}
+            <span className="ty-ao" aria-hidden="true" />
+            <span className="ty-rodshadow" aria-hidden="true" />
             <span className="ty-shade" aria-hidden="true" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="ty-body" src={MACHINE} alt="" width={1800} height={1076} draggable={false} />
@@ -428,18 +442,6 @@ export default function NotACaseStudy() {
         </div>
       </section>
 
-      <footer className="nc-end">
-        <TransitionLink href="/projects" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
-          <span className="bracket-link-l" aria-hidden="true">[</span>
-          <span className="bracket-link-text">See the work</span>
-          <span className="bracket-link-r" aria-hidden="true">]</span>
-        </TransitionLink>
-        <TransitionLink href="/#contact" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-xl">
-          <span className="bracket-link-l" aria-hidden="true">[</span>
-          <span className="bracket-link-text">Let&rsquo;s talk</span>
-          <span className="bracket-link-r" aria-hidden="true">]</span>
-        </TransitionLink>
-      </footer>
     </main>
   );
 }

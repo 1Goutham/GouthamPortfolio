@@ -5663,6 +5663,40 @@ a:focus-visible .mt-pill-fill {
   transform-origin: 50% 100%;
   will-change: transform;
 }
+/* The machine's insides, behind the paper (only ever seen at its edges). */
+.ty-cavity {
+  position: absolute;
+  z-index: 0;
+  left: calc(0.134 * var(--w));
+  width: calc(0.7225 * var(--w));
+  top: calc(0.05 * var(--w));
+  height: calc((var(--platen) - 0.05) * var(--w));
+  background: linear-gradient(#3b3d42, #1d1e21);
+}
+/* Inside the machine the frame arms shade the paper's edges... */
+.ty-ao {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--px) * 100%);
+  width: calc(var(--pw) * 100%);
+  top: calc(0.03 * var(--w));
+  height: calc((var(--platen) - 0.03) * var(--w));
+  background: linear-gradient(90deg, rgba(10, 12, 16, 0.28), rgba(10, 12, 16, 0.08) 4%, transparent 9%, transparent 91%, rgba(10, 12, 16, 0.08) 96%, rgba(10, 12, 16, 0.28));
+  -webkit-mask: linear-gradient(transparent, #000 30%);
+  mask: linear-gradient(transparent, #000 30%);
+  pointer-events: none;
+}
+/* ...and the bail rod casts a soft line across it. */
+.ty-rodshadow {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--px) * 100%);
+  width: calc(var(--pw) * 100%);
+  top: calc(var(--rod) * var(--w));
+  height: calc(0.012 * var(--w));
+  background: linear-gradient(rgba(10, 12, 16, 0.32), transparent);
+  pointer-events: none;
+}
 /* Where it curls round into the platen it falls into shadow, as in the photo. */
 .ty-shade {
   position: absolute;
@@ -5798,11 +5832,21 @@ a:focus-visible .mt-pill-fill {
   opacity: 1;
 }
 
-.nc-end {
-  display: flex;
-  justify-content: center;
-  gap: 36px;
-  padding: 72px 24px 110px;
+/* The way out, beside the machine. */
+.ty-home {
+  position: absolute;
+  z-index: 3;
+  right: clamp(20px, 4vw, 64px);
+  top: 50%;
+  font-size: 18px;
+  transform: translateY(-50%);
+}
+@media (max-width: 767px) {
+  .ty-home {
+    right: 2px;
+    font-size: 13px;
+    writing-mode: vertical-rl;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .ty-c {
