@@ -363,7 +363,88 @@ function Monitor({ children }) {
   );
 }
 
+const INK_MS = 750;
+
+/**
+ * A brush that follows the mouse over the desk, as on the Margin teaser:
+ * strokes swell when the hand slows and thin out when it hurries, fade as
+ * they age, and are drawn white with a difference blend, so they read as
+ * ink on the paper and as a negative of whatever they cross.
+ */
+function useBrush() {
+  const stageRef = useRef(null);
+  const inkRef = useRef(null);
+  const ink = useRef({ pts: [], raf: 0 });
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    const cv = inkRef.current;
+    if (!stage || !cv) return;
+    const fit = () => {
+      const r = stage.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      cv.width = Math.round(r.width * dpr);
+      cv.height = Math.round(r.height * dpr);
+      cv.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(stage);
+    const t = ink.current;
+    return () => {
+      ro.disconnect();
+      cancelAnimationFrame(t.raf);
+    };
+  }, []);
+
+  const draw = useCallback(() => {
+    const t = ink.current;
+    const cv = inkRef.current;
+    if (!cv) return;
+    const ctx = cv.getContext("2d");
+    const now = performance.now();
+    t.pts = t.pts.filter((q) => now - q.t < INK_MS);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    for (let i = 2; i < t.pts.length; i++) {
+      const a = t.pts[i - 2];
+      const b = t.pts[i - 1];
+      const c = t.pts[i];
+      if (c.t - b.t > 90) continue;
+      const life = 1 - (now - c.t) / INK_MS;
+      // Midpoints and a curve through b, so the stroke is smooth, not jointed.
+      ctx.strokeStyle = `rgba(255,255,255,${Math.min(1, life * 1.15).toFixed(3)})`;
+      ctx.lineWidth = Math.max(0.5, c.w * (0.35 + 0.65 * life));
+      ctx.beginPath();
+      ctx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2);
+      ctx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2);
+      ctx.stroke();
+    }
+    t.raf = t.pts.length ? requestAnimationFrame(draw) : 0;
+  }, []);
+
+  const onBrush = (e) => {
+    if (e.pointerType !== "mouse" || reduceMotion()) return;
+    const r = stageRef.current.getBoundingClientRect();
+    const t = ink.current;
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    const now = performance.now();
+    const prev = t.pts[t.pts.length - 1];
+    // Slow is heavy, fast is light; eased so the width breathes.
+    const speed = prev ? Math.hypot(x - prev.x, y - prev.y) / Math.max(8, now - prev.t) : 0;
+    const target = Math.max(2, Math.min(16, 15 - speed * 6));
+    const w = prev ? prev.w + (target - prev.w) * 0.3 : 4;
+    t.pts.push({ x, y, t: now, w });
+    if (!t.raf) t.raf = requestAnimationFrame(draw);
+  };
+
+  return { stageRef, inkRef, onBrush };
+}
+
 export default function BeyondStory() {
+  const { stageRef, inkRef, onBrush } = useBrush();
   // Lay the desk out once fonts are ready so nothing pops mid-swap.
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -402,41 +483,42 @@ export default function BeyondStory() {
 
       <h1 className="sr-only">Beyond: a bit more about Goutham</h1>
 
-      <div className="bt-stage">
-        <Piece id="photo" d={[13.4, 13.9, 10.3]} m={[5, 0.8, 30]} r={-3} n={0} label="A taped-up photo of Goutham">
+      <div className="bt-stage" ref={stageRef} onPointerMove={onBrush}>
+        <canvas ref={inkRef} className="bt-ink" aria-hidden="true" />
+        <Piece id="photo" d={[7, 4, 9.5]} m={[5, 2, 32]} r={-3} n={0} label="A taped-up photo of Goutham">
           <HangingPhoto ready={ready} />
         </Piece>
 
-        <Piece id="burst" d={[28.5, 8.8, 18.2]} m={[40, 1.3, 56]} r={-6} n={1}>
+        <Piece id="burst" d={[21, 9, 17]} m={[42, 2, 54]} r={-5} n={1}>
           <Burst />
         </Piece>
 
-        <Piece id="cs" z={3} d={[52.7, 17.2, 13.8]} m={[48, 10.6, 44]} r={8} n={2}>
+        <Piece id="cs" z={3} d={[40.5, 13, 11.5]} m={[50, 11, 42]} r={6} n={2}>
           <TransitionLink href="/casestudies" className="bt-pill font-outfit">
             case study <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
           </TransitionLink>
         </Piece>
 
-        <Piece id="title" d={[29.3, 30.8, 15]} m={[42, 16.7, 48]} r={6} n={3} className="bt-title-piece">
+        <Piece id="title" d={[21, 35, 14]} m={[42, 17, 48]} r={4} n={3} className="bt-title-piece">
           <p className="bt-title font-anonymous-pro">
             <Brackets>Beyond</Brackets>
           </p>
         </Piece>
 
-        <Piece id="home" z={3} d={[77, 14, 13]} m={[6, 20.3, 40]} r={-14} n={4}>
+        <Piece id="home" z={3} d={[33.5, 79, 12]} m={[58, 47, 38]} r={-6} n={4}>
           <TransitionLink href="/" className="bt-home font-anonymous-pro">
             <Brackets>Back Home</Brackets>
           </TransitionLink>
         </Piece>
 
-        <Piece id="patch" d={[44.8, 36.6, 11.7]} m={[52, 30, 36]} r={-10} n={5}>
+        <Piece id="patch" d={[38, 32, 11]} m={[52, 29.5, 38]} r={-8} n={5}>
           <TransitionLink href="/casestudies" aria-label="Case studies">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="bt-patch" src="/notacasestudy.webp" alt="" width={760} height={369} draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="intro" d={[9.8, 45.5, 32]} m={[5, 25.2, 90]} r={0} n={6} className="bt-intro-piece">
+        <Piece id="intro" d={[7, 51, 34]} m={[5, 24.5, 90]} r={0} n={6} className="bt-intro-piece">
           <div className="bt-intro">
             <Brackets tight className="font-anonymous-pro text-black">Goutham G</Brackets>
             <ScrollStar />
@@ -447,32 +529,16 @@ export default function BeyondStory() {
           </div>
         </Piece>
 
-        <Piece id="arcade" d={[38.4, 52.5, 4.6]} m={[10, 30.5, 11]} r={-8} n={7}>
+        <Piece id="arcade" d={[27, 69, 4.5]} m={[68, 37, 14]} r={-10} n={7}>
           <TransitionLink href="/arcade" aria-label="Try my arcade" className="bt-arcade">
             <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="90px" draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="note" d={[8.5, 54, 18.5]} m={[4, 35, 48]} r={-6} n={8}>
+        <Piece id="note" d={[7, 63, 16]} m={[5, 34, 50]} r={-4} n={8}>
           <LifeNote />
         </Piece>
 
-        <Piece id="works" d={[30.4, 65.7, 20.6]} m={[52, 38.2, 45]} r={-8} n={9}>
-          <TransitionLink href="/works" className="bt-card font-outfit">
-            <span className="bt-card-top">
-              <b>1G-works</b>
-              <span>[ let&rsquo;s build ]</span>
-              <i aria-hidden="true">&times;</i>
-            </span>
-            <span className="bt-card-body">
-              <Image src="/headgcwork.png" alt="" width={189} height={145} sizes="40px" />
-              <span>
-                <b>Need a creative website or digital product?</b> Design, web, growth and AI for your
-                business, built end to end with 1G-works.
-              </span>
-            </span>
-          </TransitionLink>
-        </Piece>
 
         <div className="bt-monitor-wrap">
           <Monitor>
