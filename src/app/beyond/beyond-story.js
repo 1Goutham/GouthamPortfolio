@@ -198,7 +198,7 @@ const LIFE = [
  * into the motion, and is put down where you let go. A press that doesn't
  * move is a click, so the links on the desk still work.
  */
-function Piece({ id, d, m, r = 0, z = 1, n = 0, className = "", children, label }) {
+function Piece({ id, d, m, r = 0, z = 3, n = 0, className = "", children, label }) {
   const ref = useRef(null);
   const onPointerDown = (e) => {
     if (e.button !== 0) return;
@@ -217,7 +217,8 @@ function Piece({ id, d, m, r = 0, z = 1, n = 0, className = "", children, label 
         moved = true;
         el.setPointerCapture(ev.pointerId);
         el.dataset.held = "true";
-        el.style.zIndex = String(40 + (Piece.top = (Piece.top || 0) + 1));
+        // Picked up, it comes to the top (the monitor stays under the desk things).
+        if (id !== "tv") el.style.zIndex = String(40 + (Piece.top = (Piece.top || 0) + 1));
       }
       el.style.setProperty("--dx", `${ox + dx}px`);
       el.style.setProperty("--dy", `${oy + dy}px`);
@@ -322,6 +323,21 @@ function Monitor({ children }) {
   const [level, setLevel] = useState(false);
   const [progress, setProgress] = useState(0);
   const screenRef = useRef(null);
+  const tvRef = useRef(null);
+
+  // The wheel anywhere on the monitor scrolls the story on its screen.
+  useEffect(() => {
+    const tv = tvRef.current;
+    const scr = screenRef.current;
+    if (!tv || !scr) return;
+    const onWheel = (e) => {
+      if (scr.contains(e.target)) return;
+      e.preventDefault();
+      scr.scrollTop += e.deltaY;
+    };
+    tv.addEventListener("wheel", onWheel, { passive: false });
+    return () => tv.removeEventListener("wheel", onWheel);
+  }, []);
 
   useEffect(() => {
     // Phones: it starts level (there's no pointer to reach for it with).
@@ -343,10 +359,9 @@ function Monitor({ children }) {
       onPointerLeave={(e) => e.pointerType === "mouse" && setLevel(false)}
       onFocus={() => setLevel(true)}
     >
-      <span className="bt-lamp-light" aria-hidden="true" />
-      <div className="bt-tv-in">
+      <div ref={tvRef} className="bt-tv-in" data-lenis-prevent>
         <div className="bt-screen">
-          <div ref={screenRef} className="bt-screen-scroll" data-lenis-prevent onScroll={onScroll} tabIndex={0} aria-label="My story. Scroll to read.">
+          <div ref={screenRef} className="bt-screen-scroll" data-lenis-prevent onScroll={onScroll} onPointerDown={(e) => e.stopPropagation()} tabIndex={0} aria-label="My story. Scroll to read.">
             {children}
           </div>
           <span className="bt-scan" aria-hidden="true" />
@@ -356,25 +371,28 @@ function Monitor({ children }) {
         </div>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img className="bt-frame" src="/beyond-tv.webp" alt="" width={1100} height={1100} draggable={false} />
-        <button type="button" className="bt-led" onClick={() => setOn((v) => !v)} aria-pressed={on} aria-label={on ? "Turn the monitor off" : "Turn the monitor on"} />
-        <button type="button" className="bt-bulb" onClick={() => setLamp((v) => !v)} aria-pressed={lamp} aria-label={lamp ? "Switch the lamp off" : "Switch the lamp on"} />
+        <button type="button" className="bt-led" onPointerDown={(e) => e.stopPropagation()} onClick={() => setOn((v) => !v)} aria-pressed={on} aria-label={on ? "Turn the monitor off" : "Turn the monitor on"} />
+        <button type="button" className="bt-bulb" onPointerDown={(e) => e.stopPropagation()} onClick={() => setLamp((v) => !v)} aria-pressed={lamp} aria-label={lamp ? "Switch the lamp off" : "Switch the lamp on"} />
       </div>
     </div>
   );
 }
 
-const INK_MS = 750;
+const INK_MS = 1300;
+const BRISTLES = 9;
 
 /**
- * A brush that follows the mouse over the desk, as on the Margin teaser:
- * strokes swell when the hand slows and thin out when it hurries, fade as
- * they age, and are drawn white with a difference blend, so they read as
- * ink on the paper and as a negative of whatever they cross.
+ * A real brush over the desk. Each dab is a bundle of bristles, each with
+ * its own load of ink, so the stroke has dry streaks and ragged edges; it
+ * swells when the hand slows and thins when it hurries. As it ages the ink
+ * bleeds out like wet paint on paper and fades, under a faint watery ripple
+ * (an SVG displacement on the layer). It is drawn white and blended by
+ * difference: ink on the paper, the negative of whatever it crosses.
  */
 function useBrush() {
   const stageRef = useRef(null);
   const inkRef = useRef(null);
-  const ink = useRef({ pts: [], raf: 0 });
+  const ink = useRef({ pts: [], raf: 0, n: 0 });
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -407,19 +425,37 @@ function useBrush() {
     ctx.clearRect(0, 0, cv.width, cv.height);
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    for (let i = 2; i < t.pts.length; i++) {
-      const a = t.pts[i - 2];
-      const b = t.pts[i - 1];
-      const c = t.pts[i];
-      if (c.t - b.t > 90) continue;
-      const life = 1 - (now - c.t) / INK_MS;
-      // Midpoints and a curve through b, so the stroke is smooth, not jointed.
-      ctx.strokeStyle = `rgba(255,255,255,${Math.min(1, life * 1.15).toFixed(3)})`;
-      ctx.lineWidth = Math.max(0.5, c.w * (0.35 + 0.65 * life));
+    for (let i = 1; i < t.pts.length; i++) {
+      const a = t.pts[i - 1];
+      const b = t.pts[i];
+      if (b.t - a.t > 90) continue;
+      const age = (now - b.t) / INK_MS;
+      const life = 1 - age;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const nx = -dy / len;
+      const ny = dx / len;
+      // The wet bleed: a soft wash that spreads as it dries.
+      const bleed = b.w * (1.1 + age * 1.6);
+      ctx.strokeStyle = `rgba(255,255,255,${(0.16 * life).toFixed(3)})`;
+      ctx.lineWidth = bleed;
       ctx.beginPath();
-      ctx.moveTo((a.x + b.x) / 2, (a.y + b.y) / 2);
-      ctx.quadraticCurveTo(b.x, b.y, (b.x + c.x) / 2, (b.y + c.y) / 2);
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
       ctx.stroke();
+      // The bristles.
+      for (let k = 0; k < BRISTLES; k++) {
+        const load = b.loads[k];
+        if (load < 0.15) continue; // a dry bristle leaves a streak
+        const off = ((k / (BRISTLES - 1)) - 0.5) * b.w;
+        ctx.strokeStyle = `rgba(255,255,255,${Math.min(1, load * life * 1.25).toFixed(3)})`;
+        ctx.lineWidth = Math.max(0.6, (b.w / BRISTLES) * 1.9 * (0.6 + 0.4 * life));
+        ctx.beginPath();
+        ctx.moveTo(a.x + nx * off * a.w / Math.max(1, b.w), a.y + ny * off * a.w / Math.max(1, b.w));
+        ctx.lineTo(b.x + nx * off, b.y + ny * off);
+        ctx.stroke();
+      }
     }
     t.raf = t.pts.length ? requestAnimationFrame(draw) : 0;
   }, []);
@@ -432,11 +468,20 @@ function useBrush() {
     const y = e.clientY - r.top;
     const now = performance.now();
     const prev = t.pts[t.pts.length - 1];
+    const fresh = !prev || now - prev.t > 120;
     // Slow is heavy, fast is light; eased so the width breathes.
-    const speed = prev ? Math.hypot(x - prev.x, y - prev.y) / Math.max(8, now - prev.t) : 0;
-    const target = Math.max(2, Math.min(16, 15 - speed * 6));
-    const w = prev ? prev.w + (target - prev.w) * 0.3 : 4;
-    t.pts.push({ x, y, t: now, w });
+    const speed = fresh ? 0 : Math.hypot(x - prev.x, y - prev.y) / Math.max(8, now - prev.t);
+    const target = Math.max(5, Math.min(26, 24 - speed * 9));
+    const w = fresh ? 8 : prev.w + (target - prev.w) * 0.25;
+    // Each bristle runs out of ink at its own pace along the stroke.
+    t.n = fresh ? 0 : t.n + 1;
+    const loads = Array.from({ length: BRISTLES }, (_, k) => {
+      const base = fresh ? 1 : prev.loads[k];
+      return Math.max(0, Math.min(1, base - (0.004 + ((k * 7919) % 13) * 0.0016) + (Math.random() - 0.5) * 0.08));
+    });
+    // Run dry and the brush is dipped again.
+    if (!fresh && loads.filter((l) => l > 0.15).length < 3) loads.fill(1);
+    t.pts.push({ x, y, t: now, w, loads });
     if (!t.raf) t.raf = requestAnimationFrame(draw);
   };
 
@@ -485,40 +530,49 @@ export default function BeyondStory() {
 
       <div className="bt-stage" ref={stageRef} onPointerMove={onBrush}>
         <canvas ref={inkRef} className="bt-ink" aria-hidden="true" />
-        <Piece id="photo" d={[7, 4, 9.5]} m={[5, 2, 32]} r={-3} n={0} label="A taped-up photo of Goutham">
+        {/* The water: a slow ripple the ink layer is seen through. */}
+        <svg className="bt-water" aria-hidden="true" width="0" height="0">
+          <filter id="bt-water">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="3" result="n">
+              <animate attributeName="seed" values="3;9;3" dur="6s" repeatCount="indefinite" calcMode="discrete" />
+            </feTurbulence>
+            <feDisplacementMap in="SourceGraphic" in2="n" scale="9" />
+          </filter>
+        </svg>
+        <Piece id="photo" d={[33.5, 3, 11]} m={[5, 2, 32]} r={4} n={0} label="A taped-up photo of Goutham">
           <HangingPhoto ready={ready} />
         </Piece>
 
-        <Piece id="burst" d={[21, 9, 17]} m={[42, 2, 54]} r={-5} n={1}>
+        <Piece id="burst" d={[27.5, 38, 15]} m={[42, 2, 54]} r={-6} n={1}>
           <Burst />
         </Piece>
 
-        <Piece id="cs" z={3} d={[40.5, 13, 11.5]} m={[50, 11, 42]} r={6} n={2}>
+        <Piece id="cs" d={[33, 55, 11.5]} m={[50, 11, 42]} r={-4} n={2}>
           <TransitionLink href="/casestudies" className="bt-pill font-outfit">
             case study <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
           </TransitionLink>
         </Piece>
 
-        <Piece id="title" d={[21, 35, 14]} m={[42, 17, 48]} r={4} n={3} className="bt-title-piece">
+        <Piece id="title" d={[7, 9, 21]} m={[42, 17, 48]} r={-2} n={3} className="bt-title-piece">
           <p className="bt-title font-anonymous-pro">
             <Brackets>Beyond</Brackets>
           </p>
         </Piece>
 
-        <Piece id="home" z={3} d={[33.5, 79, 12]} m={[58, 47, 38]} r={-6} n={4}>
+        <Piece id="home" d={[7, 81, 12]} m={[58, 47, 38]} r={-3} n={4}>
           <TransitionLink href="/" className="bt-home font-anonymous-pro">
             <Brackets>Back Home</Brackets>
           </TransitionLink>
         </Piece>
 
-        <Piece id="patch" d={[38, 32, 11]} m={[52, 29.5, 38]} r={-8} n={5}>
+        <Piece id="patch" d={[27, 66, 12.5]} m={[52, 29.5, 38]} r={6} n={5}>
           <TransitionLink href="/casestudies" aria-label="Case studies">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="bt-patch" src="/notacasestudy.webp" alt="" width={760} height={369} draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="intro" d={[7, 51, 34]} m={[5, 24.5, 90]} r={0} n={6} className="bt-intro-piece">
+        <Piece id="intro" d={[7, 27, 30]} m={[5, 24.5, 90]} r={0} n={6} className="bt-intro-piece">
           <div className="bt-intro">
             <Brackets tight className="font-anonymous-pro text-black">Goutham G</Brackets>
             <ScrollStar />
@@ -529,18 +583,18 @@ export default function BeyondStory() {
           </div>
         </Piece>
 
-        <Piece id="arcade" d={[27, 69, 4.5]} m={[68, 37, 14]} r={-10} n={7}>
+        <Piece id="arcade" d={[41.5, 65, 5]} m={[68, 37, 14]} r={10} n={7}>
           <TransitionLink href="/arcade" aria-label="Try my arcade" className="bt-arcade">
             <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="90px" draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="note" d={[7, 63, 16]} m={[5, 34, 50]} r={-4} n={8}>
+        <Piece id="note" d={[7, 43, 17.5]} m={[5, 34, 50]} r={-3} n={8}>
           <LifeNote />
         </Piece>
 
 
-        <div className="bt-monitor-wrap">
+        <Piece id="tv" d={[53, 15, 44]} m={[-14, 56, 128]} r={0} z={2} n={0} label="The monitor, with my story on it">
           <Monitor>
             <div className="bt-screen-pad">
               <p className="bt-screen-kicker font-anonymous-pro">~/beyond/story.txt</p>
@@ -657,7 +711,7 @@ export default function BeyondStory() {
               <p className="bt-eof font-anonymous-pro">[ end of file ]</p>
             </div>
           </Monitor>
-        </div>
+        </Piece>
       </div>
     </main>
   );

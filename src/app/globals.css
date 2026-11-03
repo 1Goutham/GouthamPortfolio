@@ -5918,6 +5918,10 @@ a:focus-visible .mt-pill-fill {
   height: 100%;
   pointer-events: none;
   mix-blend-mode: difference;
+  filter: url(#bt-water);
+}
+.bt-water {
+  position: absolute;
 }
 .bt-piece {
   --dx: 0px;
@@ -5947,14 +5951,31 @@ a:focus-visible .mt-pill-fill {
 .bt-piece[data-held] {
   cursor: grabbing;
 }
+.bt-piece[data-id="tv"] .bt-piece-in,
+.bt-piece[data-id="tv"]:hover .bt-piece-in {
+  transform: none;
+  filter: none;
+}
+.bt-piece[data-id="tv"][data-held] .bt-piece-in {
+  transform: scale(1.03) rotate(var(--lean));
+}
+/* The frame is the handle to move the monitor by, clipped to the drawing
+   so the empty corners of its box don't cover what's beside it. */
+.bt-piece[data-id="tv"] .bt-frame {
+  pointer-events: auto;
+  clip-path: polygon(21% 23%, 26% 6%, 40% 3%, 46% 16%, 64% 18%, 70% 9%, 86% 14%, 87% 38%, 80% 84%, 62% 93%, 30% 93%, 4% 90%, 4% 72%, 13% 70%);
+}
+.bt-screen-scroll {
+  touch-action: pan-y;
+  cursor: auto;
+}
 .bt-piece[data-held] .bt-piece-in {
   transform: rotate(calc(var(--r) * 0.3 + var(--lean))) scale(1.08);
   filter: drop-shadow(0 26px 22px rgba(0, 0, 0, 0.22));
   transition: transform 0.2s ease-out, filter 0.3s ease;
 }
 /* Laid on the desk one by one, as if dropped there. */
-.bt-page[data-ready="false"] .bt-piece,
-.bt-page[data-ready="false"] .bt-monitor-wrap {
+.bt-page[data-ready="false"] .bt-piece {
   opacity: 0;
 }
 .bt-page[data-ready="true"] .bt-piece {
@@ -6039,7 +6060,7 @@ a:focus-visible .mt-pill-fill {
   color: #fff;
 }
 .bt-title {
-  font-size: 3.4cqw;
+  font-size: 4.4cqw;
   white-space: nowrap;
 }
 .bt-home {
@@ -6056,7 +6077,7 @@ a:focus-visible .mt-pill-fill {
   display: flex;
   align-items: center;
   gap: 1.4cqw;
-  font-size: 1.15cqw;
+  font-size: 1.2cqw;
   white-space: nowrap;
 }
 .bt-intro > .bracket-link {
@@ -6198,19 +6219,6 @@ a:focus-visible .mt-pill-fill {
 }
 
 /* ---- the monitor ---- */
-.bt-monitor-wrap {
-  position: absolute;
-  left: 52.7%;
-  top: 17.7%;
-  width: 46.3%;
-  z-index: 2;
-}
-.bt-page[data-ready="true"] .bt-monitor-wrap {
-  animation: bt-tv-in 1.1s var(--ease-out-expo) 0.15s backwards;
-}
-@keyframes bt-tv-in {
-  from { opacity: 0; transform: translateY(40px) rotate(4deg); }
-}
 /* Only the screen and the switches catch the pointer: the rest of the
    drawing's box is empty air over the desk. */
 .bt-tv {
@@ -6239,7 +6247,6 @@ a:focus-visible .mt-pill-fill {
   height: auto;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 30px 40px rgba(60, 30, 10, 0.18));
 }
 .bt-screen {
   position: absolute;
@@ -6412,30 +6419,7 @@ a:focus-visible .mt-pill-fill {
   outline: 2px solid #111;
   outline-offset: 2px;
 }
-/* The lamp's light on the desk; off, the bulb in the drawing dims. */
-.bt-lamp-light {
-  position: absolute;
-  z-index: 0;
-  left: -30%;
-  top: -20%;
-  width: 110%;
-  height: 120%;
-  background: radial-gradient(closest-side, rgba(255, 214, 120, 0.32), transparent);
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-  animation: bt-flicker 1.4s steps(1) 0.9s backwards;
-}
-@keyframes bt-flicker {
-  0% { opacity: 0; }
-  20% { opacity: 1; }
-  28% { opacity: 0.2; }
-  40% { opacity: 1; }
-  48% { opacity: 0.4; }
-  60%, 100% { opacity: 1; }
-}
-.bt-tv[data-lamp="false"] .bt-lamp-light {
-  opacity: 0;
-}
+/* Off, the bulb in the drawing dims. */
 .bt-bulb::after {
   content: "";
   position: absolute;
@@ -6461,11 +6445,6 @@ a:focus-visible .mt-pill-fill {
     top: var(--my);
     width: var(--mw);
   }
-  .bt-monitor-wrap {
-    left: -14%;
-    top: 56%;
-    width: 128%;
-  }
   .bt-burst-word { font-size: 9cqw; }
   .bt-key { font-size: 2.6cqw; }
   .bt-pill { font-size: 4.2cqw; }
@@ -6487,6 +6466,5 @@ a:focus-visible .mt-pill-fill {
 }
 @media (prefers-reduced-motion: reduce) {
   .bt-burst svg,
-  .bt-led::after,
-  .bt-lamp-light { animation: none; }
+  .bt-led::after { animation: none; }
 }
