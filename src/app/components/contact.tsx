@@ -366,7 +366,14 @@ export default function Contact() {
     const send = fetch(FORM_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify(form),
+      // A subject that says who it's from; the email field doubles as the
+      // reply-to address in Formspree. _gotcha is the honeypot: people
+      // never see it, bots fill it in, and Formspree drops those.
+      body: JSON.stringify({
+        _subject: `Portfolio message from ${form.name.trim()}`,
+        ...form,
+        _gotcha: (formRef.current?.elements.namedItem('_gotcha') as HTMLInputElement | null)?.value || '',
+      }),
     })
       .then((r) => r.ok)
       .catch(() => false);
@@ -617,6 +624,8 @@ export default function Contact() {
         </p>
 
         <form ref={formRef} onSubmit={onSubmit} className="cx-form" noValidate={false}>
+          {/* Honeypot: hidden from people, irresistible to bots. */}
+          <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp-field" />
           <label className="cx-field cx-name cx-rise" style={{ '--d': 2 } as React.CSSProperties}>
             <span className="cx-label">Name<i aria-hidden="true">*</i></span>
             <input type="text" name="name" required autoComplete="name" value={form.name} onChange={update('name')} />

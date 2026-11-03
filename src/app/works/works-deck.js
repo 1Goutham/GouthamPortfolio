@@ -165,8 +165,16 @@ function Enquiry() {
   const submit = async (e) => {
     e.preventDefault();
     if (status !== "idle") return;
+    const honey = e.currentTarget.elements.namedItem("_gotcha")?.value || "";
     if (!form.name.trim() || !form.reach.trim()) {
       toast.error("Tell me your name and where to reach you");
+      return;
+    }
+    // An email address, or a phone number with enough digits to call.
+    const reach = form.reach.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(reach);
+    if (reach.includes("@") ? !isEmail : reach.replace(/\D/g, "").length < 7) {
+      toast.error("That doesn't look like an email or phone number");
       return;
     }
     setStatus("sending");
@@ -175,11 +183,14 @@ function Enquiry() {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          _subject: "1G-works enquiry",
+          _subject: `1G-works enquiry from ${form.name.trim()}`,
           name: form.name,
-          contact: form.reach,
+          contact: reach,
+          // Formspree replies to "email", so hitting Reply reaches them.
+          ...(isEmail ? { email: reach } : {}),
           services: picked.join(", ") || "Not sure yet",
           message: form.message,
+          _gotcha: honey,
         }),
       });
       if (!res.ok) throw new Error();
@@ -196,6 +207,8 @@ function Enquiry() {
 
   return (
     <form className="wk-form" onSubmit={submit}>
+      {/* Honeypot: hidden from people, irresistible to bots. */}
+      <input type="text" name="_gotcha" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hp-field" />
       <div className="wk-row wk-rise" style={{ "--i": 1 }}>
         <label className="wk-q" htmlFor="wk-name">What&rsquo;s your name?</label>
         <span className="wk-field wk-field-name">

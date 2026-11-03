@@ -3,12 +3,12 @@ import { pageMeta } from "@/lib/seo";
 import NotACaseStudy from "./not-a-case-study";
 
 export const metadata: Metadata = pageMeta({
-  title: "Not a Case Study | Goutham G",
+  title: "Case Studies | Goutham G",
   description:
-    "How Goutham thinks about making things: curiosity, experiments, thoughtful design, purposeful AI and the 1G identity.",
+    "Case studies by Goutham G: how his products are made, from the first idea to the thing you can use.",
   path: "/casestudies",
   image: "projects",
-  alt: "Not a case study: how Goutham G makes things",
+  alt: "Case studies by Goutham G",
 });
 
 export default function CaseStudiesPage() {

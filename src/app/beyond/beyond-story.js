@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowUpRight, Github, Instagram, Linkedin, Mail } from "lucide-react";
 import TransitionLink from "../components/layout/transition-link";
-import FadeContent from "../components/layout/fade-in";
+import MinimalNav from "../components/layout/navbar";
 import Asterisk from "../components/layout/asterisk";
 
 // The taped print at /public/beyondpic.png is shown at its own proportions;
@@ -18,6 +18,12 @@ const SOCIALS = [
   { label: "GitHub", href: "https://github.com/1Goutham", Icon: Github },
   { label: "Instagram", href: "https://www.instagram.com/tanger.ineee/", Icon: Instagram },
   { label: "Email", href: "mailto:gouthamgopinath.tsi@gmail.com", Icon: Mail },
+];
+
+const NAV_ITEMS = [
+  { label: "Home", href: "/" },
+  { label: "About me", href: "/#about" },
+  { label: "Projects", href: "/projects" },
 ];
 
 const PIPELINE = ["UX research", "design", "development", "AI integration", "deployment"];
@@ -172,8 +178,193 @@ function ScrollStar() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  The desk                                                           */
+/* ------------------------------------------------------------------ */
+
+// Every piece on the desk, placed as in the design: x/y/w as shares of the
+// stage (desktop, then phone), and its resting tilt.
+const LIFE = [
+  ["Direct a film", "film"],
+  ["Make a lot of money", "money"],
+  ["Build something millions use", "millions"],
+  ["Get ridiculously fit", "fit"],
+  ["Travel the world", "travel"],
+];
+
+/**
+ * Anything on the desk can be picked up and moved: it lifts (bigger, a
+ * deeper shadow, straightened a little), follows the pointer with a lean
+ * into the motion, and is put down where you let go. A press that doesn't
+ * move is a click, so the links on the desk still work.
+ */
+function Piece({ id, d, m, r = 0, z = 1, n = 0, className = "", children, label }) {
+  const ref = useRef(null);
+  const onPointerDown = (e) => {
+    if (e.button !== 0) return;
+    const el = ref.current;
+    const x0 = e.clientX;
+    const y0 = e.clientY;
+    const ox = parseFloat(el.style.getPropertyValue("--dx")) || 0;
+    const oy = parseFloat(el.style.getPropertyValue("--dy")) || 0;
+    let moved = false;
+    let lastX = x0;
+    const move = (ev) => {
+      const dx = ev.clientX - x0;
+      const dy = ev.clientY - y0;
+      if (!moved && Math.hypot(dx, dy) < 5) return;
+      if (!moved) {
+        moved = true;
+        el.setPointerCapture(ev.pointerId);
+        el.dataset.held = "true";
+        el.style.zIndex = String(40 + (Piece.top = (Piece.top || 0) + 1));
+      }
+      el.style.setProperty("--dx", `${ox + dx}px`);
+      el.style.setProperty("--dy", `${oy + dy}px`);
+      el.style.setProperty("--lean", `${Math.max(-10, Math.min(10, (ev.clientX - lastX) * 0.8))}deg`);
+      lastX = ev.clientX;
+    };
+    const up = () => {
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+      el.style.setProperty("--lean", "0deg");
+      delete el.dataset.held;
+      if (moved) {
+        // A drag isn't a click: swallow the one that follows.
+        const stop = (c) => {
+          c.preventDefault();
+          c.stopPropagation();
+        };
+        el.addEventListener("click", stop, { capture: true, once: true });
+        setTimeout(() => el.removeEventListener("click", stop, { capture: true }), 0);
+      }
+    };
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+  };
+  return (
+    <div
+      ref={ref}
+      className={`bt-piece ${className}`}
+      data-id={id}
+      aria-label={label}
+      style={{
+        "--x": `${d[0]}%`,
+        "--y": `${d[1]}%`,
+        "--w": `${d[2]}%`,
+        "--mx": `${m[0]}%`,
+        "--my": `${m[1]}%`,
+        "--mw": `${m[2]}%`,
+        "--r": `${r}deg`,
+        "--n": n,
+        zIndex: z,
+      }}
+      onPointerDown={onPointerDown}
+    >
+      <div className="bt-piece-in">{children}</div>
+    </div>
+  );
+}
+
+/** The 1Goutham sticker: a starburst with a keycap under it. */
+function Burst() {
+  const pts = [];
+  for (let i = 0; i < 28; i++) {
+    const a = (i / 28) * Math.PI * 2;
+    const rr = i % 2 ? 0.62 : 1;
+    pts.push(`${(50 + Math.cos(a) * 48 * rr).toFixed(1)},${(50 + Math.sin(a) * 30 * rr).toFixed(1)}`);
+  }
+  return (
+    <div className="bt-burst" aria-label="1Goutham. space">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+        <polygon points={pts.join(" ")} />
+      </svg>
+      <span className="bt-burst-word">1Goutham.</span>
+      <span className="bt-key">space</span>
+    </div>
+  );
+}
+
+/** Things I wanna do in life: a note you can tick off. */
+function LifeNote() {
+  const [done, setDone] = useState([]);
+  const toggle = (k) => setDone((d) => (d.includes(k) ? d.filter((x) => x !== k) : [...d, k]));
+  return (
+    <div className="bt-note">
+      <p className="bt-note-h">
+        Things I wanna do <mark>in life:</mark>
+      </p>
+      <ul>
+        {LIFE.map(([t, k]) => (
+          <li key={k}>
+            <button type="button" aria-pressed={done.includes(k)} onClick={() => toggle(k)} onPointerDown={(e) => e.stopPropagation()}>
+              <span className="bt-box" aria-hidden="true" />
+              <span className="bt-life">{t.split(" ").map((w, i) => (["money", "millions", "fit", "travel"].includes(w.toLowerCase()) ? <mark key={i}>{w} </mark> : `${w} `))}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/**
+ * The monitor, with the story on its screen. At rest it sits at the angle it
+ * was drawn at; reach for it and it rights itself so the screen reads level.
+ * The screen scrolls on its own (the page doesn't), the LED turns it off and
+ * on (an old CRT collapsing to a line), and the lamp switches on and off.
+ */
+function Monitor({ children }) {
+  const [on, setOn] = useState(true);
+  const [lamp, setLamp] = useState(true);
+  const [level, setLevel] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const screenRef = useRef(null);
+
+  useEffect(() => {
+    // Phones: it starts level (there's no pointer to reach for it with).
+    if (window.matchMedia("(hover: none)").matches) setLevel(true);
+  }, []);
+
+  const onScroll = (e) => {
+    const el = e.currentTarget;
+    setProgress(el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight));
+  };
+
+  return (
+    <div
+      className="bt-tv"
+      data-level={level}
+      data-on={on}
+      data-lamp={lamp}
+      onPointerEnter={(e) => e.pointerType === "mouse" && setLevel(true)}
+      onPointerLeave={(e) => e.pointerType === "mouse" && setLevel(false)}
+      onFocus={() => setLevel(true)}
+    >
+      <span className="bt-lamp-light" aria-hidden="true" />
+      <div className="bt-tv-in">
+        <div className="bt-screen">
+          <div ref={screenRef} className="bt-screen-scroll" data-lenis-prevent onScroll={onScroll} tabIndex={0} aria-label="My story. Scroll to read.">
+            {children}
+          </div>
+          <span className="bt-scan" aria-hidden="true" />
+          <span className="bt-glass" aria-hidden="true" />
+          <span className="bt-progress" style={{ "--p": progress }} aria-hidden="true" />
+          <span className="bt-off" aria-hidden="true" />
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="bt-frame" src="/beyond-tv.webp" alt="" width={1100} height={1100} draggable={false} />
+        <button type="button" className="bt-led" onClick={() => setOn((v) => !v)} aria-pressed={on} aria-label={on ? "Turn the monitor off" : "Turn the monitor on"} />
+        <button type="button" className="bt-bulb" onClick={() => setLamp((v) => !v)} aria-pressed={lamp} aria-label={lamp ? "Switch the lamp off" : "Switch the lamp on"} />
+      </div>
+    </div>
+  );
+}
+
 export default function BeyondStory() {
-  // Stagger the opening in once fonts are ready so nothing pops mid-swap.
+  // Lay the desk out once fonts are ready so nothing pops mid-swap.
   const [ready, setReady] = useState(false);
   useEffect(() => {
     let alive = true;
@@ -188,8 +379,8 @@ export default function BeyondStory() {
   }, []);
 
   return (
-    <main className="beyond-page min-h-screen bg-white text-black" data-ready={ready}>
-      <nav className="relative z-10 flex items-center justify-between px-6 py-6 md:px-12">
+    <main className="bt-page min-h-screen bg-white text-black" data-ready={ready}>
+      <nav className="relative z-50 flex items-center justify-between px-6 py-6 md:px-12">
         <TransitionLink
           href="/"
           aria-label="Home"
@@ -197,6 +388,9 @@ export default function BeyondStory() {
         >
           <Image src="/logo.png" width={40} height={40} alt="Goutham logo" priority className="invert" />
         </TransitionLink>
+        <div className="hidden md:block md:fixed md:top-6 md:left-1/2 md:z-50 md:-translate-x-1/2">
+          <MinimalNav items={NAV_ITEMS} initialActiveIndex={1} />
+        </div>
         <TransitionLink
           href="/#contact"
           className="btn-tactile btn-tactile-dark group inline-flex h-9 items-center gap-1.5 rounded-full bg-black px-5 font-outfit text-sm font-medium text-white shadow-md hover:bg-[#1a1a1a]"
@@ -206,150 +400,199 @@ export default function BeyondStory() {
         </TransitionLink>
       </nav>
 
-      <article className="mx-auto max-w-7xl px-6 pb-24 pt-6 md:px-12 md:pb-32 md:pt-10">
-        {/* Photo, then the name row underneath it. */}
-        <header className="flex flex-col items-center">
-          <HangingPhoto ready={ready} />
+      <h1 className="sr-only">Beyond: a bit more about Goutham</h1>
 
-          <div className="beyond-rise mt-7 flex items-center gap-4 md:mt-8 md:gap-5" style={{ "--i": 1 }}>
-            <Brackets tight className="font-anonymous-pro text-lg text-black md:text-2xl">Goutham G</Brackets>
+      <div className="bt-stage">
+        <Piece id="photo" d={[13.4, 13.9, 10.3]} m={[5, 0.8, 30]} r={-3} n={0} label="A taped-up photo of Goutham">
+          <HangingPhoto ready={ready} />
+        </Piece>
+
+        <Piece id="burst" d={[28.5, 8.8, 18.2]} m={[40, 1.3, 56]} r={-6} n={1}>
+          <Burst />
+        </Piece>
+
+        <Piece id="cs" z={3} d={[52.7, 17.2, 13.8]} m={[48, 10.6, 44]} r={8} n={2}>
+          <TransitionLink href="/casestudies" className="bt-pill font-outfit">
+            case study <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
+          </TransitionLink>
+        </Piece>
+
+        <Piece id="title" d={[29.3, 30.8, 15]} m={[42, 16.7, 48]} r={6} n={3} className="bt-title-piece">
+          <p className="bt-title font-anonymous-pro">
+            <Brackets>Beyond</Brackets>
+          </p>
+        </Piece>
+
+        <Piece id="home" z={3} d={[77, 14, 13]} m={[6, 20.3, 40]} r={-14} n={4}>
+          <TransitionLink href="/" className="bt-home font-anonymous-pro">
+            <Brackets>Back Home</Brackets>
+          </TransitionLink>
+        </Piece>
+
+        <Piece id="patch" d={[44.8, 36.6, 11.7]} m={[52, 30, 36]} r={-10} n={5}>
+          <TransitionLink href="/casestudies" aria-label="Case studies">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="bt-patch" src="/notacasestudy.webp" alt="" width={760} height={369} draggable={false} />
+          </TransitionLink>
+        </Piece>
+
+        <Piece id="intro" d={[9.8, 45.5, 32]} m={[5, 25.2, 90]} r={0} n={6} className="bt-intro-piece">
+          <div className="bt-intro">
+            <Brackets tight className="font-anonymous-pro text-black">Goutham G</Brackets>
             <ScrollStar />
             <p className="font-outfit">
-              <span className="block text-sm font-bold leading-snug md:text-base">A bit more about me :)</span>
-              <span className="block text-xs leading-snug text-black/70 md:text-sm">not the resumeeee version</span>
+              <span className="block font-bold">A bit more about me :)</span>
+              <span className="block text-black/70">and some blahh blahhhhhh</span>
             </p>
           </div>
-        </header>
+        </Piece>
 
-        <h1 className="beyond-rise mt-14 md:mt-20" style={{ "--i": 2 }}>
-          <Brackets className="font-anonymous-pro text-4xl leading-none text-black md:text-6xl">Beyond</Brackets>
-        </h1>
+        <Piece id="arcade" d={[38.4, 52.5, 4.6]} m={[10, 30.5, 11]} r={-8} n={7}>
+          <TransitionLink href="/arcade" aria-label="Try my arcade" className="bt-arcade">
+            <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="90px" draggable={false} />
+          </TransitionLink>
+        </Piece>
 
-        <div className="mt-8 space-y-6 md:mt-10">
-          <p className={`beyond-rise ${para}`} style={{ "--i": 3 }}>
-            <span className="font-bold text-black">Hey, Vanakkam!</span> I&rsquo;m Goutham. I&rsquo;m a little curious,
-            a little obsessive, and I tend to notice small things, sometimes a little too much. I can spend a
-            surprising amount of time wondering if something is{" "}
-            {/* It is. Hover it and it settles into place. */}
-            <span className="beyond-2px">2px out of place</span>, then realise I&rsquo;ve been sitting there for
-            two hours. I like simple things done thoughtfully, good conversations, interesting ideas, quiet
-            spaces, and the occasional random creative experiment.
-          </p>
+        <Piece id="note" d={[8.5, 54, 18.5]} m={[4, 35, 48]} r={-6} n={8}>
+          <LifeNote />
+        </Piece>
 
-          <p className={`beyond-rise ${para}`} style={{ "--i": 4 }}>
-            I&rsquo;m naturally curious about how things work, so I often end up going down little rabbit holes.
-            Sometimes they lead somewhere useful, sometimes they really don&rsquo;t. Either way, I usually learn
-            something along the way.
-          </p>
+        <Piece id="works" d={[30.4, 65.7, 20.6]} m={[52, 38.2, 45]} r={-8} n={9}>
+          <TransitionLink href="/works" className="bt-card font-outfit">
+            <span className="bt-card-top">
+              <b>1G-works</b>
+              <span>[ let&rsquo;s build ]</span>
+              <i aria-hidden="true">&times;</i>
+            </span>
+            <span className="bt-card-body">
+              <Image src="/headgcwork.png" alt="" width={189} height={145} sizes="40px" />
+              <span>
+                <b>Need a creative website or digital product?</b> Design, web, growth and AI for your
+                business, built end to end with 1G-works.
+              </span>
+            </span>
+          </TransitionLink>
+        </Piece>
 
-          <p className={`beyond-rise ${para}`} style={{ "--i": 5 }}>
-            I like making things, learning things, trying things, and occasionally overthinking them. Nothing
-            too profound, just trying to stay curious and enjoy the process.
-          </p>
+        <div className="bt-monitor-wrap">
+          <Monitor>
+            <div className="bt-screen-pad">
+              <p className="bt-screen-kicker font-anonymous-pro">~/beyond/story.txt</p>
+              <div className="bt-story">
+                <p className={para}>
+                  <span className="font-bold text-black">Hey, Vanakkam!</span> I&rsquo;m Goutham. I&rsquo;m a little curious,
+                  a little obsessive, and I tend to notice small things, sometimes a little too much. I can spend a
+                  surprising amount of time wondering if something is{" "}
+                  {/* It is. Hover it and it settles into place. */}
+                  <span className="beyond-2px">2px out of place</span>, then realise I&rsquo;ve been sitting there for
+                  two hours. I like simple things done thoughtfully, good conversations, interesting ideas, quiet
+                  spaces, and the occasional random creative experiment.
+                </p>
 
-          {/* The console is the link: it leans when you reach for it. */}
-          <p className={`beyond-rise ${para}`} style={{ "--i": 6 }}>
-            I&rsquo;m very into retro gaming{" "}
-            <TransitionLink href="/arcade" aria-label="Try my arcade" className="beyond-console">
-              <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="28px" draggable={false} />
-            </TransitionLink>{" "}
-            click on it and try my arcade!
-          </p>
+                <p className={para}>
+                  I&rsquo;m naturally curious about how things work, so I often end up going down little rabbit holes.
+                  Sometimes they lead somewhere useful, sometimes they really don&rsquo;t. Either way, I usually learn
+                  something along the way.
+                </p>
 
-          <FadeContent duration={900} threshold={0.2} className="pt-2 md:pt-4">
-            <p className="font-outfit text-base md:text-lg">
-              <span className="text-lg font-bold md:text-xl">Warning!</span> unnecessary personal journey ahead.
-            </p>
-          </FadeContent>
+                <p className={para}>
+                  I like making things, learning things, trying things, and occasionally overthinking them. Nothing
+                  too profound, just trying to stay curious and enjoy the process.
+                </p>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              I started as a freelance designer while I was in college. My first client asked me to design a
-              set of game cards, so I went all in on the graphics. He liked the work enough to pay me a
-              little extra - I still don&rsquo;t know why, but that appreciation stuck with me. It pushed me deeper
-              into design.
-            </p>
-          </FadeContent>
+                {/* The console is the link: it leans when you reach for it. */}
+                <p className={para}>
+                  I&rsquo;m very into retro gaming{" "}
+                  <TransitionLink href="/arcade" aria-label="Try my arcade" className="beyond-console">
+                    <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="28px" draggable={false} />
+                  </TransitionLink>{" "}
+                  click on it and try my arcade!
+                </p>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              From graphic design, I moved into web design and started learning more about UX research,
-              interactions, and how people actually experience products. But after a while, I wanted more
-              than just designing them.
-            </p>
-          </FadeContent>
+                <div className="pt-2">
+                  <p className="font-outfit text-base md:text-lg">
+                    <span className="text-lg font-bold md:text-xl">Warning!</span> unnecessary personal journey ahead.
+                  </p>
+                </div>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className="font-outfit text-sm font-bold leading-relaxed text-black md:text-base">
-              I wanted to build what I designed.
-            </p>
-          </FadeContent>
+                <div>
+                  <p className={para}>
+                    I started as a freelance designer while I was in college. My first client asked me to design a
+                    set of game cards, so I went all in on the graphics. He liked the work enough to pay me a
+                    little extra. I still don&rsquo;t know why, but that appreciation stuck with me. It pushed me deeper
+                    into design.
+                  </p>
+                </div>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              Back then, AI wasn&rsquo;t capable enough for me to rely on it for building products, so I decided
-              to learn full-stack development from scratch. It took me nearly a year to become comfortable
-              building things on my own. Somewhere along the way, I realised how interesting it was to bring
-              design and development together: I could think about the experience and actually make it work.
-            </p>
-          </FadeContent>
+                <div>
+                  <p className={para}>
+                    From graphic design, I moved into web design and started learning more about UX research,
+                    interactions, and how people actually experience products. But after a while, I wanted more
+                    than just designing them.
+                  </p>
+                </div>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              Then AI became much more capable, and naturally, I started exploring it too. I learned how AI
-              could fit into the products I was already designing and building, rather than treating it as
-              something separate.
-            </p>
-          </FadeContent>
+                <div>
+                  <p className="font-outfit text-sm font-bold leading-relaxed text-black md:text-base">
+                    I wanted to build what I designed.
+                  </p>
+                </div>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              Today, I enjoy taking an idea all the way from{" "}
-              <Step>{PIPELINE[0]}</Step> and <Step>{PIPELINE[1]}</Step> to <Step>{PIPELINE[2]}</Step>,{" "}
-              <Step>{PIPELINE[3]}</Step>, and <Step>{PIPELINE[4]}</Step>. I can explore the problem, shape the
-              experience, build the product, make it AI-powered when it genuinely adds value, and ship it.
-            </p>
-          </FadeContent>
+                <div>
+                  <p className={para}>
+                    Back then, AI wasn&rsquo;t capable enough for me to rely on it for building products, so I decided
+                    to learn full-stack development from scratch. It took me nearly a year to become comfortable
+                    building things on my own. Somewhere along the way, I realised how interesting it was to bring
+                    design and development together: I could think about the experience and actually make it work.
+                  </p>
+                </div>
 
-          <FadeContent duration={900} threshold={0.2}>
-            <p className={para}>
-              That&rsquo;s probably the part of my journey I&rsquo;m most excited about - not having to choose between
-              design, code, and AI.
-            </p>
-          </FadeContent>
+                <div>
+                  <p className={para}>
+                    Then AI became much more capable, and naturally, I started exploring it too. I learned how AI
+                    could fit into the products I was already designing and building, rather than treating it as
+                    something separate.
+                  </p>
+                </div>
+
+                <div>
+                  <p className={para}>
+                    Today, I enjoy taking an idea all the way from{" "}
+                    <Step>{PIPELINE[0]}</Step> and <Step>{PIPELINE[1]}</Step> to <Step>{PIPELINE[2]}</Step>,{" "}
+                    <Step>{PIPELINE[3]}</Step>, and <Step>{PIPELINE[4]}</Step>. I can explore the problem, shape the
+                    experience, build the product, make it AI-powered when it genuinely adds value, and ship it.
+                  </p>
+                </div>
+
+                <div>
+                  <p className={para}>
+                    That&rsquo;s probably the part of my journey I&rsquo;m most excited about: not having to choose between
+                    design, code, and AI.
+                  </p>
+                </div>
+              </div>
+
+
+              <ul className="bt-socials" aria-label="Find me elsewhere">
+                {SOCIALS.map(({ label, href, Icon }) => (
+                  <li key={label}>
+                    <a
+                      href={href}
+                      target={href.startsWith("mailto:") ? undefined : "_blank"}
+                      rel={href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+                      aria-label={href.startsWith("mailto:") ? `Email me at ${href.slice(7)}` : `${label}, opens in a new tab`}
+                      className="social-btn social-btn-dark flex h-10 w-10 items-center justify-center rounded-full border border-black/15 text-black/75"
+                    >
+                      <Icon className="h-[17px] w-[17px]" strokeWidth={1.75} aria-hidden="true" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+              <p className="bt-eof font-anonymous-pro">[ end of file ]</p>
+            </div>
+          </Monitor>
         </div>
-
-        <FadeContent duration={900} threshold={0.2} className="mt-14 md:mt-20">
-          <span className="block h-px w-full bg-black/15" aria-hidden="true" />
-          <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3 md:mt-10">
-            <TransitionLink href="/" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-2xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">Back home</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </TransitionLink>
-            <TransitionLink href="/#contact" className="bracket-link bracket-link-dark font-anonymous-pro text-lg text-black md:text-2xl">
-              <span className="bracket-link-l" aria-hidden="true">[</span>
-              <span className="bracket-link-text">Let&rsquo;s talk</span>
-              <span className="bracket-link-r" aria-hidden="true">]</span>
-            </TransitionLink>
-            <ul className="flex items-center gap-3 sm:ml-auto" aria-label="Find me elsewhere">
-              {SOCIALS.map(({ label, href, Icon }) => (
-                <li key={label}>
-                  <a
-                    href={href}
-                    target={href.startsWith("mailto:") ? undefined : "_blank"}
-                    rel={href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
-                    aria-label={href.startsWith("mailto:") ? `Email me at ${href.slice(7)}` : `${label}, opens in a new tab`}
-                    className="social-btn social-btn-dark flex h-11 w-11 items-center justify-center rounded-full border border-black/15 text-black/75"
-                  >
-                    <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} aria-hidden="true" />
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </FadeContent>
-      </article>
+      </div>
     </main>
   );
 }
