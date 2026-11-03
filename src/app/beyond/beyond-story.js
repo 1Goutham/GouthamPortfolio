@@ -378,21 +378,20 @@ function Monitor({ children }) {
   );
 }
 
-const INK_MS = 1300;
-const BRISTLES = 9;
+const INK_MS = 520;
 
 /**
- * A real brush over the desk. Each dab is a bundle of bristles, each with
- * its own load of ink, so the stroke has dry streaks and ragged edges; it
- * swells when the hand slows and thins when it hurries. As it ages the ink
- * bleeds out like wet paint on paper and fades, under a faint watery ripple
- * (an SVG displacement on the layer). It is drawn white and blended by
- * difference: ink on the paper, the negative of whatever it crosses.
+ * A drop of liquid ink that follows the mouse over the desk. It is a chain
+ * of round blots, each shrinking as it ages, drawn white and run through an
+ * SVG "goo" filter so neighbours melt into one body: a head that stretches
+ * when the hand is quick and a tail that pinches off into droplets, like a
+ * drop of water dragged across glass. Blended by difference, it is the
+ * negative of whatever it passes over. Quick flicks throw small splashes.
  */
 function useBrush() {
   const stageRef = useRef(null);
   const inkRef = useRef(null);
-  const ink = useRef({ pts: [], raf: 0, n: 0 });
+  const ink = useRef({ pts: [], drops: [], raf: 0 });
 
   useEffect(() => {
     const stage = stageRef.current;
@@ -400,7 +399,7 @@ function useBrush() {
     if (!stage || !cv) return;
     const fit = () => {
       const r = stage.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       cv.width = Math.round(r.width * dpr);
       cv.height = Math.round(r.height * dpr);
       cv.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -423,41 +422,39 @@ function useBrush() {
     const now = performance.now();
     t.pts = t.pts.filter((q) => now - q.t < INK_MS);
     ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    for (let i = 1; i < t.pts.length; i++) {
-      const a = t.pts[i - 1];
-      const b = t.pts[i];
-      if (b.t - a.t > 90) continue;
-      const age = (now - b.t) / INK_MS;
-      const life = 1 - age;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const nx = -dy / len;
-      const ny = dx / len;
-      // The wet bleed: a soft wash that spreads as it dries.
-      const bleed = b.w * (1.1 + age * 1.6);
-      ctx.strokeStyle = `rgba(255,255,255,${(0.16 * life).toFixed(3)})`;
-      ctx.lineWidth = bleed;
+    ctx.fillStyle = "#fff";
+    // The body: blots along the path, fullest at the head.
+    for (let i = 0; i < t.pts.length; i++) {
+      const q = t.pts[i];
+      const life = 1 - (now - q.t) / INK_MS;
+      const r = q.r * Math.pow(life, 0.8);
+      if (r < 0.6) continue;
       ctx.beginPath();
-      ctx.moveTo(a.x, a.y);
-      ctx.lineTo(b.x, b.y);
-      ctx.stroke();
-      // The bristles.
-      for (let k = 0; k < BRISTLES; k++) {
-        const load = b.loads[k];
-        if (load < 0.15) continue; // a dry bristle leaves a streak
-        const off = ((k / (BRISTLES - 1)) - 0.5) * b.w;
-        ctx.strokeStyle = `rgba(255,255,255,${Math.min(1, load * life * 1.25).toFixed(3)})`;
-        ctx.lineWidth = Math.max(0.6, (b.w / BRISTLES) * 1.9 * (0.6 + 0.4 * life));
-        ctx.beginPath();
-        ctx.moveTo(a.x + nx * off * a.w / Math.max(1, b.w), a.y + ny * off * a.w / Math.max(1, b.w));
-        ctx.lineTo(b.x + nx * off, b.y + ny * off);
-        ctx.stroke();
+      ctx.arc(q.x, q.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      // In-betweens, so a quick move stays one body.
+      const n = t.pts[i + 1];
+      if (n && n.t - q.t < 60) {
+        const d = Math.hypot(n.x - q.x, n.y - q.y);
+        const steps = Math.min(12, Math.floor(d / Math.max(4, r * 0.6)));
+        for (let k = 1; k < steps; k++) {
+          const f = k / steps;
+          ctx.beginPath();
+          ctx.arc(q.x + (n.x - q.x) * f, q.y + (n.y - q.y) * f, r * (0.92 + 0.08 * f), 0, Math.PI * 2);
+          ctx.fill();
+        }
       }
     }
-    t.raf = t.pts.length ? requestAnimationFrame(draw) : 0;
+    // Splashes: thrown off a flick, they fly, slow and shrink.
+    t.drops = t.drops.filter((d) => now - d.t < 600);
+    for (const d of t.drops) {
+      const k = (now - d.t) / 600;
+      const e = 1 - Math.pow(1 - k, 3);
+      ctx.beginPath();
+      ctx.arc(d.x + d.vx * e, d.y + d.vy * e, d.r * (1 - k), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    t.raf = t.pts.length || t.drops.length ? requestAnimationFrame(draw) : 0;
   }, []);
 
   const onBrush = (e) => {
@@ -469,19 +466,16 @@ function useBrush() {
     const now = performance.now();
     const prev = t.pts[t.pts.length - 1];
     const fresh = !prev || now - prev.t > 120;
-    // Slow is heavy, fast is light; eased so the width breathes.
     const speed = fresh ? 0 : Math.hypot(x - prev.x, y - prev.y) / Math.max(8, now - prev.t);
-    const target = Math.max(5, Math.min(26, 24 - speed * 9));
-    const w = fresh ? 8 : prev.w + (target - prev.w) * 0.25;
-    // Each bristle runs out of ink at its own pace along the stroke.
-    t.n = fresh ? 0 : t.n + 1;
-    const loads = Array.from({ length: BRISTLES }, (_, k) => {
-      const base = fresh ? 1 : prev.loads[k];
-      return Math.max(0, Math.min(1, base - (0.004 + ((k * 7919) % 13) * 0.0016) + (Math.random() - 0.5) * 0.08));
-    });
-    // Run dry and the brush is dipped again.
-    if (!fresh && loads.filter((l) => l > 0.15).length < 3) loads.fill(1);
-    t.pts.push({ x, y, t: now, w, loads });
+    // A full drop at rest, thinner as it's dragged faster.
+    const target = Math.max(7, 22 - speed * 6);
+    const rad = fresh ? 18 : prev.r + (target - prev.r) * 0.3;
+    t.pts.push({ x, y, t: now, r: rad });
+    if (!fresh && speed > 2.2 && Math.random() < 0.45) {
+      const ang = Math.atan2(y - prev.y, x - prev.x) + (Math.random() - 0.5) * 1.4;
+      const dist = 26 + Math.random() * 46;
+      t.drops.push({ x, y, t: now, vx: Math.cos(ang) * dist, vy: Math.sin(ang) * dist, r: 2.5 + Math.random() * 4 });
+    }
     if (!t.raf) t.raf = requestAnimationFrame(draw);
   };
 
@@ -530,15 +524,15 @@ export default function BeyondStory() {
 
       <div className="bt-stage" ref={stageRef} onPointerMove={onBrush}>
         <canvas ref={inkRef} className="bt-ink" aria-hidden="true" />
-        {/* The water: a slow ripple the ink layer is seen through. */}
+        {/* Goo: blur the blots together, then cut them back to a hard edge. */}
         <svg className="bt-water" aria-hidden="true" width="0" height="0">
-          <filter id="bt-water">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="2" seed="3" result="n">
-              <animate attributeName="seed" values="3;9;3" dur="6s" repeatCount="indefinite" calcMode="discrete" />
-            </feTurbulence>
-            <feDisplacementMap in="SourceGraphic" in2="n" scale="9" />
+          <filter id="bt-goo" colorInterpolationFilters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b" />
+            <feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11" />
           </filter>
         </svg>
+        {/* The desk: a grid on the left half (on a phone, scattered over the stage). */}
+        <div className="bt-desk">
         <Piece id="photo" d={[33.5, 3, 11]} m={[5, 2, 32]} r={4} n={0} label="A taped-up photo of Goutham">
           <HangingPhoto ready={ready} />
         </Piece>
@@ -593,6 +587,8 @@ export default function BeyondStory() {
           <LifeNote />
         </Piece>
 
+
+        </div>
 
         <Piece id="tv" d={[53, 15, 44]} m={[-14, 56, 128]} r={0} z={2} n={0} label="The monitor, with my story on it">
           <Monitor>
