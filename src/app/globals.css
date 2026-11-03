@@ -5898,12 +5898,19 @@ a:focus-visible .mt-pill-fill {
   overflow-x: clip;
 }
 /* The desk keeps the design's proportions and fits the screen under the nav. */
+/* Desktop: the page split down the middle inside the site's margins: the
+   desk on a grid in the left half, the monitor centred in the right. */
 .bt-stage {
   --nav: 88px;
   position: relative;
-  width: min(100vw, (100svh - var(--nav)) * 1.596);
-  aspect-ratio: 632 / 396;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  column-gap: 4cqw;
+  align-items: center;
+  width: min(100%, 1680px);
+  min-height: calc(100svh - var(--nav));
   margin: 0 auto;
+  padding: 2vh clamp(24px, 6vw, 110px) 4vh;
   container-type: inline-size;
   /* Its own white, for the brush's difference blend to work against. */
   isolation: isolate;
@@ -5918,19 +5925,43 @@ a:focus-visible .mt-pill-fill {
   height: 100%;
   pointer-events: none;
   mix-blend-mode: difference;
-  filter: url(#bt-water);
+  filter: url(#bt-goo);
 }
 .bt-water {
   position: absolute;
+}
+.bt-desk {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-areas:
+    "t t t t t t t t p p p p"
+    "i i i i i i i i p p p p"
+    "n n n n n . b b b b b b"
+    "n n n n n . c c c c c ."
+    "n n n n n . h h h h a a"
+    "x x x x x . . . . . . .";
+  column-gap: 1.2cqw;
+  row-gap: 2.2cqw;
+  align-items: center;
+}
+.bt-piece[data-id="title"] { grid-area: t; }
+.bt-piece[data-id="photo"] { grid-area: p; width: 72%; justify-self: center; }
+.bt-piece[data-id="intro"] { grid-area: i; align-self: start; }
+.bt-piece[data-id="note"] { grid-area: n; align-self: start; }
+.bt-piece[data-id="burst"] { grid-area: b; width: 88%; justify-self: center; }
+.bt-piece[data-id="cs"] { grid-area: c; width: 62%; justify-self: center; }
+.bt-piece[data-id="patch"] { grid-area: h; width: 90%; }
+.bt-piece[data-id="arcade"] { grid-area: a; width: 58%; justify-self: center; }
+.bt-piece[data-id="home"] { grid-area: x; justify-self: start; }
+.bt-piece[data-id="tv"] {
+  width: min(100%, calc(100svh - var(--nav) - 7vh));
+  justify-self: center;
 }
 .bt-piece {
   --dx: 0px;
   --dy: 0px;
   --lean: 0deg;
-  position: absolute;
-  left: var(--x);
-  top: var(--y);
-  width: var(--w);
+  position: relative;
   touch-action: none;
   cursor: grab;
   user-select: none;
@@ -6272,7 +6303,7 @@ a:focus-visible .mt-pill-fill {
   display: none;
 }
 .bt-screen-pad {
-  padding: 13% 11% 14%;
+  padding: 14% 14% 16%;
   container-type: inline-size;
 }
 .bt-screen-kicker {
@@ -6437,13 +6468,22 @@ a:focus-visible .mt-pill-fill {
 /* ---- phones: the desk is a tall stage, the monitor at its foot ---- */
 @media (max-width: 767px) {
   .bt-stage {
+    display: block;
     width: 100vw;
+    min-height: 0;
+    padding: 0;
     aspect-ratio: 390 / 1190;
   }
-  .bt-piece {
+  .bt-desk {
+    display: contents;
+  }
+  .bt-piece,
+  .bt-piece[data-id] {
+    position: absolute;
     left: var(--mx);
     top: var(--my);
     width: var(--mw);
+    justify-self: auto;
   }
   .bt-burst-word { font-size: 9cqw; }
   .bt-key { font-size: 2.6cqw; }
