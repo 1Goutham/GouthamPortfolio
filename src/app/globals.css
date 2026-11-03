@@ -5891,77 +5891,33 @@ a:focus-visible .mt-pill-fill {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Beyond: the desk and the monitor                                   */
+/*  Beyond: the desk and the TV                                        */
 /* ------------------------------------------------------------------ */
 
 .bt-page {
   overflow-x: clip;
 }
-/* The desk keeps the design's proportions and fits the screen under the nav. */
-/* Desktop: the page split down the middle inside the site's margins: the
-   desk on a grid in the left half, the monitor centred in the right. */
+/* The desk keeps the design's composition: every piece is placed in shares
+   of the stage, which fits the screen under the nav. */
 .bt-stage {
   --nav: 88px;
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 4cqw;
-  align-items: center;
-  width: min(100%, 1680px);
-  min-height: calc(100svh - var(--nav));
+  width: min(100vw, (100svh - var(--nav)) * 1.756);
+  aspect-ratio: 878 / 500;
   margin: 0 auto;
-  padding: 2vh clamp(24px, 6vw, 110px) 4vh;
   container-type: inline-size;
-  /* Its own white, for the brush's difference blend to work against. */
-  isolation: isolate;
-  background: #fff;
-}
-/* The brush rides above everything on the desk, blended by difference. */
-.bt-ink {
-  position: absolute;
-  inset: 0;
-  z-index: 90;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  mix-blend-mode: difference;
-  filter: url(#bt-goo);
-}
-.bt-water {
-  position: absolute;
 }
 .bt-desk {
-  display: grid;
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-  grid-template-areas:
-    "t t t t t t t t p p p p"
-    "i i i i i i i i p p p p"
-    "n n n n n . b b b b b b"
-    "n n n n n . c c c c c ."
-    "n n n n n . h h h h a a"
-    "x x x x x . . . . . . .";
-  column-gap: 1.2cqw;
-  row-gap: 2.2cqw;
-  align-items: center;
-}
-.bt-piece[data-id="title"] { grid-area: t; }
-.bt-piece[data-id="photo"] { grid-area: p; width: 72%; justify-self: center; }
-.bt-piece[data-id="intro"] { grid-area: i; align-self: start; }
-.bt-piece[data-id="note"] { grid-area: n; align-self: start; }
-.bt-piece[data-id="burst"] { grid-area: b; width: 88%; justify-self: center; }
-.bt-piece[data-id="cs"] { grid-area: c; width: 62%; justify-self: center; }
-.bt-piece[data-id="patch"] { grid-area: h; width: 90%; }
-.bt-piece[data-id="arcade"] { grid-area: a; width: 58%; justify-self: center; }
-.bt-piece[data-id="home"] { grid-area: x; justify-self: start; }
-.bt-piece[data-id="tv"] {
-  width: min(100%, calc(100svh - var(--nav) - 7vh));
-  justify-self: center;
+  display: contents;
 }
 .bt-piece {
   --dx: 0px;
   --dy: 0px;
   --lean: 0deg;
-  position: relative;
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
   touch-action: none;
   cursor: grab;
   user-select: none;
@@ -5970,51 +5926,34 @@ a:focus-visible .mt-pill-fill {
 }
 .bt-piece-in {
   transform: rotate(calc(var(--r) + var(--lean)));
-  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.12));
-  transition: transform 0.55s cubic-bezier(0.3, 1.4, 0.5, 1), filter 0.4s ease;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+  transition: transform 0.6s cubic-bezier(0.3, 1.45, 0.5, 1), filter 0.4s ease;
 }
+/* Hover: it lifts off the desk and straightens a little toward you. */
 @media (hover: hover) {
   .bt-piece:hover .bt-piece-in {
-    transform: rotate(calc(var(--r) * 0.6)) scale(1.04) translateY(-3px);
-    filter: drop-shadow(0 14px 14px rgba(0, 0, 0, 0.16));
+    transform: rotate(calc(var(--r) * 0.55)) translateY(-4px) scale(1.045);
+    filter: drop-shadow(0 16px 16px rgba(0, 0, 0, 0.14));
   }
 }
 .bt-piece[data-held] {
   cursor: grabbing;
 }
-.bt-piece[data-id="tv"] .bt-piece-in,
-.bt-piece[data-id="tv"]:hover .bt-piece-in {
-  transform: none;
-  filter: none;
-}
-.bt-piece[data-id="tv"][data-held] .bt-piece-in {
-  transform: scale(1.03) rotate(var(--lean));
-}
-/* The frame is the handle to move the monitor by, clipped to the drawing
-   so the empty corners of its box don't cover what's beside it. */
-.bt-piece[data-id="tv"] .bt-frame {
-  pointer-events: auto;
-  clip-path: polygon(21% 23%, 26% 6%, 40% 3%, 46% 16%, 64% 18%, 70% 9%, 86% 14%, 87% 38%, 80% 84%, 62% 93%, 30% 93%, 4% 90%, 4% 72%, 13% 70%);
-}
-.bt-screen-scroll {
-  touch-action: pan-y;
-  cursor: auto;
-}
 .bt-piece[data-held] .bt-piece-in {
   transform: rotate(calc(var(--r) * 0.3 + var(--lean))) scale(1.08);
-  filter: drop-shadow(0 26px 22px rgba(0, 0, 0, 0.22));
-  transition: transform 0.2s ease-out, filter 0.3s ease;
+  filter: drop-shadow(0 26px 22px rgba(0, 0, 0, 0.2));
+  transition: transform 0.18s ease-out, filter 0.3s ease;
 }
-/* Laid on the desk one by one, as if dropped there. */
+/* Laid on the desk one after another, as if dropped there. */
 .bt-page[data-ready="false"] .bt-piece {
   opacity: 0;
 }
 .bt-page[data-ready="true"] .bt-piece {
   animation: bt-drop 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.25) backwards;
-  animation-delay: calc(0.35s + var(--n) * 70ms);
+  animation-delay: calc(0.3s + var(--n) * 70ms);
 }
 @keyframes bt-drop {
-  from { opacity: 0; transform: translateY(-30px) scale(1.12) rotate(-6deg); }
+  from { opacity: 0; transform: translateY(-28px) scale(1.1) rotate(-6deg); }
 }
 .bt-piece a {
   display: block;
@@ -6023,51 +5962,17 @@ a:focus-visible .mt-pill-fill {
 .bt-piece .beyond-photo {
   width: 100%;
 }
-
-/* 1Goutham. */
-.bt-burst {
-  position: relative;
-  aspect-ratio: 2 / 1;
-  display: grid;
-  place-items: center;
-}
-.bt-burst svg {
-  position: absolute;
-  inset: 0;
+.bt-burst-img {
+  display: block;
   width: 100%;
-  height: 100%;
-  fill: #ffeb3b;
-  stroke: #f2d500;
-  stroke-width: 0.6;
-  animation: bt-buzz 6s ease-in-out infinite;
+  height: auto;
+}
+.bt-piece[data-id="burst"]:hover .bt-burst-img {
+  animation: bt-buzz 0.5s ease-in-out;
 }
 @keyframes bt-buzz {
-  50% { transform: rotate(3deg) scale(1.03); }
-}
-.bt-burst-word {
-  position: relative;
-  margin-top: -6%;
-  font: 900 italic 3.3cqw/1 var(--font-outfit), sans-serif;
-  letter-spacing: -0.06em;
-  color: #111;
-  transform: rotate(-4deg);
-}
-.bt-key {
-  position: absolute;
-  right: 4%;
-  bottom: 12%;
-  padding: 0.5% 5% 0.5% 3%;
-  border-radius: 4px;
-  background: linear-gradient(#ff6f9a, #e94478);
-  box-shadow: 0 0.35cqw 0 #b62c58, inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  font: 600 0.9cqw/1.6 var(--font-outfit), sans-serif;
-  color: #fff;
-  transform: rotate(4deg);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.bt-burst:active .bt-key {
-  box-shadow: 0 0.08cqw 0 #b62c58;
-  transform: rotate(4deg) translateY(0.27cqw);
+  25% { transform: rotate(-3deg) scale(1.03); }
+  60% { transform: rotate(2deg); }
 }
 
 /* case study pill */
@@ -6080,7 +5985,7 @@ a:focus-visible .mt-pill-fill {
   border: 1.5px solid #111;
   border-radius: 999px;
   background: #fff;
-  font-size: 1.45cqw;
+  font-size: 1.3cqw;
   color: #111;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -6091,11 +5996,11 @@ a:focus-visible .mt-pill-fill {
   color: #fff;
 }
 .bt-title {
-  font-size: 4.4cqw;
+  font-size: 2.6cqw;
   white-space: nowrap;
 }
 .bt-home {
-  font-size: 1.9cqw;
+  font-size: 1.75cqw;
   white-space: nowrap;
   color: #111;
 }
@@ -6249,47 +6154,55 @@ a:focus-visible .mt-pill-fill {
   color: #9ef05a;
 }
 
-/* ---- the monitor ---- */
-/* Only the screen and the switches catch the pointer: the rest of the
-   drawing's box is empty air over the desk. */
+
+/* ---- the TV ---- */
+.bt-piece[data-id="tv"] .bt-piece-in,
+.bt-piece[data-id="tv"]:hover .bt-piece-in {
+  transform: none;
+  filter: none;
+}
+.bt-piece[data-id="tv"][data-held] .bt-piece-in {
+  transform: scale(1.03) rotate(var(--lean));
+}
 .bt-tv {
   position: relative;
   pointer-events: none;
 }
-.bt-screen,
-.bt-led,
-.bt-bulb {
-  pointer-events: auto;
-}
 .bt-tv-in {
   position: relative;
-  transform-origin: 50% 55%;
-  transition: transform 0.9s cubic-bezier(0.3, 1.35, 0.45, 1);
+  transform-origin: 72% 78%;
+  transition: transform 0.7s cubic-bezier(0.3, 1.3, 0.45, 1);
 }
-/* Reach for it and it rights itself (the drawing leans 13.45deg). */
-.bt-tv[data-level="true"] .bt-tv-in {
-  transform: rotate(-13.45deg) scale(1.03);
+/* Reach for the screen and the set leans in so it can be read. */
+.bt-tv[data-watch="true"] .bt-tv-in {
+  transform: scale(1.28);
+}
+.bt-piece[data-id="tv"]:has(.bt-tv[data-watch="true"]) {
+  z-index: 60 !important;
 }
 .bt-frame {
   position: relative;
-  z-index: 2;
   display: block;
   width: 100%;
   height: auto;
-  pointer-events: none;
   user-select: none;
+  /* The handle to move it by, clipped to the set so its empty corners
+     don't cover the desk. */
+  pointer-events: auto;
+  clip-path: polygon(12% 12%, 88% 12%, 88% 92%, 82% 100%, 18% 100%, 12% 92%);
 }
+/* The tube: the orange glass in the drawing, with the story on it. */
 .bt-screen {
   position: absolute;
-  z-index: 1;
-  left: 49.87%;
-  top: 53.13%;
-  width: 51.5%;
-  height: 39%;
+  left: 17.9%;
+  top: 30.8%;
+  width: 49%;
+  height: 44.3%;
   overflow: hidden;
-  border-radius: 6%;
-  background: #f6efe6;
-  transform: translate(-50%, -50%) rotate(13.45deg);
+  border-radius: 13% / 17%;
+  pointer-events: auto;
+  background: radial-gradient(120% 120% at 45% 40%, #f7b230, #e7891b 70%, #b85a0b);
+  box-shadow: inset 0 0 30px rgba(60, 20, 0, 0.55);
 }
 .bt-screen-scroll {
   position: absolute;
@@ -6298,26 +6211,41 @@ a:focus-visible .mt-pill-fill {
   overscroll-behavior: contain;
   scrollbar-width: none;
   outline: none;
+  touch-action: pan-y;
+  color: #2b1300;
+  animation: bt-flicker 4s steps(1) infinite;
 }
 .bt-screen-scroll::-webkit-scrollbar {
   display: none;
 }
+@keyframes bt-flicker {
+  0%, 100% { opacity: 1; }
+  47% { opacity: 0.92; }
+  48% { opacity: 1; }
+  71% { opacity: 0.95; }
+}
 .bt-screen-pad {
-  padding: 14% 14% 16%;
+  padding: 13% 12% 18%;
   container-type: inline-size;
 }
 .bt-screen-kicker {
-  font-size: max(10px, 2.6cqw);
+  font-size: max(9px, 2.8cqw);
   letter-spacing: 0.08em;
-  color: rgba(0, 0, 0, 0.45);
+  color: rgba(43, 19, 0, 0.6);
 }
 .bt-story {
   margin-top: 1em;
 }
 .bt-story p {
-  font-size: max(11.5px, 3.55cqw) !important;
-  line-height: 1.6 !important;
+  font-size: max(10.5px, 4.1cqw) !important;
+  line-height: 1.55 !important;
   text-align: left !important;
+  color: #2b1300 !important;
+}
+.bt-story .text-black,
+.bt-story b,
+.bt-story .font-bold {
+  color: #1a0b00 !important;
 }
 .bt-story > * + * {
   margin-top: 1em;
@@ -6327,52 +6255,94 @@ a:focus-visible .mt-pill-fill {
   gap: 8px;
   margin-top: 1.6em;
 }
+.bt-socials a {
+  border-color: rgba(43, 19, 0, 0.35) !important;
+  color: #2b1300 !important;
+}
 .bt-eof {
   margin-top: 2em;
-  font-size: max(10px, 2.6cqw);
+  font-size: max(9px, 2.8cqw);
   text-align: center;
-  color: rgba(0, 0, 0, 0.35);
+  color: rgba(43, 19, 0, 0.5);
 }
-/* Glass: scanlines, a curved sheen, and a vignette into the bezel. */
+.bt-noise,
+.bt-roll,
 .bt-scan,
 .bt-glass,
+.bt-static,
 .bt-off {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
+/* Fine static, always crawling. */
+.bt-noise {
+  inset: -50%;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.95' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.16;
+  mix-blend-mode: overlay;
+  animation: bt-grain 0.5s steps(5) infinite;
+}
+@keyframes bt-grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-9%, 6%); }
+  40% { transform: translate(7%, -8%); }
+  60% { transform: translate(-6%, -4%); }
+  80% { transform: translate(8%, 9%); }
+}
+/* The roll bar, drifting down the tube. */
+.bt-roll {
+  top: -30%;
+  height: 30%;
+  background: linear-gradient(transparent, rgba(255, 230, 180, 0.16) 50%, transparent);
+  animation: bt-roll 7s linear infinite;
+}
+@keyframes bt-roll {
+  to { transform: translateY(430%); }
+}
 .bt-scan {
-  background: repeating-linear-gradient(rgba(0, 0, 0, 0.035) 0 1px, transparent 1px 3px);
-  mix-blend-mode: multiply;
+  background: repeating-linear-gradient(rgba(60, 20, 0, 0.12) 0 1px, transparent 1px 3px);
 }
 .bt-glass {
   background:
-    radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, 0.45), transparent 45%),
-    radial-gradient(140% 120% at 50% 50%, transparent 60%, rgba(60, 40, 30, 0.22));
+    radial-gradient(70% 55% at 28% 18%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(120% 120% at 50% 50%, transparent 58%, rgba(60, 20, 0, 0.45));
 }
-/* How far through the story you are, along the screen's foot. */
+/* Channel change: a burst of loud static. */
+.bt-static {
+  opacity: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='1' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 120px 120px;
+}
+.bt-static[data-go="true"] {
+  animation: bt-burst 0.42s steps(6) forwards;
+}
+@keyframes bt-burst {
+  0% { opacity: 0.95; background-position: 0 0; }
+  50% { opacity: 0.85; background-position: 40px -60px; }
+  100% { opacity: 0; background-position: -30px 50px; }
+}
 .bt-progress {
   position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 5%;
+  left: 12%;
+  right: 12%;
+  bottom: 6%;
   height: 2px;
   border-radius: 2px;
-  background: rgba(0, 0, 0, 0.08);
+  background: rgba(43, 19, 0, 0.15);
   pointer-events: none;
 }
 .bt-progress::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: #111;
+  background: #2b1300;
   transform: scaleX(var(--p));
   transform-origin: left;
 }
-/* Off: the picture collapses to a line, then a dot, and goes dark. */
+/* Off: the picture collapses to a line, then a dot, and the glass goes dark. */
 .bt-off {
   z-index: 3;
-  background: #1a1a1d;
+  background: radial-gradient(120% 120% at 40% 30%, #3a2c22, #120c08);
   opacity: 0;
   transition: opacity 0.3s ease 0.35s;
 }
@@ -6383,8 +6353,8 @@ a:focus-visible .mt-pill-fill {
   top: 50%;
   width: 100%;
   height: 100%;
-  background: #fff;
-  transform: translate(-50%, -50%) scale(1, 1);
+  background: #fff6dd;
+  transform: translate(-50%, -50%);
   opacity: 0;
 }
 .bt-tv[data-on="false"] .bt-off {
@@ -6401,92 +6371,50 @@ a:focus-visible .mt-pill-fill {
   100% { opacity: 0; transform: translate(-50%, -50%) scale(0, 0); }
 }
 .bt-tv[data-on="true"] .bt-screen-scroll {
-  animation: bt-warm 0.6s ease-out;
+  animation: bt-warm 0.6s ease-out, bt-flicker 4s steps(1) 0.6s infinite;
 }
 @keyframes bt-warm {
   from { filter: brightness(1.8) blur(1px); }
 }
-/* The power LED and the lamp's bulb are buttons. */
-.bt-led,
-.bt-bulb {
+/* The three knobs on the front: power, then channel down and up. */
+.bt-knob {
   position: absolute;
-  z-index: 3;
+  left: calc(63.2% + var(--k) * 6.95%);
+  top: 82.6%;
+  width: 4.4%;
+  aspect-ratio: 1;
   border: 0;
   border-radius: 50%;
   background: transparent;
+  pointer-events: auto;
   cursor: pointer;
+  transition: transform 0.4s cubic-bezier(0.3, 1.6, 0.5, 1);
 }
-.bt-led {
-  left: 62.6%;
-  top: 78.6%;
-  width: 3%;
-  height: 3%;
+.bt-knob:hover {
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.35), transparent 70%);
 }
-.bt-led::after {
-  content: "";
-  position: absolute;
-  inset: 25%;
-  border-radius: 50%;
-  background: #d6f53b;
-  box-shadow: 0 0 10px 3px rgba(214, 245, 59, 0.7);
-  animation: bt-blink 3s ease-in-out infinite;
+.bt-knob:active {
+  transform: rotate(40deg) scale(0.92);
 }
-@keyframes bt-blink {
-  50% { opacity: 0.55; }
-}
-.bt-tv[data-on="false"] .bt-led::after {
-  background: #7a6c62;
-  box-shadow: none;
-  animation: none;
-}
-.bt-bulb {
-  left: 27%;
-  top: 13%;
-  width: 13%;
-  height: 9%;
-}
-.bt-bulb:focus-visible,
-.bt-led:focus-visible {
+.bt-knob:focus-visible {
   outline: 2px solid #111;
   outline-offset: 2px;
 }
-/* Off, the bulb in the drawing dims. */
-.bt-bulb::after {
-  content: "";
-  position: absolute;
-  inset: 10% 5% 0;
-  border-radius: 50% 50% 40% 40%;
-  background: rgba(120, 80, 20, 0.55);
-  mix-blend-mode: multiply;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-.bt-tv[data-lamp="false"] .bt-bulb::after {
-  opacity: 1;
-}
 
-/* ---- phones: the desk is a tall stage, the monitor at its foot ---- */
+/* ---- phones: the desk is a tall stage, the TV at its foot ---- */
 @media (max-width: 767px) {
   .bt-stage {
-    display: block;
     width: 100vw;
-    min-height: 0;
-    padding: 0;
-    aspect-ratio: 390 / 1190;
+    aspect-ratio: 390 / 1110;
   }
-  .bt-desk {
-    display: contents;
-  }
-  .bt-piece,
-  .bt-piece[data-id] {
-    position: absolute;
+  .bt-piece {
     left: var(--mx);
     top: var(--my);
     width: var(--mw);
-    justify-self: auto;
   }
-  .bt-burst-word { font-size: 9cqw; }
-  .bt-key { font-size: 2.6cqw; }
+  .bt-tv[data-watch="true"] .bt-tv-in {
+    transform: none;
+  }
   .bt-pill { font-size: 4.2cqw; }
   .bt-title { font-size: 9cqw; }
   .bt-home { font-size: 5cqw; }
@@ -6502,9 +6430,11 @@ a:focus-visible .mt-pill-fill {
   .bt-card-top { font-size: 2.6cqw; gap: 2cqw; padding-bottom: 2.4cqw; }
   .bt-card-body { font-size: 2.5cqw; gap: 2.6cqw; margin-top: 6cqw; }
   .bt-card-body img { width: 8cqw; }
-  .bt-tv[data-level="true"] .bt-tv-in { transform: rotate(-13.45deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .bt-burst svg,
-  .bt-led::after { animation: none; }
+  .bt-noise,
+  .bt-roll,
+  .bt-screen-scroll {
+    animation: none !important;
+  }
 }
