@@ -5905,6 +5905,19 @@ a:focus-visible .mt-pill-fill {
   aspect-ratio: 632 / 396;
   margin: 0 auto;
   container-type: inline-size;
+  /* Its own white, for the brush's difference blend to work against. */
+  isolation: isolate;
+  background: #fff;
+}
+/* The brush rides above everything on the desk, blended by difference. */
+.bt-ink {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: difference;
 }
 .bt-piece {
   --dx: 0px;
@@ -6078,7 +6091,7 @@ a:focus-visible .mt-pill-fill {
   color: inherit;
 }
 .bt-note-h {
-  font-size: 1.45cqw;
+  font-size: 1.3cqw;
   line-height: 1.15;
   text-align: center;
   text-transform: uppercase;
@@ -6098,7 +6111,7 @@ a:focus-visible .mt-pill-fill {
   border: 0;
   background: none;
   font: inherit;
-  font-size: 1cqw;
+  font-size: 0.9cqw;
   line-height: 1.2;
   text-align: left;
   text-transform: uppercase;
