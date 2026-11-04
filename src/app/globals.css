@@ -6533,3 +6533,30 @@ a:focus-visible .mt-pill-fill {
     --fs: 3.3cqw;
   }
 }
+
+/* The space bar on the 1Goutham. sticker presses down into its well. */
+.bt-space {
+  position: relative;
+}
+.bt-space img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+}
+.bt-space-well,
+.bt-space-key {
+  position: absolute;
+  inset: 0;
+}
+.bt-space-well {
+  transform: translateY(2.5%);
+}
+.bt-space-key {
+  transition: transform 0.16s cubic-bezier(0.3, 1.6, 0.5, 1), filter 0.16s ease;
+}
+.bt-space[data-down="true"] .bt-space-key {
+  transform: translateY(3.2%) scale(0.985);
+  filter: brightness(0.92) drop-shadow(0 0 0 transparent);
+  transition-duration: 0.06s;
+}

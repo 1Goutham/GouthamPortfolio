@@ -269,6 +269,35 @@ function Piece({ id, d, m, r = 0, z = 3, n = 0, className = "", children, label 
   );
 }
 
+/**
+ * The 1Goutham. space sticker, with a space bar that really presses: the
+ * keycap is its own layer over a dark well, and pressing anywhere on the
+ * sticker pushes it down into it.
+ */
+function SpaceLogo() {
+  const [down, setDown] = useState(false);
+  const press = () => setDown(true);
+  const release = () => setDown(false);
+  return (
+    <div
+      className="bt-space"
+      data-down={down}
+      role="img"
+      aria-label="1Goutham. space"
+      onPointerDown={press}
+      onPointerUp={release}
+      onPointerLeave={release}
+      onPointerCancel={release}
+    >
+      {/* eslint-disable @next/next/no-img-element */}
+      <img className="bt-space-well" src="/1gs-well.webp" alt="" width={642} height={255} draggable={false} />
+      <img className="bt-space-base" src="/1gs-base.webp" alt="" width={642} height={255} draggable={false} />
+      <img className="bt-space-key" src="/1gs-key.webp" alt="" width={642} height={255} draggable={false} />
+      {/* eslint-enable @next/next/no-img-element */}
+    </div>
+  );
+}
+
 /** Things I wanna do in life: a note you can tick off. */
 function LifeNote() {
   const [done, setDone] = useState([]);
@@ -455,13 +484,12 @@ export default function BeyondStory() {
         </Piece>
 
         <Piece id="burst" d={[27.3, 10, 17.1]} m={[42, 2, 54]} r={0} n={1}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="bt-burst-img" src="/1gouthamspace.webp" alt="1Goutham. space" width={642} height={255} draggable={false} />
+          <SpaceLogo />
         </Piece>
 
         <Piece id="cs" d={[54.3, 15, 12.6]} m={[50, 11, 42]} r={6} n={2}>
-          <TransitionLink href="/casestudies" className="bt-pill font-outfit">
-            case study <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
+          <TransitionLink href="/projects" className="bt-pill font-outfit">
+            projects <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
           </TransitionLink>
         </Piece>
 
