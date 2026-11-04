@@ -186,7 +186,7 @@ function ScrollStar() {
 // stage (desktop, then phone), and its resting tilt.
 const LIFE = [
   ["Direct a film", "film"],
-  ["Make a lot of money", "money"],
+  ["Content creation", "content"],
   ["Build something millions use", "millions"],
   ["Get ridiculously fit", "fit"],
   ["Travel the world", "travel"],
@@ -275,6 +275,9 @@ function LifeNote() {
   const toggle = (k) => setDone((d) => (d.includes(k) ? d.filter((x) => x !== k) : [...d, k]));
   return (
     <div className="bt-note">
+      {/* The two loose corners, lifting off the desk. */}
+      <span className="bt-curl bt-curl-tr" aria-hidden="true" />
+      <span className="bt-curl bt-curl-bl" aria-hidden="true" />
       <p className="bt-note-h">
         Things I wanna do <mark>in life:</mark>
       </p>
@@ -283,7 +286,7 @@ function LifeNote() {
           <li key={k}>
             <button type="button" aria-pressed={done.includes(k)} onClick={() => toggle(k)} onPointerDown={(e) => e.stopPropagation()}>
               <span className="bt-box" aria-hidden="true" />
-              <span className="bt-life">{t.split(" ").map((w, i) => (["money", "millions", "fit", "travel"].includes(w.toLowerCase()) ? <mark key={i}>{w} </mark> : `${w} `))}</span>
+              <span className="bt-life">{t.split(" ").map((w, i) => (["content", "millions", "fit", "travel"].includes(w.toLowerCase()) ? <mark key={i}>{w} </mark> : `${w} `))}</span>
             </button>
           </li>
         ))}
