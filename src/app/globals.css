@@ -6034,13 +6034,78 @@ a:focus-visible .mt-pill-fill {
 }
 
 /* the note */
+/* The note is a loose sheet: it leans off the desk in 3D, two corners
+   curl up and drift as if in a draught, and it lifts further on hover. */
 .bt-note {
+  position: relative;
   padding: 1.4cqw 1.5cqw 1.6cqw;
-  background: #f4f1e8;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
-  clip-path: polygon(0 2%, 3% 0, 97% 1%, 100% 4%, 99% 98%, 96% 100%, 2% 99%, 0 96%);
+  border-radius: 2px;
+  background: linear-gradient(160deg, #f8f6ee, #efebdf);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.05), 0 1.2cqw 1.6cqw -0.8cqw rgba(40, 30, 10, 0.3);
   font-family: var(--font-hand), cursive;
   color: #2b2b2b;
+  transform: perspective(900px) rotateX(10deg) rotateY(-8deg);
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.3, 1.4, 0.5, 1);
+  animation: bt-drift 5.5s ease-in-out infinite;
+}
+@keyframes bt-drift {
+  50% { transform: perspective(900px) rotateX(13deg) rotateY(-5deg) translateZ(4px); }
+}
+.bt-piece:hover .bt-note {
+  animation-play-state: paused;
+  transform: perspective(900px) rotateX(4deg) rotateY(-3deg) translateZ(14px);
+}
+/* A curled corner: the underside of the paper showing, shaded, with the
+   desk's shadow beneath it. */
+.bt-curl {
+  position: absolute;
+  width: 18%;
+  aspect-ratio: 1;
+  pointer-events: none;
+  transform-origin: var(--o);
+  animation: bt-flutter 3.4s ease-in-out infinite;
+}
+.bt-curl::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(var(--g), #fff 0%, #e6e0cf 42%, #c8c0aa 50%, transparent 50.5%);
+  filter: drop-shadow(var(--sx) var(--sy) 3px rgba(40, 30, 10, 0.28));
+}
+.bt-curl-tr {
+  --o: 100% 0;
+  --g: 225deg;
+  --sx: -2px;
+  --sy: 3px;
+  right: 0;
+  top: 0;
+}
+.bt-curl-bl {
+  --o: 0 100%;
+  --g: 45deg;
+  --sx: 3px;
+  --sy: -1px;
+  left: 0;
+  bottom: 0;
+  width: 14%;
+  animation-delay: -1.7s;
+}
+@keyframes bt-flutter {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.18) rotate(-2deg); }
+}
+
+/* While the TV is being watched, the desk falls back: out of focus, a
+   step further away and dimmer, so the screen has the room. */
+.bt-piece {
+  transition: scale 0.6s var(--ease-out-expo), filter 0.6s ease, opacity 0.6s ease;
+}
+.bt-stage:has(.bt-tv[data-watch="true"]) .bt-piece:not([data-id="tv"]) {
+  scale: 0.95;
+  filter: blur(5px) saturate(0.7);
+  opacity: 0.45;
+  pointer-events: none;
 }
 .bt-note mark {
   padding: 0 0.15em;
@@ -6256,6 +6321,7 @@ a:focus-visible .mt-pill-fill {
   margin-top: 1.6em;
 }
 .bt-socials a {
+  display: flex !important;
   border-color: rgba(43, 19, 0, 0.35) !important;
   color: #2b1300 !important;
 }
@@ -6432,6 +6498,8 @@ a:focus-visible .mt-pill-fill {
   .bt-card-body img { width: 8cqw; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .bt-note,
+  .bt-curl,
   .bt-noise,
   .bt-roll,
   .bt-screen-scroll {
