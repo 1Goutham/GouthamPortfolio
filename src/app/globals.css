@@ -6632,3 +6632,29 @@ a:focus-visible .mt-pill-fill {
     display: none;
   }
 }
+
+/* ---- focus: whatever you hold the pointer on comes forward, and the rest
+   of the desk falls back, out of focus, smaller and dimmer ---- */
+.bt-piece {
+  transition: scale 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo), opacity 0.7s ease;
+}
+@media (hover: hover) {
+  .bt-stage:has(.bt-piece:hover) .bt-piece:not(:hover):not([data-clawed]) {
+    scale: 0.93;
+    filter: blur(4px) saturate(0.75);
+    opacity: 0.5;
+    transition-delay: 0.12s;
+  }
+  .bt-piece:not([data-id="tv"]):hover {
+    z-index: 70 !important;
+    scale: 1.14;
+    transition-delay: 0.12s;
+  }
+  /* The TV, being the big one, pushes the desk further back. */
+  .bt-stage:has(.bt-tv[data-watch="true"]) .bt-piece:not([data-id="tv"]) {
+    scale: 0.9;
+    filter: blur(6px) saturate(0.7);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+}
