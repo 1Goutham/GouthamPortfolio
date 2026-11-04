@@ -269,25 +269,6 @@ function Piece({ id, d, m, r = 0, z = 3, n = 0, className = "", children, label 
   );
 }
 
-/** The 1Goutham sticker: a starburst with a keycap under it. */
-function Burst() {
-  const pts = [];
-  for (let i = 0; i < 28; i++) {
-    const a = (i / 28) * Math.PI * 2;
-    const rr = i % 2 ? 0.62 : 1;
-    pts.push(`${(50 + Math.cos(a) * 48 * rr).toFixed(1)},${(50 + Math.sin(a) * 30 * rr).toFixed(1)}`);
-  }
-  return (
-    <div className="bt-burst" aria-label="1Goutham. space">
-      <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-        <polygon points={pts.join(" ")} />
-      </svg>
-      <span className="bt-burst-word">1Goutham.</span>
-      <span className="bt-key">space</span>
-    </div>
-  );
-}
-
 /** Things I wanna do in life: a note you can tick off. */
 function LifeNote() {
   const [done, setDone] = useState([]);
@@ -312,20 +293,21 @@ function LifeNote() {
 }
 
 /**
- * The monitor, with the story on its screen. At rest it sits at the angle it
- * was drawn at; reach for it and it rights itself so the screen reads level.
- * The screen scrolls on its own (the page doesn't), the LED turns it off and
- * on (an old CRT collapsing to a line), and the lamp switches on and off.
+ * The TV, with the story on its screen. The tube is never quite still: a
+ * fine static crawls over it, a roll bar drifts down, and it flickers. Reach
+ * for the screen and the set leans in so it can be read (the wheel anywhere
+ * on it scrolls the story). The knobs work: the first is power (the picture
+ * collapses to a line and goes dark), the other two change the channel,
+ * which is a burst of static and the next part of the story.
  */
-function Monitor({ children }) {
+function Tube({ children }) {
   const [on, setOn] = useState(true);
-  const [lamp, setLamp] = useState(true);
-  const [level, setLevel] = useState(false);
+  const [watch, setWatch] = useState(false);
+  const [burst, setBurst] = useState(0);
   const [progress, setProgress] = useState(0);
   const screenRef = useRef(null);
   const tvRef = useRef(null);
 
-  // The wheel anywhere on the monitor scrolls the story on its screen.
   useEffect(() => {
     const tv = tvRef.current;
     const scr = screenRef.current;
@@ -339,151 +321,49 @@ function Monitor({ children }) {
     return () => tv.removeEventListener("wheel", onWheel);
   }, []);
 
-  useEffect(() => {
-    // Phones: it starts level (there's no pointer to reach for it with).
-    if (window.matchMedia("(hover: none)").matches) setLevel(true);
-  }, []);
-
   const onScroll = (e) => {
     const el = e.currentTarget;
     setProgress(el.scrollTop / Math.max(1, el.scrollHeight - el.clientHeight));
   };
 
+  // Change channel: static, and the next (or last) paragraph comes up.
+  const channel = (dir) => {
+    if (!on) return;
+    setBurst((n) => n + 1);
+    const scr = screenRef.current;
+    const ps = [...scr.querySelectorAll(".bt-story > *")];
+    const top = scr.scrollTop;
+    const next = dir > 0 ? ps.find((p) => p.offsetTop > top + 20) : [...ps].reverse().find((p) => p.offsetTop < top - 20);
+    setTimeout(() => scr.scrollTo({ top: next ? next.offsetTop - 12 : dir > 0 ? scr.scrollHeight : 0, behavior: "auto" }), 140);
+  };
+  const stop = (e) => e.stopPropagation();
+
   return (
-    <div
-      className="bt-tv"
-      data-level={level}
-      data-on={on}
-      data-lamp={lamp}
-      onPointerEnter={(e) => e.pointerType === "mouse" && setLevel(true)}
-      onPointerLeave={(e) => e.pointerType === "mouse" && setLevel(false)}
-      onFocus={() => setLevel(true)}
-    >
+    <div className="bt-tv" data-on={on} data-watch={watch} onPointerLeave={(e) => e.pointerType === "mouse" && setWatch(false)}>
       <div ref={tvRef} className="bt-tv-in" data-lenis-prevent>
-        <div className="bt-screen">
-          <div ref={screenRef} className="bt-screen-scroll" data-lenis-prevent onScroll={onScroll} onPointerDown={(e) => e.stopPropagation()} tabIndex={0} aria-label="My story. Scroll to read.">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img className="bt-frame" src="/beyond-tv.webp" alt="" width={1100} height={904} draggable={false} />
+        <div className="bt-screen" onPointerEnter={(e) => e.pointerType === "mouse" && setWatch(true)} onFocus={() => setWatch(true)}>
+          <div ref={screenRef} className="bt-screen-scroll" onScroll={onScroll} onPointerDown={stop} tabIndex={0} aria-label="My story. Scroll to read.">
             {children}
           </div>
+          <span className="bt-noise" aria-hidden="true" />
+          <span className="bt-roll" aria-hidden="true" />
           <span className="bt-scan" aria-hidden="true" />
           <span className="bt-glass" aria-hidden="true" />
+          <span key={burst} className="bt-static" data-go={burst > 0} aria-hidden="true" />
           <span className="bt-progress" style={{ "--p": progress }} aria-hidden="true" />
           <span className="bt-off" aria-hidden="true" />
         </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="bt-frame" src="/beyond-tv.webp" alt="" width={1100} height={1100} draggable={false} />
-        <button type="button" className="bt-led" onPointerDown={(e) => e.stopPropagation()} onClick={() => setOn((v) => !v)} aria-pressed={on} aria-label={on ? "Turn the monitor off" : "Turn the monitor on"} />
-        <button type="button" className="bt-bulb" onPointerDown={(e) => e.stopPropagation()} onClick={() => setLamp((v) => !v)} aria-pressed={lamp} aria-label={lamp ? "Switch the lamp off" : "Switch the lamp on"} />
+        <button type="button" className="bt-knob" style={{ "--k": 0 }} onPointerDown={stop} onClick={() => setOn((v) => !v)} aria-pressed={on} aria-label={on ? "Turn the TV off" : "Turn the TV on"} />
+        <button type="button" className="bt-knob" style={{ "--k": 1 }} onPointerDown={stop} onClick={() => channel(-1)} aria-label="Previous channel" />
+        <button type="button" className="bt-knob" style={{ "--k": 2 }} onPointerDown={stop} onClick={() => channel(1)} aria-label="Next channel" />
       </div>
     </div>
   );
 }
 
-const INK_MS = 520;
-
-/**
- * A drop of liquid ink that follows the mouse over the desk. It is a chain
- * of round blots, each shrinking as it ages, drawn white and run through an
- * SVG "goo" filter so neighbours melt into one body: a head that stretches
- * when the hand is quick and a tail that pinches off into droplets, like a
- * drop of water dragged across glass. Blended by difference, it is the
- * negative of whatever it passes over. Quick flicks throw small splashes.
- */
-function useBrush() {
-  const stageRef = useRef(null);
-  const inkRef = useRef(null);
-  const ink = useRef({ pts: [], drops: [], raf: 0 });
-
-  useEffect(() => {
-    const stage = stageRef.current;
-    const cv = inkRef.current;
-    if (!stage || !cv) return;
-    const fit = () => {
-      const r = stage.getBoundingClientRect();
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      cv.width = Math.round(r.width * dpr);
-      cv.height = Math.round(r.height * dpr);
-      cv.getContext("2d").setTransform(dpr, 0, 0, dpr, 0, 0);
-    };
-    fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(stage);
-    const t = ink.current;
-    return () => {
-      ro.disconnect();
-      cancelAnimationFrame(t.raf);
-    };
-  }, []);
-
-  const draw = useCallback(() => {
-    const t = ink.current;
-    const cv = inkRef.current;
-    if (!cv) return;
-    const ctx = cv.getContext("2d");
-    const now = performance.now();
-    t.pts = t.pts.filter((q) => now - q.t < INK_MS);
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.fillStyle = "#fff";
-    // The body: blots along the path, fullest at the head.
-    for (let i = 0; i < t.pts.length; i++) {
-      const q = t.pts[i];
-      const life = 1 - (now - q.t) / INK_MS;
-      const r = q.r * Math.pow(life, 0.8);
-      if (r < 0.6) continue;
-      ctx.beginPath();
-      ctx.arc(q.x, q.y, r, 0, Math.PI * 2);
-      ctx.fill();
-      // In-betweens, so a quick move stays one body.
-      const n = t.pts[i + 1];
-      if (n && n.t - q.t < 60) {
-        const d = Math.hypot(n.x - q.x, n.y - q.y);
-        const steps = Math.min(12, Math.floor(d / Math.max(4, r * 0.6)));
-        for (let k = 1; k < steps; k++) {
-          const f = k / steps;
-          ctx.beginPath();
-          ctx.arc(q.x + (n.x - q.x) * f, q.y + (n.y - q.y) * f, r * (0.92 + 0.08 * f), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-    }
-    // Splashes: thrown off a flick, they fly, slow and shrink.
-    t.drops = t.drops.filter((d) => now - d.t < 600);
-    for (const d of t.drops) {
-      const k = (now - d.t) / 600;
-      const e = 1 - Math.pow(1 - k, 3);
-      ctx.beginPath();
-      ctx.arc(d.x + d.vx * e, d.y + d.vy * e, d.r * (1 - k), 0, Math.PI * 2);
-      ctx.fill();
-    }
-    t.raf = t.pts.length || t.drops.length ? requestAnimationFrame(draw) : 0;
-  }, []);
-
-  const onBrush = (e) => {
-    if (e.pointerType !== "mouse" || reduceMotion()) return;
-    const r = stageRef.current.getBoundingClientRect();
-    const t = ink.current;
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    const now = performance.now();
-    const prev = t.pts[t.pts.length - 1];
-    const fresh = !prev || now - prev.t > 120;
-    const speed = fresh ? 0 : Math.hypot(x - prev.x, y - prev.y) / Math.max(8, now - prev.t);
-    // A full drop at rest, thinner as it's dragged faster.
-    const target = Math.max(7, 22 - speed * 6);
-    const rad = fresh ? 18 : prev.r + (target - prev.r) * 0.3;
-    t.pts.push({ x, y, t: now, r: rad });
-    if (!fresh && speed > 2.2 && Math.random() < 0.45) {
-      const ang = Math.atan2(y - prev.y, x - prev.x) + (Math.random() - 0.5) * 1.4;
-      const dist = 26 + Math.random() * 46;
-      t.drops.push({ x, y, t: now, vx: Math.cos(ang) * dist, vy: Math.sin(ang) * dist, r: 2.5 + Math.random() * 4 });
-    }
-    if (!t.raf) t.raf = requestAnimationFrame(draw);
-  };
-
-  return { stageRef, inkRef, onBrush };
-}
-
 export default function BeyondStory() {
-  const { stageRef, inkRef, onBrush } = useBrush();
   // Lay the desk out once fonts are ready so nothing pops mid-swap.
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -522,51 +402,44 @@ export default function BeyondStory() {
 
       <h1 className="sr-only">Beyond: a bit more about Goutham</h1>
 
-      <div className="bt-stage" ref={stageRef} onPointerMove={onBrush}>
-        <canvas ref={inkRef} className="bt-ink" aria-hidden="true" />
-        {/* Goo: blur the blots together, then cut them back to a hard edge. */}
-        <svg className="bt-water" aria-hidden="true" width="0" height="0">
-          <filter id="bt-goo" colorInterpolationFilters="sRGB">
-            <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="b" />
-            <feColorMatrix in="b" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 26 -11" />
-          </filter>
-        </svg>
+      <div className="bt-stage">
         {/* The desk: a grid on the left half (on a phone, scattered over the stage). */}
         <div className="bt-desk">
-        <Piece id="photo" d={[33.5, 3, 11]} m={[5, 2, 32]} r={4} n={0} label="A taped-up photo of Goutham">
+        <Piece id="photo" d={[10.25, 5, 8.9]} m={[5, 2, 32]} r={-3} n={0} label="A taped-up photo of Goutham">
           <HangingPhoto ready={ready} />
         </Piece>
 
-        <Piece id="burst" d={[27.5, 38, 15]} m={[42, 2, 54]} r={-6} n={1}>
-          <Burst />
+        <Piece id="burst" d={[27.3, 10, 17.1]} m={[42, 2, 54]} r={0} n={1}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="bt-burst-img" src="/1gouthamspace.webp" alt="1Goutham. space" width={642} height={255} draggable={false} />
         </Piece>
 
-        <Piece id="cs" d={[33, 55, 11.5]} m={[50, 11, 42]} r={-4} n={2}>
+        <Piece id="cs" d={[54.3, 15, 12.6]} m={[50, 11, 42]} r={6} n={2}>
           <TransitionLink href="/casestudies" className="bt-pill font-outfit">
             case study <ArrowUpRight className="h-[1em] w-[1em]" strokeWidth={2} aria-hidden="true" />
           </TransitionLink>
         </Piece>
 
-        <Piece id="title" d={[7, 9, 21]} m={[42, 17, 48]} r={-2} n={3} className="bt-title-piece">
+        <Piece id="title" d={[32.7, 30.4, 12.9]} m={[42, 17, 48]} r={7} n={3} className="bt-title-piece">
           <p className="bt-title font-anonymous-pro">
-            <Brackets>Beyond</Brackets>
+            <Brackets tight>Beyond</Brackets>
           </p>
         </Piece>
 
-        <Piece id="home" d={[7, 81, 12]} m={[58, 47, 38]} r={-3} n={4}>
+        <Piece id="home" d={[76.5, 16.4, 11.4]} m={[58, 38, 32]} r={-18} n={4}>
           <TransitionLink href="/" className="bt-home font-anonymous-pro">
-            <Brackets>Back Home</Brackets>
+            <Brackets tight>Back Home</Brackets>
           </TransitionLink>
         </Piece>
 
-        <Piece id="patch" d={[27, 66, 12.5]} m={[52, 29.5, 38]} r={6} n={5}>
+        <Piece id="patch" d={[48.4, 34.4, 10.8]} m={[52, 29.5, 38]} r={-15} n={5}>
           <TransitionLink href="/casestudies" aria-label="Case studies">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img className="bt-patch" src="/notacasestudy.webp" alt="" width={760} height={369} draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="intro" d={[7, 27, 30]} m={[5, 24.5, 90]} r={0} n={6} className="bt-intro-piece">
+        <Piece id="intro" d={[7.1, 41.6, 28.5]} m={[5, 24.5, 90]} r={0} n={6} className="bt-intro-piece">
           <div className="bt-intro">
             <Brackets tight className="font-anonymous-pro text-black">Goutham G</Brackets>
             <ScrollStar />
@@ -577,21 +450,37 @@ export default function BeyondStory() {
           </div>
         </Piece>
 
-        <Piece id="arcade" d={[41.5, 65, 5]} m={[68, 37, 14]} r={10} n={7}>
+        <Piece id="arcade" d={[35.5, 55.6, 4.3]} m={[87, 37.5, 10]} r={-10} n={7}>
           <TransitionLink href="/arcade" aria-label="Try my arcade" className="bt-arcade">
             <Image src="/ArcadePic.png" alt="" width={1292} height={1320} sizes="90px" draggable={false} />
           </TransitionLink>
         </Piece>
 
-        <Piece id="note" d={[7, 43, 17.5]} m={[5, 34, 50]} r={-3} n={8}>
+        <Piece id="note" d={[10, 56.4, 17.3]} m={[5, 35, 44]} r={10} n={8}>
           <LifeNote />
         </Piece>
 
 
+        <Piece id="works" d={[33.9, 69, 19.6]} m={[53, 45, 43]} r={-12} n={9}>
+          <TransitionLink href="/works" className="bt-card font-outfit">
+            <span className="bt-card-top">
+              <b>1G-works</b>
+              <span>[ let&rsquo;s build ]</span>
+              <i aria-hidden="true">&times;</i>
+            </span>
+            <span className="bt-card-body">
+              <Image src="/headgcwork.png" alt="" width={189} height={145} sizes="40px" />
+              <span>
+                <b>Need a creative website or digital product?</b> Design, web, growth and AI for your
+                business, built end to end with 1G-works.
+              </span>
+            </span>
+          </TransitionLink>
+        </Piece>
         </div>
 
-        <Piece id="tv" d={[53, 15, 44]} m={[-14, 56, 128]} r={0} z={2} n={0} label="The monitor, with my story on it">
-          <Monitor>
+        <Piece id="tv" d={[53.2, 29, 45]} m={[-14, 59, 128]} r={0} z={2} n={0} label="The monitor, with my story on it">
+          <Tube>
             <div className="bt-screen-pad">
               <p className="bt-screen-kicker font-anonymous-pro">~/beyond/story.txt</p>
               <div className="bt-story">
@@ -706,7 +595,7 @@ export default function BeyondStory() {
               </ul>
               <p className="bt-eof font-anonymous-pro">[ end of file ]</p>
             </div>
-          </Monitor>
+          </Tube>
         </Piece>
       </div>
     </main>
