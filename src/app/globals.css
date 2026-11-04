@@ -6101,6 +6101,16 @@ a:focus-visible .mt-pill-fill {
 .bt-piece {
   transition: scale 0.6s var(--ease-out-expo), filter 0.6s ease, opacity 0.6s ease;
 }
+/* The same on any piece: hold the pointer on one and the rest of the desk
+   eases back, softly, after a beat (so sweeping across doesn't flash). */
+@media (hover: hover) {
+  .bt-stage:has(.bt-piece:not([data-id="tv"]):hover) .bt-piece:not(:hover) {
+    scale: 0.97;
+    filter: blur(2.5px) saturate(0.8);
+    opacity: 0.6;
+    transition-delay: 0.18s;
+  }
+}
 .bt-stage:has(.bt-tv[data-watch="true"]) .bt-piece:not([data-id="tv"]) {
   scale: 0.95;
   filter: blur(5px) saturate(0.7);
@@ -6247,6 +6257,7 @@ a:focus-visible .mt-pill-fill {
 }
 .bt-frame {
   position: relative;
+  z-index: 2;
   display: block;
   width: 100%;
   height: auto;
@@ -6257,14 +6268,17 @@ a:focus-visible .mt-pill-fill {
   clip-path: polygon(12% 12%, 88% 12%, 88% 92%, 82% 100%, 18% 100%, 12% 92%);
 }
 /* The tube: the orange glass in the drawing, with the story on it. */
+/* The tube sits behind the set, a touch larger than the hole in it, so the
+   black bezel overlaps its edge like real glass in a cabinet. */
 .bt-screen {
   position: absolute;
-  left: 17.9%;
-  top: 30.8%;
-  width: 49%;
-  height: 44.3%;
+  z-index: 0;
+  left: 16.6%;
+  top: 29.2%;
+  width: 53.2%;
+  height: 48.6%;
   overflow: hidden;
-  border-radius: 13% / 17%;
+  border-radius: 9% / 12%;
   pointer-events: auto;
   background: radial-gradient(120% 120% at 45% 40%, #f7b230, #e7891b 70%, #b85a0b);
   box-shadow: inset 0 0 30px rgba(60, 20, 0, 0.55);
@@ -6290,7 +6304,7 @@ a:focus-visible .mt-pill-fill {
   71% { opacity: 0.95; }
 }
 .bt-screen-pad {
-  padding: 13% 12% 18%;
+  padding: 12% 11% 16%;
   container-type: inline-size;
 }
 .bt-screen-kicker {
@@ -6445,6 +6459,7 @@ a:focus-visible .mt-pill-fill {
 /* The three knobs on the front: power, then channel down and up. */
 .bt-knob {
   position: absolute;
+  z-index: 3;
   left: calc(63.2% + var(--k) * 6.95%);
   top: 82.6%;
   width: 4.4%;
