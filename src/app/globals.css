@@ -6612,26 +6612,6 @@ a:focus-visible .mt-pill-fill {
   transform-origin: 76.6% 64%;
   transform: rotate(calc(var(--shut) * 14deg));
 }
-.bt-claw-hint {
-  position: absolute;
-  left: 50%;
-  top: 104%;
-  font-size: max(10px, 0.8cqw);
-  letter-spacing: 0.08em;
-  white-space: nowrap;
-  color: rgba(0, 0, 0, 0.4);
-  translate: -50% 0;
-  opacity: 0;
-  animation: bt-hint 0.8s ease 2.4s forwards;
-  transition: opacity 0.4s ease;
-}
-@keyframes bt-hint {
-  to { opacity: 1; }
-}
-.bt-claw[data-awake="true"] .bt-claw-hint {
-  animation: none;
-  opacity: 0;
-}
 /* Arrival: the claw lowers into view on its cable. */
 .bt-page[data-ready="true"] .bt-claw-head {
   animation: bt-claw-in 1.2s cubic-bezier(0.3, 1.3, 0.5, 1) 0.8s backwards;
@@ -6650,5 +6630,31 @@ a:focus-visible .mt-pill-fill {
 @media (max-width: 767px), (hover: none) {
   .bt-claw {
     display: none;
+  }
+}
+
+/* ---- focus: whatever you hold the pointer on comes forward, and the rest
+   of the desk falls back, out of focus, smaller and dimmer ---- */
+.bt-piece {
+  transition: scale 0.7s var(--ease-out-expo), filter 0.7s var(--ease-out-expo), opacity 0.7s ease;
+}
+@media (hover: hover) {
+  .bt-stage:has(.bt-piece:hover) .bt-piece:not(:hover):not([data-clawed]) {
+    scale: 0.93;
+    filter: blur(4px) saturate(0.75);
+    opacity: 0.5;
+    transition-delay: 0.12s;
+  }
+  .bt-piece:not([data-id="tv"]):hover {
+    z-index: 70 !important;
+    scale: 1.14;
+    transition-delay: 0.12s;
+  }
+  /* The TV, being the big one, pushes the desk further back. */
+  .bt-stage:has(.bt-tv[data-watch="true"]) .bt-piece:not([data-id="tv"]) {
+    scale: 0.9;
+    filter: blur(6px) saturate(0.7);
+    opacity: 0.4;
+    pointer-events: none;
   }
 }

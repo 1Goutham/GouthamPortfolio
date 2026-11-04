@@ -442,7 +442,7 @@ function Tube({ children }) {
  * rail (it sways with the motion), ↓ or Enter drops it: it lowers on its
  * cable until it meets whatever is under it, closes, and lifts it off the
  * desk. Move it and press again to let go; the piece is set down there.
- * Desktop only, and quiet until the first arrow key.
+ * Desktop only, and unannounced: there is no hint, it's for whoever finds it.
  */
 function Claw({ stageRef }) {
   const ref = useRef(null);
@@ -593,7 +593,6 @@ function Claw({ stageRef }) {
         <img className="bt-claw-body" src="/claw-body.webp" alt="" draggable={false} />
         {/* eslint-enable @next/next/no-img-element */}
       </div>
-      <span className="bt-claw-hint font-anonymous-pro">← → move &middot; ↓ grab</span>
     </div>
   );
 }
