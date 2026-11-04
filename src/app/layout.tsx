@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display, Nothing_You_Could_Do, Montserrat, Poppins } from "next/font/google";
+import { Anonymous_Pro, Outfit, Noto_Sans_Tamil, Playfair_Display, Nothing_You_Could_Do, Caveat, Montserrat, Poppins } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import { Analytics } from "@vercel/analytics/next";
 import SmoothScroll from "./components/layout/smooth-scroll";
@@ -40,6 +40,15 @@ const playfair = Playfair_Display({
 
 // Handwritten "1G-works" wordmark. The design uses Figma's Freehand, which
 // has no web version; this is the closest match on Google Fonts.
+// A pen hand for notes (Beyond's to-do list); loaded on use, not preloaded.
+const pen = Caveat({
+  variable: "--font-pen",
+  subsets: ["latin"],
+  weight: ["400", "600"],
+  display: "swap",
+  preload: false,
+});
+
 const hand = Nothing_You_Could_Do({
   variable: "--font-hand",
   subsets: ["latin"],
@@ -111,7 +120,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} ${playfair.variable} ${hand.variable} ${montserrat.variable} ${poppins.variable} antialiased`}
+        className={`${anonymousPro.variable} ${outfit.variable} ${notoSansTamil.variable} ${playfair.variable} ${hand.variable} ${pen.variable} ${montserrat.variable} ${poppins.variable} antialiased`}
       >
         <SmoothScroll />
         <Toaster

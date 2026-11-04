@@ -272,25 +272,54 @@ function Piece({ id, d, m, r = 0, z = 3, n = 0, className = "", children, label 
 /** Things I wanna do in life: a note you can tick off. */
 function LifeNote() {
   const [done, setDone] = useState([]);
+  const ref = useRef(null);
   const toggle = (k) => setDone((d) => (d.includes(k) ? d.filter((x) => x !== k) : [...d, k]));
+
+  // The sheet tilts toward the pointer and the light moves across it.
+  const onMove = (e) => {
+    if (e.pointerType !== "mouse" || reduceMotion()) return;
+    const el = ref.current;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--rx", `${(-y * 14).toFixed(2)}deg`);
+    el.style.setProperty("--ry", `${(x * 16).toFixed(2)}deg`);
+    el.style.setProperty("--lx", `${((x + 0.5) * 100).toFixed(1)}%`);
+    el.style.setProperty("--ly", `${((y + 0.5) * 100).toFixed(1)}%`);
+  };
+  const onLeave = () => {
+    const el = ref.current;
+    ["--rx", "--ry", "--lx", "--ly"].forEach((v) => el.style.removeProperty(v));
+  };
+
   return (
-    <div className="bt-note">
-      {/* The two loose corners, lifting off the desk. */}
-      <span className="bt-curl bt-curl-tr" aria-hidden="true" />
-      <span className="bt-curl bt-curl-bl" aria-hidden="true" />
-      <p className="bt-note-h">
-        Things I wanna do <mark>in life:</mark>
-      </p>
-      <ul>
-        {LIFE.map(([t, k]) => (
-          <li key={k}>
-            <button type="button" aria-pressed={done.includes(k)} onClick={() => toggle(k)} onPointerDown={(e) => e.stopPropagation()}>
-              <span className="bt-box" aria-hidden="true" />
-              <span className="bt-life">{t.split(" ").map((w, i) => (["content", "millions", "fit", "travel"].includes(w.toLowerCase()) ? <mark key={i}>{w} </mark> : `${w} `))}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
+    <div ref={ref} className="bt-note" onPointerMove={onMove} onPointerLeave={onLeave}>
+      <div className="bt-sheet">
+        <span className="bt-perf" aria-hidden="true" />
+        <p className="bt-note-h">Things I wanna do in life</p>
+        <ul>
+          {LIFE.map(([t, k]) => {
+            const on = done.includes(k);
+            return (
+              <li key={k}>
+                <button type="button" aria-pressed={on} onClick={() => toggle(k)} onPointerDown={(e) => e.stopPropagation()}>
+                  <svg className="bt-check" viewBox="0 0 24 24" aria-hidden="true">
+                    <path className="bt-check-box" d="M4.5 5.2c4.6-.6 9.6-.5 14.8.1.5 4.6.4 9.3-.2 13.9-4.8.5-9.6.6-14.4.2-.6-4.7-.7-9.4-.2-14.2z" />
+                    <path className="bt-check-tick" d="M7.5 12.4l3.3 3.9L21 3.5" />
+                  </svg>
+                  <span className="bt-life">
+                    {t}
+                    <svg className="bt-strike" viewBox="0 0 100 10" preserveAspectRatio="none" aria-hidden="true">
+                      <path d="M1 6c12-3 24 2 36-1s26-2 38 1 16-1 24-2" />
+                    </svg>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <span className="bt-sheet-light" aria-hidden="true" />
+      </div>
     </div>
   );
 }
@@ -342,11 +371,24 @@ function Tube({ children }) {
   const stop = (e) => e.stopPropagation();
 
   return (
-    <div className="bt-tv" data-on={on} data-watch={watch} onPointerLeave={(e) => e.pointerType === "mouse" && setWatch(false)}>
-      <div ref={tvRef} className="bt-tv-in" data-lenis-prevent>
+    <div className="bt-tv" data-on={on} data-watch={watch}>
+      <div
+        ref={tvRef}
+        className="bt-tv-in"
+        data-lenis-prevent
+        onPointerOver={(e) => e.pointerType === "mouse" && setWatch(true)}
+        onPointerOut={(e) => e.pointerType === "mouse" && !e.currentTarget.contains(e.relatedTarget) && setWatch(false)}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="bt-frame" src="/beyond-tv.webp" alt="" width={1100} height={904} draggable={false} />
-        <div className="bt-screen" onPointerEnter={(e) => e.pointerType === "mouse" && setWatch(true)} onFocus={() => setWatch(true)}>
+        <img
+          className="bt-frame"
+          src="/beyond-tv.webp"
+          alt=""
+          width={1100}
+          height={904}
+          draggable={false}
+        />
+        <div className="bt-screen" onFocus={() => setWatch(true)}>
           <div ref={screenRef} className="bt-screen-scroll" onScroll={onScroll} onPointerDown={stop} tabIndex={0} aria-label="My story. Scroll to read.">
             {children}
           </div>
