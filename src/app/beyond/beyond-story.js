@@ -437,7 +437,169 @@ function Tube({ children }) {
   );
 }
 
+/**
+ * Easter egg: a claw machine over the desk. ← → move the claw along its
+ * rail (it sways with the motion), ↓ or Enter drops it: it lowers on its
+ * cable until it meets whatever is under it, closes, and lifts it off the
+ * desk. Move it and press again to let go; the piece is set down there.
+ * Desktop only, and quiet until the first arrow key.
+ */
+function Claw({ stageRef }) {
+  const ref = useRef(null);
+  const [awake, setAwake] = useState(false);
+  const st = useRef({ x: 0.13, vx: 0, sway: 0, sv: 0, y: 0, phase: "idle", target: 0, held: null, keys: new Set(), raf: 0, last: 0, closed: 0 });
+
+  useEffect(() => {
+    if (!window.matchMedia("(hover: hover) and (min-width: 768px)").matches || reduceMotion()) return;
+    const s = st.current;
+    const stage = stageRef.current;
+    const el = ref.current;
+    if (!stage || !el) return;
+
+    const tip = () => {
+      const r = el.querySelector(".bt-claw-body").getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.93 };
+    };
+    // What's under the claw: the highest piece its tip would meet.
+    const under = () => {
+      const t = tip();
+      let best = null;
+      stage.querySelectorAll(".bt-piece").forEach((p) => {
+        const r = p.getBoundingClientRect();
+        if (t.x < r.left + r.width * 0.15 || t.x > r.right - r.width * 0.15 || r.bottom < t.y) return;
+        if (!best || r.top < best.r.top) best = { p, r };
+      });
+      return best;
+    };
+    const num = (p, v) => parseFloat(p.style.getPropertyValue(v)) || 0;
+
+    const frame = (now) => {
+      const dt = Math.min(40, now - (s.last || now)) / 1000;
+      s.last = now;
+      const W = stage.clientWidth;
+      // Along the rail.
+      const dir = (s.keys.has("ArrowRight") ? 1 : 0) - (s.keys.has("ArrowLeft") ? 1 : 0);
+      const can = s.phase === "idle";
+      s.vx += ((can ? dir * 0.55 : 0) - s.vx) * Math.min(1, dt * 7);
+      s.x = Math.max(0.04, Math.min(0.96, s.x + s.vx * dt));
+      // Swinging on the cable: lags behind the motion, springs back.
+      s.sv += (-s.vx * 30 - s.sway * 40 - s.sv * 5) * dt;
+      s.sway += s.sv * dt;
+      // Up and down.
+      if (s.phase === "down") {
+        s.y += Math.max(40, (s.target - s.y) * 4) * dt * 3.2;
+        if (s.y >= s.target) {
+          s.y = s.target;
+          s.phase = "close";
+          s.timer = now;
+        }
+      } else if (s.phase === "close") {
+        s.closed = Math.min(1, (now - s.timer) / 260);
+        if (s.closed >= 1) {
+          if (s.grab && !s.held) {
+            const p = s.grab;
+            s.held = { p, dx: num(p, "--dx"), dy: num(p, "--dy"), x: s.x * W, y: s.y };
+            p.dataset.clawed = "true";
+          }
+          s.phase = "up";
+        }
+      } else if (s.phase === "up") {
+        s.y = Math.max(0, s.y - Math.max(60, s.y * 3) * dt);
+        if (s.y <= 0) s.phase = "idle";
+        if (!s.held && s.y <= 0) s.closed = 0;
+      } else if (s.phase === "open") {
+        s.closed = Math.max(0, 1 - (now - s.timer) / 220);
+        if (s.closed <= 0) s.phase = "idle";
+      }
+      el.style.setProperty("--cx", `${(s.x * W).toFixed(1)}px`);
+      el.style.setProperty("--cy", `${s.y.toFixed(1)}px`);
+      el.style.setProperty("--sway", `${s.sway.toFixed(2)}deg`);
+      el.style.setProperty("--shut", s.closed.toFixed(3));
+      // What it's holding comes along, swinging with it.
+      if (s.held) {
+        const h = s.held;
+        h.p.style.setProperty("--dx", `${(h.dx + s.x * W - h.x).toFixed(1)}px`);
+        h.p.style.setProperty("--dy", `${(h.dy + s.y - h.y).toFixed(1)}px`);
+        h.p.style.setProperty("--lean", `${(s.sway * 0.8).toFixed(2)}deg`);
+      }
+      const busy = s.phase !== "idle" || Math.abs(s.vx) > 0.002 || Math.abs(s.sway) > 0.05 || dir;
+      s.raf = busy ? requestAnimationFrame(frame) : 0;
+      if (!busy) s.last = 0;
+    };
+    const kick = () => {
+      if (!s.raf) s.raf = requestAnimationFrame(frame);
+    };
+
+    const drop = () => {
+      if (s.phase !== "idle") return;
+      if (s.held) {
+        // Let go: it falls back onto the desk below where it hung, with a
+        // little bounce as it lands.
+        const p = s.held.p;
+        p.style.transition = "translate 0.55s cubic-bezier(0.5, 0, 0.55, 1.35)";
+        p.style.setProperty("--dy", `${s.held.dy}px`);
+        p.style.setProperty("--lean", "0deg");
+        delete p.dataset.clawed;
+        setTimeout(() => (p.style.transition = ""), 600);
+        s.held = null;
+        s.phase = "open";
+        s.timer = performance.now();
+        return kick();
+      }
+      const u = under();
+      const t = tip();
+      const floor = stage.getBoundingClientRect().bottom - 10;
+      const goal = u ? u.r.top + Math.min(u.r.height * 0.3, 60) : floor;
+      s.grab = u?.p || null;
+      s.target = s.y + Math.max(0, goal - t.y);
+      s.phase = "down";
+      kick();
+    };
+
+    const onKey = (e) => {
+      if (e.target.closest?.("input, textarea, .bt-screen-scroll, [contenteditable]")) return;
+      const k = e.key;
+      if (!["ArrowLeft", "ArrowRight", "ArrowDown", "Enter"].includes(k)) return;
+      if (k === "Enter" && e.target.closest?.("a, button")) return;
+      e.preventDefault();
+      setAwake(true);
+      if (e.type === "keyup") {
+        s.keys.delete(k);
+        return;
+      }
+      if (k === "ArrowDown" || k === "Enter") {
+        if (!e.repeat) drop();
+        return;
+      }
+      s.keys.add(k);
+      kick();
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("keyup", onKey);
+    return () => {
+      cancelAnimationFrame(s.raf);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("keyup", onKey);
+    };
+  }, [stageRef]);
+
+  return (
+    <div ref={ref} className="bt-claw" data-awake={awake} aria-hidden="true">
+      <span className="bt-claw-cable" />
+      <div className="bt-claw-head">
+        {/* eslint-disable @next/next/no-img-element */}
+        <img className="bt-claw-jaw bt-claw-l" src="/claw-l.webp" alt="" draggable={false} />
+        <img className="bt-claw-jaw bt-claw-r" src="/claw-r.webp" alt="" draggable={false} />
+        <img className="bt-claw-body" src="/claw-body.webp" alt="" draggable={false} />
+        {/* eslint-enable @next/next/no-img-element */}
+      </div>
+      <span className="bt-claw-hint font-anonymous-pro">← → move &middot; ↓ grab</span>
+    </div>
+  );
+}
+
 export default function BeyondStory() {
+  const stageRef = useRef(null);
   // Lay the desk out once fonts are ready so nothing pops mid-swap.
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -476,7 +638,8 @@ export default function BeyondStory() {
 
       <h1 className="sr-only">Beyond: a bit more about Goutham</h1>
 
-      <div className="bt-stage">
+      <div className="bt-stage" ref={stageRef}>
+        <Claw stageRef={stageRef} />
         {/* The desk: a grid on the left half (on a phone, scattered over the stage). */}
         <div className="bt-desk">
         <Piece id="photo" d={[10.25, 5, 8.9]} m={[5, 2, 32]} r={-3} n={0} label="A taped-up photo of Goutham">
